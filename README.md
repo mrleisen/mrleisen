@@ -1,7 +1,7 @@
 <h1 align="center">Hi 👋, I'm Rafael</h1>
 <h3 align="center">A passionate mobile developer from Colombia</h3>
 
-- 💬 Ask me about **Kotlin, Dart, Android, iOS, Mobile, Entrepenurship, Crypto and Aliens**
+- 💬 Ask me about **Kotlin, Dart, Android, iOS, Mobile, Entrepenurship, Crypto, Videogames and Aliens**
 
 - 📫 How to reach me **ing.rafaelcamargo@gmail.com**
 
