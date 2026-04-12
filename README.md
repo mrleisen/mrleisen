@@ -1,15 +1,30 @@
-# mrleisen_temp
+# 📻 Radio
 
-A new Jaspr project
+_tune in · sintoniza_
 
-## Running the project
+[**rafahcf.com**](https://rafahcf.com)
 
-Run your project using `jaspr serve`.
+&nbsp;
 
-The development server will be available on `http://localhost:8080`.
+Five frequencies. Each one hides something.
+Sweep the dial, listen for the static to clear.
 
-## Building the project
+&nbsp;
 
-Build your project using `jaspr build`.
+### Frequencies
 
-The output will be located inside the `build/jaspr/` directory.
+`FM 87.5` — ???
+`FM 91.3` — ???
+`FM 95.7` — ???
+`FM 99.1` — ???
+`FM 103.5` — ???
+
+&nbsp;
+
+### Built with
+
+Jaspr · Dart · CSS · Web Audio API
+
+&nbsp;
+
+_No map. No legend. Just a dial._
