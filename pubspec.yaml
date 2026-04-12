@@ -1,5 +1,5 @@
-name: the_signal
-description: The Signal - an interactive radio-frequency experience
+name: radio
+description: Radio - an interactive radio-frequency experience
 version: 0.1.0
 
 environment:

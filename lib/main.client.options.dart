@@ -6,7 +6,7 @@
 
 import 'package:jaspr/client.dart';
 
-import 'package:the_signal/app.dart' deferred as _app;
+import 'package:radio/app.dart' deferred as _app;
 
 /// Default [ClientOptions] for use with your Jaspr project.
 ///

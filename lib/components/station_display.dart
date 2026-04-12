@@ -14,7 +14,7 @@ enum Lang { es, en }
 /// Transitions are intentionally staggered: the outgoing panel fades
 /// quickly (0.3 s, no delay) while the incoming panel waits 0.25 s
 /// before starting its 0.5 s fade-in. That tiny gap keeps two panels
-/// from reading simultaneously and matches the "catching the signal"
+/// from reading simultaneously and matches the "catching a signal"
 /// feel of the rest of the experience.
 ///
 /// NOTE: deliberately NOT marked `@client`. The parent App is already a
@@ -94,6 +94,13 @@ class StationDisplay extends StatelessComponent {
     final jitterDur = (0.6 - distortion * 0.4).toStringAsFixed(2);
     final flickerDur = (1.4 - distortion * 0.9).toStringAsFixed(2);
 
+    // Station colour propagated through the subtree as CSS custom
+    // properties so labels / titles / pills / cards can all glow with
+    // it without each needing an inline style.
+    final sc = station.color;
+    final scGlow = '${sc}55'; // ~33% alpha — primary glow
+    final scGlowDim = '${sc}26'; // ~15% alpha — soft halo
+
     return div(
       classes:
           'station-panel station-${station.callSign.toLowerCase()}${isVisible ? ' is-visible' : ''}',
@@ -101,6 +108,9 @@ class StationDisplay extends StatelessComponent {
         opacity: opacity,
         raw: {
           '--distortion': distortion.toStringAsFixed(3),
+          '--sc': sc,
+          '--sc-glow': scGlow,
+          '--sc-glow-dim': scGlowDim,
           'visibility': isVisible ? 'visible' : 'hidden',
           'transform': 'translate(-50%, -50%)',
         },
@@ -281,22 +291,13 @@ class StationDisplay extends StatelessComponent {
         ? 'Esta frecuencia aún no ha sido decodificada.'
         : 'This frequency has not been decoded yet.';
     return div(classes: 'panel-shell', [
-      div(
-        classes: 'panel-label',
-        styles: Styles(color: Color(s.color)),
-        [text(label)],
-      ),
+      div(classes: 'panel-label', [text(label)]),
       // Glitched title — re-uses the existing `glitch` / `glitch-alt`
       // keyframes from main.server.dart.
       div(classes: 'glitch-title-wrapper', [
-        h2(
-          classes: 'panel-title glitch-title',
-          styles: Styles(color: Color(s.color)),
-          [text('???')],
-        ),
+        h2(classes: 'panel-title glitch-title', [text('???')]),
         h2(
           classes: 'panel-title glitch-title glitch-title-alt',
-          styles: Styles(color: Color(s.color)),
           attributes: {'aria-hidden': 'true'},
           [text('???')],
         ),
@@ -313,17 +314,12 @@ class StationDisplay extends StatelessComponent {
     required String title,
     required List<Component> children,
   }) {
+    // `color` kept in the signature for future use, but the actual
+    // value propagates through the subtree as the `--sc` custom
+    // property set on `.station-panel` — CSS picks it up.
     return div(classes: 'panel-shell', [
-      div(
-        classes: 'panel-label',
-        styles: Styles(color: Color(color)),
-        [text(label)],
-      ),
-      h2(
-        classes: 'panel-title',
-        styles: Styles(color: Color(color)),
-        [text(title)],
-      ),
+      div(classes: 'panel-label', [text(label)]),
+      h2(classes: 'panel-title', [text(title)]),
       ...children,
     ]);
   }
@@ -347,11 +343,7 @@ class StationDisplay extends StatelessComponent {
   Component _projectCard(_ProjectEntry p, String color, Lang lang) {
     final desc = lang == Lang.es ? p.descEs : p.descEn;
     final children = <Component>[
-      div(
-        classes: 'project-name',
-        styles: Styles(color: Color(color)),
-        [text(p.name)],
-      ),
+      div(classes: 'project-name', [text(p.name)]),
       div(classes: 'project-subtitle', [text(p.subtitle)]),
       div(classes: 'project-desc', [text(desc)]),
     ];
@@ -420,40 +412,61 @@ class StationDisplay extends StatelessComponent {
       padding: Padding.symmetric(horizontal: 24.px),
     ),
 
+    // Label — reads like a small secondary LED readout above the title.
     css('.panel-label').styles(
-      fontFamily: const FontFamily.list([FontFamilies.monospace]),
+      fontFamily: const FontFamily.list([
+        FontFamily('IBM Plex Mono'),
+        FontFamilies.monospace,
+      ]),
       fontSize: Unit.pixels(10),
       fontWeight: FontWeight.w500,
       letterSpacing: 0.4.em,
       textTransform: TextTransform.upperCase,
-      raw: {'opacity': '0.55'},
+      raw: {
+        'color': 'var(--sc, #E8A035)',
+        'opacity': '0.75',
+        'text-shadow':
+            '0 0 2px var(--sc-glow, rgba(232,160,53,0.35))',
+      },
     ),
 
+    // Title — dim illuminated text on a dark panel, in the station
+    // colour. Chromatic glitch split still scales with --distortion.
     css('.panel-title').styles(
-      fontFamily: const FontFamily.list([FontFamilies.sansSerif]),
-      fontSize: 2.4.rem,
-      fontWeight: FontWeight.w600,
-      letterSpacing: 0.02.em,
+      fontFamily: const FontFamily.list([
+        FontFamily('Orbitron'),
+        FontFamilies.sansSerif,
+      ]),
+      fontSize: 2.2.rem,
+      fontWeight: FontWeight.w700,
+      letterSpacing: 0.05.em,
       raw: {
+        'color': 'var(--sc, #E8A035)',
+        'opacity': '0.92',
         'margin': '0',
-        'line-height': '1.1',
-        // Red / cyan chromatic split that scales with --distortion.
-        // At --distortion: 0 the shadow offsets collapse to 0,
-        // producing no visible fringe.
+        'line-height': '1.15',
         'text-shadow':
-            'calc(var(--distortion, 0) * 2px) 0 rgba(255,0,0,0.55), '
+            '0 0 6px var(--sc-glow, rgba(232,160,53,0.3)), '
+                '0 0 16px var(--sc-glow-dim, rgba(232,160,53,0.15)), '
+                'calc(var(--distortion, 0) * 2px) 0 rgba(255,0,0,0.55), '
                 'calc(var(--distortion, 0) * -2px) 0 rgba(0,255,255,0.55)',
       },
     ),
 
+    // Body — dim printed-on-dark-plastic feel, warm amber/green tint.
     css('.panel-body').styles(
-      fontFamily: const FontFamily.list([FontFamilies.sansSerif]),
-      fontSize: Unit.pixels(13),
-      color: const Color('#e6e6ec'),
+      fontFamily: const FontFamily.list([
+        FontFamily('IBM Plex Mono'),
+        FontFamilies.monospace,
+      ]),
+      fontSize: Unit.pixels(12),
+      fontWeight: FontWeight.w400,
+      color: const Color('#c5b994'),
       maxWidth: 400.px,
       raw: {
         'opacity': '0.55',
-        'line-height': '1.75',
+        'line-height': '1.55',
+        'letter-spacing': '0.02em',
         'margin': '0 auto',
         'text-shadow':
             'calc(var(--distortion, 0) * 1.5px) 0 rgba(255,0,0,0.45), '
@@ -480,29 +493,75 @@ class StationDisplay extends StatelessComponent {
       justifyContent: JustifyContent.center,
       gap: Gap(row: 8.px, column: 8.px),
     ),
+    // Pills render as physical stereo buttons: raised plastic with an
+    // upper highlight + lower drop, a tiny illuminated LED dot in the
+    // station colour, and station-coloured glowing text. Hover =
+    // "pressed": inset shadow flip + slight darker face.
     css('.pill', [
       css('&').styles(
-        fontFamily: const FontFamily.list([FontFamilies.monospace]),
-        fontSize: Unit.pixels(12),
-        letterSpacing: 0.08.em,
-        color: const Color('#e6e6ec'),
-        padding: Padding.symmetric(horizontal: 20.px, vertical: 8.px),
+        fontFamily: const FontFamily.list([
+          FontFamily('IBM Plex Mono'),
+          FontFamilies.monospace,
+        ]),
+        fontSize: Unit.pixels(11),
+        fontWeight: FontWeight.w500,
+        letterSpacing: 0.15.em,
+        textTransform: TextTransform.upperCase,
+        padding: Padding.symmetric(horizontal: 16.px, vertical: 8.px),
         cursor: Cursor.pointer,
         textDecoration: const TextDecoration(line: TextDecorationLine.none),
         raw: {
-          'border': '1px solid rgba(255,255,255,0.12)',
+          'color': 'var(--sc, #E8A035)',
+          'display': 'inline-flex',
+          'align-items': 'center',
+          'gap': '8px',
+          'border': '1px solid rgba(255,255,255,0.09)',
           'border-radius': '99px',
-          'background': 'rgba(255,255,255,0.02)',
-          'transition': 'border-color 0.2s ease, background 0.2s ease, '
-              'color 0.2s ease, opacity 0.2s ease',
-          'opacity': '0.85',
+          // Raised-plastic faceplate: soft dark gradient body, tiny
+          // light highlight up top, dark drop below.
+          'background':
+              'linear-gradient(180deg, #1a1a1f 0%, #111115 100%)',
+          'box-shadow':
+              'inset 0 1px 0 rgba(255,255,255,0.06), '
+                  '0 1px 0 rgba(0,0,0,0.6), '
+                  '0 2px 6px rgba(0,0,0,0.35)',
+          'text-shadow':
+              '0 0 3px var(--sc-glow, rgba(232,160,53,0.3))',
+          'transition': 'border-color 0.15s ease, background 0.15s ease, '
+              'box-shadow 0.15s ease, color 0.15s ease',
         },
       ),
+      // Tiny LED dot ::before — lit in the station colour with glow.
+      css('&::before').styles(
+        raw: {
+          'content': '""',
+          'display': 'inline-block',
+          'width': '5px',
+          'height': '5px',
+          'border-radius': '50%',
+          'background': 'var(--sc, #E8A035)',
+          'box-shadow':
+              '0 0 4px var(--sc, #E8A035), '
+                  '0 0 1px rgba(0,0,0,0.8)',
+        },
+      ),
+      // Pressed-in state on hover / active — inverts the bevel and
+      // darkens the face slightly.
       css('&:hover').styles(
         raw: {
-          'border-color': 'rgba(255,255,255,0.32)',
-          'background': 'rgba(255,255,255,0.06)',
-          'opacity': '1',
+          'background':
+              'linear-gradient(180deg, #121216 0%, #0d0d10 100%)',
+          'border-color': 'rgba(255,255,255,0.18)',
+          'box-shadow':
+              'inset 0 1px 3px rgba(0,0,0,0.7), '
+                  'inset 0 -1px 0 rgba(255,255,255,0.04)',
+        },
+      ),
+      css('&:active').styles(
+        raw: {
+          'box-shadow':
+              'inset 0 2px 4px rgba(0,0,0,0.85), '
+                  'inset 0 -1px 0 rgba(255,255,255,0.04)',
         },
       ),
     ]),
@@ -516,52 +575,84 @@ class StationDisplay extends StatelessComponent {
         'gap': '10px',
       },
     ),
+    // Project cards look like debossed sections milled into the
+    // stereo faceplate: dark recessed body, inset shadow for the
+    // depth, station-colour title, monospace description.
     css('.project-card', [
       css('&').styles(
-        padding: Padding.symmetric(horizontal: 16.px, vertical: 12.px),
+        padding: Padding.symmetric(horizontal: 14.px, vertical: 11.px),
         textDecoration: const TextDecoration(line: TextDecorationLine.none),
         raw: {
-          'border': '1px solid rgba(255,255,255,0.06)',
-          'border-radius': '8px',
-          'background': 'rgba(255,255,255,0.015)',
+          'border': '1px solid rgba(0,0,0,0.65)',
+          'border-radius': '5px',
+          'background':
+              'linear-gradient(180deg, #0b0b0e 0%, #0d0d11 100%)',
+          'box-shadow':
+              'inset 0 1px 2px rgba(0,0,0,0.7), '
+                  'inset 0 -1px 0 rgba(255,255,255,0.03), '
+                  '0 1px 0 rgba(255,255,255,0.04)',
           'text-align': 'left',
           'display': 'block',
           'color': 'inherit',
-          'transition': 'border-color 0.2s ease, background 0.2s ease, '
+          'transition': 'border-color 0.2s ease, box-shadow 0.2s ease, '
               'transform 0.2s ease',
         },
       ),
-      // Linked cards get a hover lift.
       css('&.project-card-link').styles(cursor: Cursor.pointer),
       css('&.project-card-link:hover').styles(
         raw: {
-          'border-color': 'rgba(255,255,255,0.18)',
-          'background': 'rgba(255,255,255,0.035)',
+          'border-color': 'rgba(0,0,0,0.8)',
+          'box-shadow':
+              'inset 0 1px 2px rgba(0,0,0,0.7), '
+                  'inset 0 -1px 0 rgba(255,255,255,0.03), '
+                  '0 0 10px var(--sc-glow-dim, rgba(232,160,53,0.15))',
           'transform': 'translateY(-1px)',
         },
       ),
     ]),
+    // Name: station colour with faint glow, feels like a label milled
+    // into the faceplate and lit from behind.
     css('.project-name').styles(
-      fontFamily: const FontFamily.list([FontFamilies.sansSerif]),
-      fontSize: Unit.pixels(13),
-      fontWeight: FontWeight.w600,
-      letterSpacing: 0.01.em,
+      fontFamily: const FontFamily.list([
+        FontFamily('Orbitron'),
+        FontFamilies.sansSerif,
+      ]),
+      fontSize: Unit.pixels(12),
+      fontWeight: FontWeight.w700,
+      letterSpacing: 0.06.em,
+      textTransform: TextTransform.upperCase,
+      raw: {
+        'color': 'var(--sc, #E8A035)',
+        'text-shadow':
+            '0 0 3px var(--sc-glow, rgba(232,160,53,0.3))',
+      },
     ),
     css('.project-subtitle').styles(
-      fontFamily: const FontFamily.list([FontFamilies.sansSerif]),
-      fontSize: Unit.pixels(11),
+      fontFamily: const FontFamily.list([
+        FontFamily('IBM Plex Mono'),
+        FontFamilies.monospace,
+      ]),
+      fontSize: Unit.pixels(10),
       fontWeight: FontWeight.w400,
-      color: const Color('#cfcfd6'),
-      raw: {'margin-top': '2px', 'opacity': '0.78'},
+      color: const Color('#b8a97c'),
+      raw: {
+        'margin-top': '3px',
+        'opacity': '0.7',
+        'letter-spacing': '0.04em',
+      },
     ),
     css('.project-desc').styles(
-      fontFamily: const FontFamily.list([FontFamilies.sansSerif]),
+      fontFamily: const FontFamily.list([
+        FontFamily('IBM Plex Mono'),
+        FontFamilies.monospace,
+      ]),
       fontSize: Unit.pixels(10),
-      color: const Color('#a1a1a9'),
+      color: const Color('#8a8570'),
       raw: {
-        'margin-top': '6px',
+        'margin-top': '7px',
         'opacity': '0.75',
         'line-height': '1.5',
+        'letter-spacing': '0.01em',
       },
     ),
 

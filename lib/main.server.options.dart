@@ -5,13 +5,13 @@
 // Generated with jaspr_builder
 
 import 'package:jaspr/server.dart';
-import 'package:the_signal/components/radio_dial.dart' as _radio_dial;
-import 'package:the_signal/components/scanlines.dart' as _scanlines;
-import 'package:the_signal/components/signal_bars.dart' as _signal_bars;
-import 'package:the_signal/components/static_noise.dart' as _static_noise;
-import 'package:the_signal/components/station_display.dart' as _station_display;
-import 'package:the_signal/components/vignette.dart' as _vignette;
-import 'package:the_signal/app.dart' as _app;
+import 'package:radio/components/radio_dial.dart' as _radio_dial;
+import 'package:radio/components/scanlines.dart' as _scanlines;
+import 'package:radio/components/signal_bars.dart' as _signal_bars;
+import 'package:radio/components/static_noise.dart' as _static_noise;
+import 'package:radio/components/station_display.dart' as _station_display;
+import 'package:radio/components/vignette.dart' as _vignette;
+import 'package:radio/app.dart' as _app;
 
 /// Default [ServerOptions] for use with your Jaspr project.
 ///

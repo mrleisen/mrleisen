@@ -1,11 +1,11 @@
 {
-    "name": "The Signal — rafahcf",
-    "short_name": "The Signal",
+    "name": "Radio — rafahcf",
+    "short_name": "Radio — rafahcf",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#050507",
     "theme_color": "#050507",
-    "description": "The Signal — an interactive radio-frequency experience",
+    "description": "Radio — an interactive radio-frequency experience",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

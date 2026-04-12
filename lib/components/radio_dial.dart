@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:jaspr/dom.dart';
 import 'package:jaspr/jaspr.dart';
 import 'package:universal_web/js_interop.dart';
@@ -32,9 +34,10 @@ const double _stripWidth = (maxFrequency - minFrequency) * _pxPerMhz;
 /// Visible width of the dial window viewport.
 const double _windowWidth = 320.0;
 
-// Amber-LCD palette (Pioneer/Kenwood-style backlight).
-const String _lcdAmber = '#ffb13a';
-const String _lcdAmberDim = '#7a4f10';
+// Amber-LED palette — warm Pioneer/Kenwood segment colour. Matches the
+// text-shadow values below; change both together or the glow goes off.
+const String _lcdAmber = '#E8A035';
+const String _lcdAmberDim = '#6d4a0e';
 
 /// The radio dial panel fixed to the bottom of the screen.
 ///
@@ -66,6 +69,18 @@ class RadioDialState extends State<RadioDial> {
   double _dragStartFreq = 0;
   double _dragStartX = 0;
   double _dragStartY = 0;
+
+  // --- LCD tap glitch ---
+  // Incrementing counter used to force the tap animation to restart on
+  // consecutive taps — the value is embedded in the inline `animation`
+  // shorthand (via a varying `animation-delay`), which makes the
+  // browser treat each tap as a fresh animation run. `_lcdTapTimer`
+  // clears the counter back to 0 once the animation finishes, which
+  // removes the inline override and lets the base LCD animation
+  // resume.
+  int _lcdTapNonce = 0;
+  Timer? _lcdTapTimer;
+  static const Duration _lcdTapDuration = Duration(milliseconds: 850);
 
   // --- helpers ---
 
@@ -136,6 +151,24 @@ class RadioDialState extends State<RadioDial> {
 
   // --- wheel on panel ---
 
+  // --- LCD tap ---
+
+  void _onLcdTap(web.Event _) {
+    _lcdTapTimer?.cancel();
+    setState(() => _lcdTapNonce++);
+    _lcdTapTimer = Timer(_lcdTapDuration, () {
+      if (mounted) {
+        setState(() => _lcdTapNonce = 0);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _lcdTapTimer?.cancel();
+    super.dispose();
+  }
+
   void _onPanelWheel(web.Event event) {
     final we = event as web.WheelEvent;
     we.preventDefault();
@@ -158,7 +191,7 @@ class RadioDialState extends State<RadioDial> {
 
         // Header row: brand + indicators.
         div(classes: 'panel-header', [
-          span(classes: 'brand', [text('THE SIGNAL')]),
+          span(classes: 'brand', [text('RADIO')]),
           div(classes: 'indicator-row', [
             _indicator('FM', active: true),
             _indicator('AM'),
@@ -169,13 +202,32 @@ class RadioDialState extends State<RadioDial> {
 
         // Main row: LCD readout + dial window + knob.
         div(classes: 'panel-main', [
-          // LCD frequency readout.
-          div(classes: 'lcd', [
-            div(classes: 'lcd-backlight', []),
-            // Faded "ghost" 88.8 segments behind the live digits.
+          // LCD frequency readout. Clicking/tapping runs the tap-
+          // glitch animation via an inline override; the nonce in the
+          // animation-delay forces a restart on each consecutive tap.
+          div(
+            classes: 'lcd${tuned ? ' lcd-locked' : ''}',
+            events: {'click': _onLcdTap},
+            styles: _lcdTapNonce > 0
+                ? Styles(raw: {
+                    'animation':
+                        'lcd-tap-glitch 0.8s step-end ${(_lcdTapNonce * 0.0001).toStringAsFixed(4)}s',
+                  })
+                : null,
+            [
+            // Faded "ghost" segments behind the live digits, like the
+            // unlit cells on a real 7-segment LED panel. Uses `188.8`
+            // which lights every segment (once our font matches).
             span(classes: 'lcd-ghost', [text('188.8')]),
             span(classes: 'lcd-value', [text(_freq.toStringAsFixed(1))]),
-            span(classes: 'lcd-unit', [text('MHz')]),
+            // Right-side badges: always-on "FM" + station-lock "ST".
+            div(classes: 'lcd-badges', [
+              span(classes: 'lcd-fm', [text('FM')]),
+              span(
+                classes: 'lcd-st${tuned ? ' is-lit' : ''}',
+                [text('ST')],
+              ),
+            ]),
           ]),
 
           // Dial window (etched slit).
@@ -377,76 +429,204 @@ class RadioDialState extends State<RadioDial> {
       raw: {'flex': '1'},
     ),
 
-    // ── LCD readout ──
-    css('.lcd').styles(
-      position: Position.relative(),
-      display: Display.flex,
-      flexDirection: FlexDirection.row,
-      alignItems: AlignItems.baseline,
-      justifyContent: JustifyContent.end,
-      gap: Gap(column: 4.px),
-      width: 130.px,
-      height: 56.px,
-      padding: Padding.symmetric(horizontal: 10.px, vertical: 6.px),
-      radius: BorderRadius.all(Radius.circular(3.px)),
-      overflow: Overflow.hidden,
+    // ── LCD readout (aged backlit-LCD look) ──
+    // The layered backgrounds, top to bottom, are:
+    //   1. A tight diagonal noise pattern (micro-scratches on the
+    //      plastic lens, low opacity).
+    //   2. A dark radial patch in the upper-right corner — the one
+    //      zone where the backlight has faded more than the rest.
+    //   3. An off-centre main amber gradient, muted and
+    //      desaturated, like a 90s LCD that's been running for 20
+    //      years.
+    css('.lcd', [
+      css('&').styles(
+        position: Position.relative(),
+        display: Display.flex,
+        flexDirection: FlexDirection.row,
+        alignItems: AlignItems.center,
+        justifyContent: JustifyContent.end,
+        gap: Gap(column: 6.px),
+        width: 140.px,
+        height: 56.px,
+        padding: Padding.symmetric(horizontal: 12.px, vertical: 6.px),
+        radius: BorderRadius.all(Radius.circular(3.px)),
+        overflow: Overflow.hidden,
+        raw: {
+          'background':
+              // 1) Wear / micro-scratch noise.
+              'repeating-linear-gradient(47deg, '
+                  'rgba(0,0,0,0.055) 0px, '
+                  'rgba(0,0,0,0.055) 1px, '
+                  'transparent 1px, '
+                  'transparent 3px),'
+                  // 2) Dead-corner shadow (top-right).
+                  'radial-gradient(circle at 82% 18%, '
+                  'rgba(0,0,0,0.28) 0%, '
+                  'transparent 48%),'
+                  // 3) Main backlight — off-centre, muted amber.
+                  'radial-gradient(ellipse at 42% 55%, '
+                  '#A67820 0%, '
+                  '#8B6418 55%, '
+                  '#6E4C10 100%)',
+          'border': '1px solid #000',
+          // Bevel preserved; outer bleed dialed back ~60% — old
+          // backlight barely leaks light anymore.
+          'box-shadow':
+              'inset 0 2px 4px rgba(0,0,0,0.5), '
+                  'inset 0 -1px 2px rgba(0,0,0,0.3), '
+                  'inset 0 0 0 1px rgba(0,0,0,0.55), '
+                  '0 0 8px rgba(166,120,32,0.22), '
+                  '0 0 18px rgba(166,120,32,0.1), '
+                  '0 1px 0 rgba(255,255,255,0.04)',
+          'transition': 'box-shadow 0.3s ease, background 0.3s ease',
+          // Rare worn-LCD glitches — step-end so value changes jump
+          // rather than interpolate (reads like a fault, not a tween).
+          // Disabled by `.lcd-locked` below.
+          'animation': 'lcd-glitch 25s step-end infinite',
+        },
+      ),
+      // "Glass" overlay — yellowed with age, diffused reflection.
+      // Warm faded highlight up top, brownish mid-cast from oxidised
+      // plastic, darker lower edge.
+      css('&::after').styles(
+        position: Position.absolute(top: Unit.zero, left: Unit.zero),
+        width: 100.percent,
+        height: 100.percent,
+        pointerEvents: PointerEvents.none,
+        raw: {
+          'content': '""',
+          'background':
+              'linear-gradient(to bottom, '
+                  'rgba(255,225,160,0.1) 0%, '
+                  'rgba(210,170,100,0.05) 35%, '
+                  'rgba(140,100,50,0.05) 55%, '
+                  'transparent 75%, '
+                  'rgba(40,25,10,0.18) 100%)',
+        },
+      ),
+    ]),
+
+    // Locked state — the backlight comes up a bit (like the amplifier
+    // drawing slightly more current once a carrier is found), but it
+    // never approaches "brand new" brightness.
+    css('.lcd-locked').styles(
       raw: {
         'background':
-            'linear-gradient(to bottom, #0a0703 0%, #1a0e04 100%)',
-        'border': '1px solid #000',
+            'repeating-linear-gradient(47deg, '
+                'rgba(0,0,0,0.055) 0px, '
+                'rgba(0,0,0,0.055) 1px, '
+                'transparent 1px, '
+                'transparent 3px),'
+                'radial-gradient(circle at 82% 18%, '
+                'rgba(0,0,0,0.22) 0%, '
+                'transparent 48%),'
+                'radial-gradient(ellipse at 42% 55%, '
+                '#C28A26 0%, '
+                '#9C711C 55%, '
+                '#78530F 100%)',
         'box-shadow':
-            'inset 0 2px 4px rgba(0,0,0,0.85), inset 0 -1px 1px rgba(255,177,58,0.08), 0 0 14px rgba(255,140,30,0.18), 0 1px 0 rgba(255,255,255,0.05)',
+            'inset 0 2px 4px rgba(0,0,0,0.5), '
+                'inset 0 -1px 2px rgba(0,0,0,0.3), '
+                'inset 0 0 0 1px rgba(0,0,0,0.55), '
+                '0 0 12px rgba(198,140,48,0.32), '
+                '0 0 22px rgba(166,120,32,0.14), '
+                '0 1px 0 rgba(255,255,255,0.04)',
+        // A locked station is the "clean signal" moment — no glitches.
+        'animation': 'none',
       },
     ),
-    css('.lcd-backlight').styles(
-      position: Position.absolute(top: Unit.zero, left: Unit.zero),
-      width: 100.percent,
-      height: 100.percent,
-      pointerEvents: PointerEvents.none,
-      raw: {
-        'background':
-            'radial-gradient(ellipse at 50% 50%, rgba(255,160,40,0.18) 0%, rgba(255,120,20,0.05) 60%, transparent 100%)',
-      },
-    ),
+
+    // "Off" ghost segments — slightly more visible than before
+    // (polariser degradation leaking more light through unused
+    // segments).
     css('.lcd-ghost').styles(
       position: Position.absolute(),
-      fontFamily: const FontFamily.list([FontFamilies.monospace]),
-      fontSize: 1.7.rem,
-      fontWeight: FontWeight.bold,
-      color: const Color('#3a1d05'),
-      letterSpacing: 0.05.em,
+      fontFamily: const FontFamily.list([
+        FontFamily('Orbitron'),
+        FontFamilies.monospace,
+      ]),
+      fontSize: 1.55.rem,
+      fontWeight: FontWeight.w700,
+      color: const Color('#000000'),
+      letterSpacing: 0.08.em,
       raw: {
-        'right': '36px',
+        'right': '42px',
         'top': '50%',
         'transform': 'translateY(-50%)',
-        'opacity': '0.45',
+        'opacity': '0.10',
         'pointer-events': 'none',
       },
     ),
+
+    // Live digits — dark segments, no longer pure black. A faded
+    // brown-black reads as aged LCD ink rather than crisp new print.
     css('.lcd-value').styles(
       position: Position.relative(),
-      fontFamily: const FontFamily.list([FontFamilies.monospace]),
-      fontSize: 1.7.rem,
-      fontWeight: FontWeight.bold,
-      color: const Color(_lcdAmber),
-      letterSpacing: 0.05.em,
+      fontFamily: const FontFamily.list([
+        FontFamily('Orbitron'),
+        FontFamilies.monospace,
+      ]),
+      fontSize: 1.55.rem,
+      fontWeight: FontWeight.w700,
+      color: const Color('#2a1f10'),
+      letterSpacing: 0.08.em,
       raw: {
-        'text-shadow':
-            '0 0 4px rgba(255,177,58,0.95), 0 0 10px rgba(255,140,30,0.6), 0 0 20px rgba(255,100,10,0.35)',
+        'text-shadow': '0 1px 0 rgba(0,0,0,0.12)',
+        'transition': 'color 0.3s ease, text-shadow 0.3s ease',
       },
     ),
-    css('.lcd-unit').styles(
+    css('.lcd-locked .lcd-value').styles(
+      color: const Color('#1f1608'),
+      raw: {'text-shadow': '0 1px 0 rgba(0,0,0,0.18)'},
+    ),
+
+    // Right-side badges — aged ink dark, ST still flips to a tiny
+    // green LED on lock (with a softer glow to match the tired
+    // panel).
+    css('.lcd-badges').styles(
       position: Position.relative(),
-      fontFamily: const FontFamily.list([FontFamilies.monospace]),
-      fontSize: Unit.pixels(9),
-      fontWeight: FontWeight.bold,
-      letterSpacing: 0.15.em,
-      color: const Color(_lcdAmber),
-      raw: {
-        'text-shadow':
-            '0 0 3px rgba(255,177,58,0.7), 0 0 6px rgba(255,140,30,0.4)',
-      },
+      display: Display.flex,
+      flexDirection: FlexDirection.column,
+      alignItems: AlignItems.start,
+      raw: {'gap': '2px'},
     ),
+    css('.lcd-fm').styles(
+      fontFamily: const FontFamily.list([
+        FontFamily('Orbitron'),
+        FontFamilies.monospace,
+      ]),
+      fontSize: Unit.pixels(10),
+      fontWeight: FontWeight.w700,
+      letterSpacing: 0.2.em,
+      color: const Color('#2a1f10'),
+      raw: {'opacity': '0.5'},
+    ),
+    css('.lcd-st', [
+      css('&').styles(
+        fontFamily: const FontFamily.list([
+          FontFamily('Orbitron'),
+          FontFamilies.monospace,
+        ]),
+        fontSize: Unit.pixels(9),
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.2.em,
+        color: const Color('#2a1f10'),
+        raw: {
+          'opacity': '0.22',
+          'transition':
+              'color 0.25s ease, opacity 0.25s ease, text-shadow 0.25s ease',
+        },
+      ),
+      css('&.is-lit').styles(
+        color: const Color('#0f3a0b'),
+        raw: {
+          'opacity': '0.95',
+          'text-shadow':
+              '0 0 2px rgba(100,200,80,0.7), '
+                  '0 0 6px rgba(100,200,80,0.35)',
+        },
+      ),
+    ]),
 
     // ── dial frame (etched slit on the faceplate) ──
     css('.dial-frame').styles(
@@ -627,7 +807,8 @@ class RadioDialState extends State<RadioDial> {
         fontSize: 1.15.rem,
         raw: {'right': '32px'},
       ),
-      css('.lcd-unit').styles(fontSize: Unit.pixels(8)),
+      css('.lcd-fm').styles(fontSize: Unit.pixels(9)),
+      css('.lcd-st').styles(fontSize: Unit.pixels(8)),
       // Dial + knob sit side by side on the second row.
       css('.dial-window').styles(width: 220.px, height: 48.px),
       css('.knob').styles(width: 50.px, height: 50.px),
@@ -644,8 +825,10 @@ class RadioDialState extends State<RadioDial> {
       css('.lcd-value').styles(fontSize: 1.0.rem),
       css('.lcd-ghost').styles(
         fontSize: 1.0.rem,
-        raw: {'right': '28px'},
+        raw: {'right': '26px'},
       ),
+      css('.lcd-fm').styles(fontSize: Unit.pixels(8)),
+      css('.lcd-st').styles(fontSize: Unit.pixels(7)),
       css('.knob').styles(width: 46.px, height: 46.px),
       css('.knob-notch').styles(
         height: 10.px,

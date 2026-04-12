@@ -13,7 +13,7 @@ void main() {
   );
 
   runApp(Document(
-    title: 'The Signal · rafahcf',
+    title: 'Radio · rafahcf',
     styles: [
       // Global reset
       css('*, *::before, *::after').styles(
@@ -79,6 +79,64 @@ void main() {
         '88%':  Styles(raw: {'opacity': '1'}),
         '89%':  Styles(raw: {'opacity': 'calc(1 - 0.22 * var(--tv-flicker-amp, 0))'}),
         '90%':  Styles(raw: {'opacity': '1'}),
+        '100%': Styles(raw: {'opacity': '1'}),
+      }),
+      // Keyframe: bad-connection LCD glitch. 38 s cycle with two
+      // bursts of rapid flickers separated by long stable periods.
+      // Each flicker is 80–150 ms. Step-end timing makes the value
+      // transitions snap rather than tween, which reads as an
+      // actual electrical fault.
+      //
+      // Disabled when the panel carries `.lcd-locked` so a tuned-in
+      // station stays clean.
+      css.keyframes('lcd-glitch', {
+        '0%':    Styles(raw: {'opacity': '1', 'transform': 'translateX(0)'}),
+        // ─ BURST 1 (~1.5 s): 6 rapid flickers + 2 dim moments.
+        '0.3%':  Styles(raw: {'opacity': '0.08'}),
+        '0.5%':  Styles(raw: {'opacity': '1'}),
+        '0.9%':  Styles(raw: {'opacity': '0.08'}),
+        '1.1%':  Styles(raw: {'opacity': '1'}),
+        '1.5%':  Styles(raw: {'opacity': '0.45'}),
+        '1.7%':  Styles(raw: {'opacity': '1'}),
+        '2.0%':  Styles(raw: {'opacity': '0.08', 'transform': 'translateX(-1px)'}),
+        '2.2%':  Styles(raw: {'opacity': '1', 'transform': 'translateX(0)'}),
+        '2.6%':  Styles(raw: {'opacity': '0.08'}),
+        '2.8%':  Styles(raw: {'opacity': '1'}),
+        '3.1%':  Styles(raw: {'opacity': '0.55'}),
+        '3.3%':  Styles(raw: {'opacity': '1'}),
+        '3.7%':  Styles(raw: {'opacity': '0.12'}),
+        '3.9%':  Styles(raw: {'opacity': '1'}),
+        // ─ long stable ~27 s ─
+        // ─ BURST 2 (~0.85 s): 3 flickers + 1 dim moment.
+        '75%':   Styles(raw: {'opacity': '0.08'}),
+        '75.4%': Styles(raw: {'opacity': '1'}),
+        '75.9%': Styles(raw: {'opacity': '0.08'}),
+        '76.3%': Styles(raw: {'opacity': '0.4'}),
+        '76.5%': Styles(raw: {'opacity': '1'}),
+        '77%':   Styles(raw: {'opacity': '0.1'}),
+        '77.2%': Styles(raw: {'opacity': '1'}),
+        '100%':  Styles(raw: {'opacity': '1', 'transform': 'translateX(0)'}),
+      }),
+      // Keyframe: one-shot tap glitch. Fires on user click/tap on the
+      // LCD — 5 rapid flickers + 2 dim moments across 0.8 s, like
+      // physically tapping a loose connection. Runs even when
+      // `.lcd-locked` is present (a tap is physical, not a signal
+      // issue), via an inline `animation` override on the element.
+      css.keyframes('lcd-tap-glitch', {
+        '0%':   Styles(raw: {'opacity': '1'}),
+        '6%':   Styles(raw: {'opacity': '0.08'}),
+        '14%':  Styles(raw: {'opacity': '1'}),
+        '22%':  Styles(raw: {'opacity': '0.08'}),
+        '30%':  Styles(raw: {'opacity': '1'}),
+        '38%':  Styles(raw: {'opacity': '0.4'}),
+        '45%':  Styles(raw: {'opacity': '1'}),
+        '52%':  Styles(raw: {'opacity': '0.08'}),
+        '60%':  Styles(raw: {'opacity': '1'}),
+        '68%':  Styles(raw: {'opacity': '0.08'}),
+        '76%':  Styles(raw: {'opacity': '1'}),
+        '84%':  Styles(raw: {'opacity': '0.3'}),
+        '92%':  Styles(raw: {'opacity': '0.08'}),
+        '96%':  Styles(raw: {'opacity': '1'}),
         '100%': Styles(raw: {'opacity': '1'}),
       }),
       // Keyframe: subtle horizontal jitter for content between stations.
@@ -255,6 +313,18 @@ void main() {
       // SVG favicon (modern browsers) + .ico fallback for legacy clients.
       link(rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg'),
       link(rel: 'icon', type: 'image/x-icon', href: '/favicon.ico'),
+      // Orbitron — geometric/digital display face used for the LCD.
+      link(rel: 'preconnect', href: 'https://fonts.googleapis.com'),
+      link(
+        rel: 'preconnect',
+        href: 'https://fonts.gstatic.com',
+        attributes: {'crossorigin': ''},
+      ),
+      link(
+        rel: 'stylesheet',
+        href:
+            'https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap',
+      ),
     ],
     body: App(),
   ));

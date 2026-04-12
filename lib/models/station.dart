@@ -1,4 +1,4 @@
-/// Station data model and frequency helpers for The Signal.
+/// Station data model and frequency helpers for Radio.
 
 const double minFrequency = 85.0;
 const double maxFrequency = 108.0;
