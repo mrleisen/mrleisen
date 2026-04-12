@@ -159,10 +159,15 @@ class StationDisplay extends StatelessComponent {
         ? 'FM 95.7 — transmisión decodificada'
         : 'FM 95.7 — decoded transmission';
     final body = lang == Lang.es
-        ? 'Flutter developer. Android, iOS, Web. Bucaramanga, Colombia. '
-            'Construyo experiencias digitales con Dart.'
-        : 'Flutter developer. Android, iOS, Web. Bucaramanga, Colombia. '
-            'Building digital experiences with Dart.';
+        ? 'Ingeniero de software con más de 7 años de experiencia. '
+            'Construyo cosas — como esta. Este sitio fue construido '
+            'completamente en Dart, compilado a HTML estático con el '
+            'framework Jaspr. Sin frameworks de JavaScript. '
+            'Sin librerías externas.'
+        : 'Software engineer with 7+ years of experience. '
+            'I build things — like this. This site was built entirely '
+            'in Dart, compiled to static HTML through the Jaspr '
+            'framework. No JavaScript frameworks. No external libraries.';
     return _panelShell(
       color: s.color,
       label: label,
