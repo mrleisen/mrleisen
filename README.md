@@ -1,46 +1,26 @@
-```
-╔══════════════════════════════════════════════════════════╗
-║                                                          ║
-║       R  A  D  I  O                                      ║
-║       ━━━━━━━━━━━━━━━━━━━━━━━                            ║
-║                                                          ║
-║       88 ── 92 ── 96 ── 100 ── 104 ── 108       MHz      ║
-║                          ▲                               ║
-║                                                          ║
-║       rafahcf.com  ·  tune in  ·  sintoniza              ║
-║                                                          ║
-╚══════════════════════════════════════════════════════════╝
+### Radio
+
+An interactive radio-frequency experience.
+
+Live at [rafahcf.com](https://rafahcf.com).
 
 
-┌─[ 01 ]─ SIGNAL DETECTED ─────────────────────────────────┐
-│                                                          │
-│   An interactive radio-frequency experience.             │
-│   Five frequencies. Each one hides something.            │
-│   Tune the dial. Listen for the static to clear.         │
-│   Find the signal.                                       │
-│                                                          │
-└──────────────────────────────────────────────────────────┘
+### About
+
+A single-page interactive experience modelled as an analog FM radio — tune the dial, sweep through the band, find stations hidden in the noise.
+
+Audio is fully synthesised at runtime via the Web Audio API: sparse-noise static, bandpass filtering, and a heterodyne beat oscillator that tracks the distance to each station. The UI is built entirely in Dart with [Jaspr](https://docs.jaspr.site) and compiled to static HTML, CSS, and JavaScript — no runtime frameworks, no external UI libraries. Deployed as a static site on GitHub Pages.
 
 
-┌─[ 02 ]─ FREQUENCY LOG ───────────────────────────────────┐
-│                                                          │
-│   FM  87.5   ░░░░░░░░░░░░░░░░░░   • • •   ? ? ?          │
-│   FM  91.3   ░░░░░░░░░░░░░░░░░░   • • •   ? ? ?          │
-│   FM  95.7   ░░░░░░░░░░░░░░░░░░   • • •   ? ? ?          │
-│   FM  99.1   ░░░░░░░░░░░░░░░░░░   • • •   ? ? ?          │
-│   FM 103.5   ░░░░░░░░░░░░░░░░░░   • • •   ? ? ?          │
-│                                                          │
-└──────────────────────────────────────────────────────────┘
+### Technical highlights
+
+- Server-side rendered to static HTML at build time via Jaspr; hydrated client-side for interactivity.
+- All visual effects pure CSS: analog TV static, CRT scanlines, signal distortion, aged LCD panel with backlight unevenness and occasional glitches.
+- Procedural audio via `dart:js_interop` over the Web Audio API — sparse-noise buffer sources, layered biquad filters, and a heterodyne oscillator whose frequency maps to detuning distance.
+- Cross-platform dial interaction using pointer capture — drag, wheel, touch, and keyboard all drive the same tuning path.
+- Bilingual content (ES/EN) resolved at render time with zero runtime dependencies.
 
 
-┌─[ 03 ]─ TRANSMISSION INFO ───────────────────────────────┐
-│                                                          │
-│   BUILT WITH    Jaspr · Dart · CSS · Web Audio API       │
-│   DEPLOY        GitHub Pages                             │
-│   STATUS        ■ LIVE                                   │
-│                                                          │
-└──────────────────────────────────────────────────────────┘
+### Stack
 
-
-           ·  ·  ·   end of transmission   ·  ·  ·
-```
+Jaspr · Dart · CSS · Web Audio API · GitHub Pages
