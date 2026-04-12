@@ -314,17 +314,8 @@ void main() {
       link(rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg'),
       link(rel: 'icon', type: 'image/x-icon', href: '/favicon.ico'),
       // Orbitron — geometric/digital display face used for the LCD.
-      link(rel: 'preconnect', href: 'https://fonts.googleapis.com'),
-      link(
-        rel: 'preconnect',
-        href: 'https://fonts.gstatic.com',
-        attributes: {'crossorigin': ''},
-      ),
-      link(
-        rel: 'stylesheet',
-        href:
-            'https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap',
-      ),
+      // Self-hosted: no runtime dependency on Google Fonts.
+      link(rel: 'stylesheet', href: 'fonts.css'),
     ],
     body: App(),
   ));
