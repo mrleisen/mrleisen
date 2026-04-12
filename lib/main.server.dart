@@ -252,6 +252,9 @@ void main() {
     ],
     head: [
       link(rel: 'manifest', href: 'manifest.json'),
+      // SVG favicon (modern browsers) + .ico fallback for legacy clients.
+      link(rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg'),
+      link(rel: 'icon', type: 'image/x-icon', href: '/favicon.ico'),
     ],
     body: App(),
   ));

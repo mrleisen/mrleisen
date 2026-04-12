@@ -1,14 +1,19 @@
 {
-    "name": "The Signal · rafahcf",
+    "name": "The Signal — rafahcf",
     "short_name": "The Signal",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#050507",
     "theme_color": "#050507",
-    "description": "The Signal - an interactive radio-frequency experience",
+    "description": "The Signal — an interactive radio-frequency experience",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
+        {
+            "src": "favicon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml"
+        },
         {
             "src": "icons/Icon-192.png",
             "sizes": "192x192",

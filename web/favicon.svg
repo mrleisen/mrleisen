@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="The Signal — R">
+  <defs>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="0.8" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="32" height="32" rx="5" ry="5" fill="#0a0a0c"/>
+  <text x="16" y="23"
+        text-anchor="middle"
+        font-family="'SF Mono', Menlo, Consolas, 'Roboto Mono', monospace"
+        font-weight="800"
+        font-size="20"
+        fill="#E8A035"
+        filter="url(#glow)">R</text>
+</svg>
