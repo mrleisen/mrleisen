@@ -13,7 +13,7 @@ void main() {
   );
 
   runApp(Document(
-    title: 'Radio · rafahcf',
+    title: 'rchf',
     styles: [
       // Global reset
       css('*, *::before, *::after').styles(
