@@ -58,12 +58,10 @@
         fill="#E8A035"
         filter="url(#amber-glow)">RAD</text>
 
-  <!-- "I" as radio tuner needle: thin red vertical with a glow and a
-       triangular pointer tip dipping below the baseline. -->
-  <g filter="url(#needle-glow)">
-    <rect x="463.4" y="55" width="3" height="53" fill="#E05555"/>
-    <polygon points="457.5,104 471.5,104 464.9,116" fill="#E05555"/>
-  </g>
+  <!-- "I" as radio tuner needle: a single thin red stroke, softly glowing. -->
+  <line x1="465.2" y1="55" x2="465.2" y2="108"
+        stroke="#E05555" stroke-width="2" stroke-linecap="butt"
+        filter="url(#needle-glow)"/>
 
   <!-- "O" as rotary tuning knob: dark radial-gradient disc, knurled rim
        (dashed stroke), and a glowing amber notch pointing up. -->

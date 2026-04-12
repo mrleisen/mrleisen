@@ -1,18 +1,19 @@
 <p align="center">
   <a href="https://rafahcf.com">
-    <img src=".github/assets/banner.svg" alt="Radio" width="800">
+    <img src=".github/assets/banner.svg" alt="Rafael Camargo — rafahcf.com" width="800">
   </a>
 </p>
 
-<h1 align="center">Radio</h1>
+<h1 align="center">Rafael Camargo</h1>
 
 <p align="center">
-  <strong>An interactive radio-frequency experience, built entirely in Dart.</strong>
+  <strong>Software engineer with 7+ years of experience. I build things — like this.</strong><br>
+  <sub>Built entirely in Dart.</sub>
 </p>
 
 <p align="center">
   <a href="#about">About</a> •
-  <a href="#how-it-works">How it works</a> •
+  <a href="#how-it-was-built">How it was built</a> •
   <a href="#stack">Stack</a> •
   <a href="#signals">Signals</a> •
   <a href="#build">Build</a>
@@ -26,22 +27,22 @@
 </p>
 
 <p align="center">
-  <a href="https://rafahcf.com"><strong>► Live at rafahcf.com</strong></a>
+  <a href="https://rafahcf.com"><strong>► rafahcf.com</strong></a>
 </p>
 
 ---
 
 ## About
 
-**Radio** is a single-page interactive experience that simulates tuning an analog FM receiver. Audio is synthesised at runtime through the Web Audio API, every visual effect is pure CSS, and the project ships with zero JavaScript runtime dependencies.
+This site is a single-page interactive radio-frequency simulator. Audio is synthesised at runtime through the Web Audio API, every visual effect is pure CSS, and it ships with zero JavaScript runtime dependencies.
 
-The entire codebase is written in **Dart** and compiled to static HTML, CSS, and JavaScript via the [Jaspr](https://docs.jaspr.site) framework, then deployed as a static site on GitHub Pages. No server. No framework bundle. No tracking.
+The entire codebase is written in **Dart** and compiled to static HTML, CSS, and JavaScript via the [Jaspr](https://docs.jaspr.site) framework, then deployed on GitHub Pages. No server. No framework bundle. No tracking.
 
-> *Tune carefully. Some stations only appear when you stop looking for them.*
+It's a small demonstration of what I build: procedural audio, CSS-only visuals, type-safe browser interop, and a static build pipeline end-to-end.
 
 ---
 
-## How it works
+## How it was built
 
 <table>
 <tr>
