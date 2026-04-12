@@ -1,13 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" width="800" height="200" role="img" aria-label="Radio — rafahcf.com">
   <defs>
-    <!-- Faded amber backlight behind the entire panel. -->
-    <radialGradient id="backlight" cx="50%" cy="52%" r="65%">
-      <stop offset="0%" stop-color="#1b1108" stop-opacity="1"/>
-      <stop offset="70%" stop-color="#0b0a0c" stop-opacity="1"/>
-      <stop offset="100%" stop-color="#06060a" stop-opacity="1"/>
+    <radialGradient id="backlight" cx="50%" cy="45%" r="65%">
+      <stop offset="0%"   stop-color="#1b1108"/>
+      <stop offset="70%"  stop-color="#0b0a0c"/>
+      <stop offset="100%" stop-color="#06060a"/>
     </radialGradient>
 
-    <!-- Amber LED glow for the main title. -->
     <filter id="amber-glow" x="-20%" y="-20%" width="140%" height="140%">
       <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur"/>
       <feMerge>
@@ -17,114 +15,120 @@
       </feMerge>
     </filter>
 
-    <!-- Thin horizontal scanlines. -->
-    <pattern id="scanlines" x="0" y="0" width="2" height="3" patternUnits="userSpaceOnUse">
-      <rect width="2" height="1" fill="#000" opacity="0.35"/>
-    </pattern>
-
-    <!-- Soft red glow for the needle that stands in for the letter "I". -->
-    <filter id="needle-glow" x="-150%" y="-20%" width="400%" height="140%">
-      <feGaussianBlur in="SourceGraphic" stdDeviation="2.2" result="blur"/>
+    <!-- Strong red glow for the needle/I: Gaussian blur of the shape's
+         alpha, flooded with #FF4444 at opacity 0.8, composited and
+         layered twice so the halo reads even on a dark background. -->
+    <filter id="needle-glow" x="-400%" y="-20%" width="900%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="4" result="blur"/>
+      <feFlood flood-color="#FF4444" flood-opacity="0.8" result="flood"/>
+      <feComposite in="flood" in2="blur" operator="in" result="coloredBlur"/>
       <feMerge>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="blur"/>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="coloredBlur"/>
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
 
-    <!-- Dark metallic radial fill for the knob that stands in for "O". -->
+    <pattern id="scanlines" x="0" y="0" width="2" height="3" patternUnits="userSpaceOnUse">
+      <rect width="2" height="1" fill="#000" opacity="0.28"/>
+    </pattern>
+
     <radialGradient id="knob-grad" cx="38%" cy="35%" r="78%">
-      <stop offset="0%"  stop-color="#3d3633"/>
-      <stop offset="55%" stop-color="#1e1916"/>
+      <stop offset="0%"   stop-color="#3d3633"/>
+      <stop offset="55%"  stop-color="#1e1916"/>
       <stop offset="100%" stop-color="#0a0806"/>
     </radialGradient>
   </defs>
 
-  <!-- Panel -->
+  <!-- Background panel -->
   <rect width="800" height="200" fill="#0a0a0c"/>
   <rect width="800" height="200" fill="url(#backlight)"/>
   <rect width="800" height="200" fill="url(#scanlines)"/>
   <rect x="0.5" y="0.5" width="799" height="199" fill="none" stroke="#1d1712" stroke-width="1"/>
 
-  <!-- "RAD" — first three letters of RADIO as amber-glow LCD text.
-       The "I" and "O" are drawn below as graphical easter eggs
-       (tuner needle + rotary knob) that still read as letters. -->
-  <text x="248" y="108"
-        text-anchor="start"
-        font-family="'Courier New', 'Consolas', 'Menlo', monospace"
-        font-weight="900"
-        font-size="72"
-        letter-spacing="22"
-        fill="#E8A035"
-        filter="url(#amber-glow)">RAD</text>
+  <!--
+    Single horizontal axis at y=85. Five elements, equal 80 px spacing:
+      R(240)   A(320)   D(400)   I(480)   ⊙(560)
+    Major ticks (and their labels) live in the six slots between/around
+    those elements: 200, 280, 360, 440, 520, 600. Ticks go UP from the
+    line; labels sit BELOW the line. Nothing collides with a letter.
+  -->
 
-  <!-- "I" as radio tuner needle: a single thin red stroke, softly glowing. -->
-  <line x1="465.2" y1="55" x2="465.2" y2="108"
-        stroke="#E05555" stroke-width="2" stroke-linecap="butt"
-        filter="url(#needle-glow)"/>
+  <!-- Strip line — extends past the outermost ticks on both sides. -->
+  <line x1="160" y1="85" x2="640" y2="85"
+        stroke="#a87a3a" stroke-width="1" opacity="0.6"/>
 
-  <!-- "O" as rotary tuning knob: dark radial-gradient disc, knurled rim
-       (dashed stroke), and a glowing amber notch pointing up. -->
-  <g transform="translate(530.4, 82)">
-    <circle r="27" fill="#0a0806"/>
-    <circle r="25.5" fill="none" stroke="#4a3828" stroke-width="2.4"
-            stroke-dasharray="3 3.2" opacity="0.78"/>
-    <circle r="23" fill="url(#knob-grad)"/>
-    <circle r="23" fill="none" stroke="#6a5038" stroke-width="0.6"
-            stroke-opacity="0.5"/>
-    <line x1="0" y1="-19" x2="0" y2="-9"
+  <!-- Major ticks: go UPWARD from the line. -->
+  <g stroke="#a87a3a" stroke-width="1.5">
+    <line x1="200" y1="77" x2="200" y2="85"/>
+    <line x1="280" y1="77" x2="280" y2="85"/>
+    <line x1="360" y1="77" x2="360" y2="85"/>
+    <line x1="440" y1="77" x2="440" y2="85"/>
+    <line x1="520" y1="77" x2="520" y2="85"/>
+    <line x1="600" y1="77" x2="600" y2="85"/>
+  </g>
+
+  <!-- Minor ticks: two per interval (1/4 and 3/4 offsets). -->
+  <g stroke="#5a4018" stroke-width="1">
+    <line x1="220" y1="81" x2="220" y2="85"/>
+    <line x1="260" y1="81" x2="260" y2="85"/>
+    <line x1="300" y1="81" x2="300" y2="85"/>
+    <line x1="340" y1="81" x2="340" y2="85"/>
+    <line x1="380" y1="81" x2="380" y2="85"/>
+    <line x1="420" y1="81" x2="420" y2="85"/>
+    <line x1="460" y1="81" x2="460" y2="85"/>
+    <line x1="500" y1="81" x2="500" y2="85"/>
+    <line x1="540" y1="81" x2="540" y2="85"/>
+    <line x1="580" y1="81" x2="580" y2="85"/>
+  </g>
+
+  <!-- Frequency labels (BELOW the line), in the six slots between/around
+       the letters so they never overlap a letter glyph. -->
+  <g font-family="'Courier New', monospace" font-size="10" fill="#a87a3a"
+     text-anchor="middle" letter-spacing="1">
+    <text x="200" y="105">88</text>
+    <text x="280" y="105">92</text>
+    <text x="360" y="105">96</text>
+    <text x="440" y="105">100</text>
+    <text x="520" y="105">104</text>
+    <text x="600" y="105">108</text>
+  </g>
+
+  <!-- Letters R, A, D — amber-glow slab-serif display type on top of
+       the strip. Baseline y=104 puts the cap-height center on y=85. -->
+  <g font-family="'Rockwell', 'Georgia', 'Times New Roman', serif"
+     font-weight="900"
+     font-size="52"
+     fill="#E8A035"
+     filter="url(#amber-glow)"
+     text-anchor="middle">
+    <text x="240" y="104">R</text>
+    <text x="320" y="104">A</text>
+    <text x="400" y="104">D</text>
+  </g>
+
+  <!-- "O" as rotary tuning knob centered on the strip line at (560, 85).
+       Sits on top of the strip line, covering it through the knob body. -->
+  <g transform="translate(560, 85)">
+    <circle r="28" fill="url(#knob-grad)" stroke="#2a211c" stroke-width="1"/>
+    <circle r="28" fill="none" stroke="#4a3828" stroke-width="2"
+            stroke-dasharray="3 3.2" opacity="0.8"/>
+    <circle r="26" fill="none" stroke="#6a5038" stroke-width="0.6"
+            stroke-opacity="0.45"/>
+    <line x1="0" y1="-22" x2="0" y2="-12"
           stroke="#E8A035" stroke-width="2.2" stroke-linecap="round"
           filter="url(#amber-glow)"/>
   </g>
 
-  <!-- Frequency dial strip -->
-  <g transform="translate(400, 150)">
-    <line x1="-220" y1="0" x2="220" y2="0" stroke="#3a2a10" stroke-width="1"/>
+  <!-- "I" as the red tuner needle. 4 px wide rect, centered on x=480,
+       extending from y=61 to y=109 (5 px above cap top and 5 px below
+       baseline so it reads as slightly taller than the letters).
+       Drawn last so the red glow sits on top of everything. -->
+  <rect x="478" y="61" width="4" height="48" fill="#FF4444"
+        filter="url(#needle-glow)"/>
 
-    <!-- Minor ticks (every ~4 MHz step of 4 subdivisions). -->
-    <g stroke="#5a4018" stroke-width="1">
-      <line x1="-198" y1="-3" x2="-198" y2="3"/>
-      <line x1="-176" y1="-3" x2="-176" y2="3"/>
-      <line x1="-154" y1="-3" x2="-154" y2="3"/>
-      <line x1="-110" y1="-3" x2="-110" y2="3"/>
-      <line x1="-88"  y1="-3" x2="-88"  y2="3"/>
-      <line x1="-66"  y1="-3" x2="-66"  y2="3"/>
-      <line x1="-22"  y1="-3" x2="-22"  y2="3"/>
-      <line x1="0"    y1="-3" x2="0"    y2="3"/>
-      <line x1="22"   y1="-3" x2="22"   y2="3"/>
-      <line x1="66"   y1="-3" x2="66"   y2="3"/>
-      <line x1="88"   y1="-3" x2="88"   y2="3"/>
-      <line x1="110"  y1="-3" x2="110"  y2="3"/>
-      <line x1="154"  y1="-3" x2="154"  y2="3"/>
-      <line x1="176"  y1="-3" x2="176"  y2="3"/>
-      <line x1="198"  y1="-3" x2="198"  y2="3"/>
-    </g>
-
-    <!-- Major ticks + labels: 88 / 92 / 96 / 100 / 104 / 108 MHz. -->
-    <g stroke="#a87a3a" stroke-width="1.5">
-      <line x1="-220" y1="-6" x2="-220" y2="6"/>
-      <line x1="-132" y1="-6" x2="-132" y2="6"/>
-      <line x1="-44"  y1="-6" x2="-44"  y2="6"/>
-      <line x1="44"   y1="-6" x2="44"   y2="6"/>
-      <line x1="132"  y1="-6" x2="132"  y2="6"/>
-      <line x1="220"  y1="-6" x2="220"  y2="6"/>
-    </g>
-    <g font-family="'Courier New', monospace" font-size="9" fill="#a87a3a"
-       text-anchor="middle" letter-spacing="1">
-      <text x="-220" y="19">88</text>
-      <text x="-132" y="19">92</text>
-      <text x="-44"  y="19">96</text>
-      <text x="44"   y="19">100</text>
-      <text x="132"  y="19">104</text>
-      <text x="220"  y="19">108</text>
-    </g>
-
-    <!-- Red tuner needle. -->
-    <line x1="0" y1="-10" x2="0" y2="10" stroke="#ff3030" stroke-width="2" opacity="0.92"/>
-  </g>
-
-  <!-- Domain line -->
-  <text x="400" y="188"
+  <!-- Domain line, centered below the composition. -->
+  <text x="400" y="170"
         text-anchor="middle"
         font-family="'Courier New', monospace"
         font-size="10"
