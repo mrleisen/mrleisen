@@ -1,26 +1,50 @@
-### Radio
+<p align="center">
+  <a href="https://rafahcf.com">
+    <img src=".github/assets/banner.svg" alt="Radio" width="800">
+  </a>
+</p>
 
-An interactive radio-frequency experience.
+<p align="center">
+  An interactive radio-frequency experience built entirely in Dart.
+</p>
 
-Live at [rafahcf.com](https://rafahcf.com).
+<p align="center">
+  <a href="https://rafahcf.com"><strong>► rafahcf.com</strong></a>
+</p>
 
+---
 
 ### About
 
-A single-page interactive experience modelled as an analog FM radio — tune the dial, sweep through the band, find stations hidden in the noise.
+Radio is a single-page interactive experience that simulates tuning an analog FM radio. Audio is synthesised at runtime through the Web Audio API, every visual effect is pure CSS, and the project ships with zero JavaScript runtime dependencies.
 
-Audio is fully synthesised at runtime via the Web Audio API: sparse-noise static, bandpass filtering, and a heterodyne beat oscillator that tracks the distance to each station. The UI is built entirely in Dart with [Jaspr](https://docs.jaspr.site) and compiled to static HTML, CSS, and JavaScript — no runtime frameworks, no external UI libraries. Deployed as a static site on GitHub Pages.
-
-
-### Technical highlights
-
-- Server-side rendered to static HTML at build time via Jaspr; hydrated client-side for interactivity.
-- All visual effects pure CSS: analog TV static, CRT scanlines, signal distortion, aged LCD panel with backlight unevenness and occasional glitches.
-- Procedural audio via `dart:js_interop` over the Web Audio API — sparse-noise buffer sources, layered biquad filters, and a heterodyne oscillator whose frequency maps to detuning distance.
-- Cross-platform dial interaction using pointer capture — drag, wheel, touch, and keyboard all drive the same tuning path.
-- Bilingual content (ES/EN) resolved at render time with zero runtime dependencies.
+The codebase is written entirely in Dart and compiled to static HTML, CSS, and JavaScript via the [Jaspr](https://docs.jaspr.site) framework, then deployed as a static site on GitHub Pages.
 
 
-### Stack
+### How it works
 
-Jaspr · Dart · CSS · Web Audio API · GitHub Pages
+| Layer        | Technology                                                   |
+|--------------|--------------------------------------------------------------|
+| Framework    | Jaspr (Dart → static HTML)                                   |
+| Rendering    | Server-side generated, client-side hydrated                  |
+| Audio        | Web Audio API via `dart:js_interop` (procedural synthesis)   |
+| Visual FX    | Pure CSS (analog static, CRT scanlines, LCD aging)           |
+| Interaction  | Pointer capture, touch, keyboard, wheel                      |
+| Deploy       | GitHub Pages (static)                                        |
+
+
+### Signals
+
+<p align="center">
+  <code>87.5 · 91.3 · 95.7 · 99.1 · 103.5</code>
+</p>
+
+<p align="center">
+  <sub>Five frequencies. Tune in to find them.</sub>
+</p>
+
+---
+
+<p align="center">
+  <sub>Built with Jaspr · Dart · CSS · Web Audio API</sub>
+</p>

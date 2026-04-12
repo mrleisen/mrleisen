@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" width="800" height="200" role="img" aria-label="Radio — rafahcf.com">
+  <defs>
+    <!-- Faded amber backlight behind the entire panel. -->
+    <radialGradient id="backlight" cx="50%" cy="52%" r="65%">
+      <stop offset="0%" stop-color="#1b1108" stop-opacity="1"/>
+      <stop offset="70%" stop-color="#0b0a0c" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#06060a" stop-opacity="1"/>
+    </radialGradient>
+
+    <!-- Amber LED glow for the main title. -->
+    <filter id="amber-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Thin horizontal scanlines. -->
+    <pattern id="scanlines" x="0" y="0" width="2" height="3" patternUnits="userSpaceOnUse">
+      <rect width="2" height="1" fill="#000" opacity="0.35"/>
+    </pattern>
+  </defs>
+
+  <!-- Panel -->
+  <rect width="800" height="200" fill="#0a0a0c"/>
+  <rect width="800" height="200" fill="url(#backlight)"/>
+  <rect width="800" height="200" fill="url(#scanlines)"/>
+  <rect x="0.5" y="0.5" width="799" height="199" fill="none" stroke="#1d1712" stroke-width="1"/>
+
+  <!-- RADIO title with amber glow. -->
+  <text x="400" y="108"
+        text-anchor="middle"
+        font-family="'Courier New', 'Consolas', 'Menlo', monospace"
+        font-weight="900"
+        font-size="72"
+        letter-spacing="22"
+        fill="#E8A035"
+        filter="url(#amber-glow)">RADIO</text>
+
+  <!-- Frequency dial strip -->
+  <g transform="translate(400, 150)">
+    <line x1="-220" y1="0" x2="220" y2="0" stroke="#3a2a10" stroke-width="1"/>
+
+    <!-- Minor ticks (every ~4 MHz step of 4 subdivisions). -->
+    <g stroke="#5a4018" stroke-width="1">
+      <line x1="-198" y1="-3" x2="-198" y2="3"/>
+      <line x1="-176" y1="-3" x2="-176" y2="3"/>
+      <line x1="-154" y1="-3" x2="-154" y2="3"/>
+      <line x1="-110" y1="-3" x2="-110" y2="3"/>
+      <line x1="-88"  y1="-3" x2="-88"  y2="3"/>
+      <line x1="-66"  y1="-3" x2="-66"  y2="3"/>
+      <line x1="-22"  y1="-3" x2="-22"  y2="3"/>
+      <line x1="0"    y1="-3" x2="0"    y2="3"/>
+      <line x1="22"   y1="-3" x2="22"   y2="3"/>
+      <line x1="66"   y1="-3" x2="66"   y2="3"/>
+      <line x1="88"   y1="-3" x2="88"   y2="3"/>
+      <line x1="110"  y1="-3" x2="110"  y2="3"/>
+      <line x1="154"  y1="-3" x2="154"  y2="3"/>
+      <line x1="176"  y1="-3" x2="176"  y2="3"/>
+      <line x1="198"  y1="-3" x2="198"  y2="3"/>
+    </g>
+
+    <!-- Major ticks + labels: 88 / 92 / 96 / 100 / 104 / 108 MHz. -->
+    <g stroke="#a87a3a" stroke-width="1.5">
+      <line x1="-220" y1="-6" x2="-220" y2="6"/>
+      <line x1="-132" y1="-6" x2="-132" y2="6"/>
+      <line x1="-44"  y1="-6" x2="-44"  y2="6"/>
+      <line x1="44"   y1="-6" x2="44"   y2="6"/>
+      <line x1="132"  y1="-6" x2="132"  y2="6"/>
+      <line x1="220"  y1="-6" x2="220"  y2="6"/>
+    </g>
+    <g font-family="'Courier New', monospace" font-size="9" fill="#a87a3a"
+       text-anchor="middle" letter-spacing="1">
+      <text x="-220" y="19">88</text>
+      <text x="-132" y="19">92</text>
+      <text x="-44"  y="19">96</text>
+      <text x="44"   y="19">100</text>
+      <text x="132"  y="19">104</text>
+      <text x="220"  y="19">108</text>
+    </g>
+
+    <!-- Red tuner needle. -->
+    <line x1="0" y1="-10" x2="0" y2="10" stroke="#ff3030" stroke-width="2" opacity="0.92"/>
+  </g>
+
+  <!-- Domain line -->
+  <text x="400" y="188"
+        text-anchor="middle"
+        font-family="'Courier New', monospace"
+        font-size="10"
+        font-weight="500"
+        letter-spacing="3"
+        fill="#7a5510">rafahcf.com</text>
+</svg>
