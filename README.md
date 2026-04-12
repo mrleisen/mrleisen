@@ -1,7 +1,15 @@
-<h1 align="center">Hi 👋, I'm Rafael</h1>
-<h3 align="center">A passionate mobile developer from Colombia</h3>
+# mrleisen_temp
 
-- 💬 Ask me about **Mobile, Entrepenurship, Videogames and Aliens**
+A new Jaspr project
 
-- 📫 How to reach me **mrleisen@users.noreply.github.com**
+## Running the project
 
+Run your project using `jaspr serve`.
+
+The development server will be available on `http://localhost:8080`.
+
+## Building the project
+
+Build your project using `jaspr build`.
+
+The output will be located inside the `build/jaspr/` directory.
