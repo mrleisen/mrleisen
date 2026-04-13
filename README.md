@@ -7,7 +7,7 @@
 <h1 align="center">Rafael Camargo</h1>
 
 <p align="center">
-  <strong>Software engineer with 7+ years of experience. I build things — like this.</strong><br>
+  <strong>Software engineer with 8+ years of experience. I build things — like this.</strong><br>
   <sub>Built entirely in Dart.</sub>
 </p>
 
