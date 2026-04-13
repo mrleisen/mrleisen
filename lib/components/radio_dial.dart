@@ -1004,15 +1004,14 @@ class RadioDialState extends State<RadioDial> {
     //   │ VOL  │     LCD      │        │
     //   │      ├──────────────┤  TUNE  │
     //   ┌──────────────┬────────┐
-    //   │     LCD      │        │  row 1
-    //   ├──────────────┤  VOL   │  row 2
-    //   │              ├────────┤
-    //   │  dial strip  │  TUNE  │  row 3
+    //   │     LCD      │  VOL   │  row 1
+    //   ├──────────────┼────────┤
+    //   │  dial strip  │  TUNE  │  row 2
     //   └──────────────┴────────┘
     //
-    // LCD spans the full top row; the dial occupies rows 2–3 on the
-    // left; VOL (row 2) and TUNE (row 3) share the right column,
-    // stacking the two knobs vertically like a real car stereo.
+    // Two columns × two rows: left column (1fr) stacks LCD above the
+    // dial; right column (auto) stacks VOL above TUNE, vertically
+    // centred in their cells.
     css.media(MediaQuery.screen(maxWidth: 600.px), [
       css('.radio-panel').styles(
         height: 180.px,
@@ -1033,8 +1032,8 @@ class RadioDialState extends State<RadioDial> {
       css('.panel-main').styles(
         raw: {
           'grid-template-columns': '1fr auto',
-          'grid-template-rows': 'auto 1fr 1fr',
-          'grid-template-areas': '"lcd lcd" "dial vol" "dial tune"',
+          'grid-template-rows': 'auto auto',
+          'grid-template-areas': '"lcd vol" "dial tune"',
           'column-gap': '10px',
           'row-gap': '6px',
         },
