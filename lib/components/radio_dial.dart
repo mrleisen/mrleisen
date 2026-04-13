@@ -778,18 +778,35 @@ class RadioDialState extends State<RadioDial> {
     ),
 
     // ── responsive ──
-    // ≤600 px: rearrange `.panel-main` into a wrapping flex container
-    // so the LCD takes its own full-width row above the dial+knob row.
-    // Compacts the LCD itself (smaller font/padding) and shrinks the
-    // knob so the whole panel fits in ~150 px of vertical space.
+    // ≤600 px: three-row stack — indicators / LCD / (dial+knob). The
+    // "RADIO" brand and the decorative AM/MONO pills are hidden to
+    // reclaim vertical space; the dial-window stretches to fill the
+    // remaining width beside the knob.
     css.media(MediaQuery.screen(maxWidth: 600.px), [
       css('.radio-panel').styles(
-        height: 150.px,
-        padding: Padding.symmetric(horizontal: 12.px, vertical: 10.px),
+        height: 160.px,
+        padding: Padding.symmetric(horizontal: 12.px, vertical: 8.px),
       ),
-      css('.panel-header').styles(raw: {'margin-bottom': '6px'}),
-      css('.brand').styles(fontSize: Unit.pixels(8)),
-      // LCD becomes a full-width banner at the top of the main row.
+      // Brand text is redundant on phones — the faceplate itself is
+      // unmistakable. Collapsing it also lets the indicator row
+      // right-align cleanly against the panel edge.
+      css('.brand').styles(display: Display.none),
+      css('.panel-header').styles(
+        raw: {'margin-bottom': '6px', 'justify-content': 'flex-end'},
+      ),
+      // Hide the decorative AM (2nd pill) and MONO (4th pill) on
+      // mobile — FM and ST are the only ones that change state.
+      css('.indicator-row .ind:nth-child(2), .indicator-row .ind:nth-child(4)')
+          .styles(display: Display.none),
+      css('.indicator-row').styles(gap: Gap(column: 4.px)),
+      css('.ind').styles(
+        fontSize: Unit.pixels(7),
+        padding: Padding.symmetric(horizontal: 4.px, vertical: 1.px),
+        raw: {'letter-spacing': '0.12em'},
+      ),
+      // Main region: LCD full-width on its own row, then dial+knob
+      // share the row below with the dial-window taking all spare
+      // width next to the knob.
       css('.panel-main').styles(
         flexWrap: FlexWrap.wrap,
         gap: Gap(row: 8.px, column: 10.px),
@@ -797,7 +814,7 @@ class RadioDialState extends State<RadioDial> {
       ),
       css('.lcd').styles(
         width: 100.percent,
-        maxWidth: 240.px,
+        maxWidth: 280.px,
         height: 34.px,
         padding: Padding.symmetric(horizontal: 10.px, vertical: 4.px),
         raw: {'flex': '0 0 100%', 'margin': '0 auto'},
@@ -809,19 +826,26 @@ class RadioDialState extends State<RadioDial> {
       ),
       css('.lcd-fm').styles(fontSize: Unit.pixels(9)),
       css('.lcd-st').styles(fontSize: Unit.pixels(8)),
-      // Dial + knob sit side by side on the second row.
-      css('.dial-window').styles(width: 220.px, height: 48.px),
-      css('.knob').styles(width: 50.px, height: 50.px),
+      // Dial-window fills the remaining width; knob stays fixed-size.
+      css('.dial-window').styles(
+        height: 48.px,
+        raw: {'flex': '1 1 auto', 'min-width': '0', 'width': 'auto'},
+      ),
+      css('.knob').styles(
+        width: 50.px,
+        height: 50.px,
+        raw: {'flex': '0 0 auto'},
+      ),
       css('.knob-cap').styles(raw: {'inset': '5px'}),
       css('.knob-notch').styles(
         height: 11.px,
         raw: {'transform-origin': '50% 16px'},
       ),
     ]),
-    // ≤380 px: very narrow phones — squeeze the dial slightly more.
+    // ≤380 px: very narrow phones — tighten LCD + knob further; the
+    // dial-window keeps filling whatever width is left.
     css.media(MediaQuery.screen(maxWidth: 380.px), [
-      css('.dial-window').styles(width: 188.px),
-      css('.lcd').styles(maxWidth: 200.px, height: 30.px),
+      css('.lcd').styles(maxWidth: 220.px, height: 30.px),
       css('.lcd-value').styles(fontSize: 1.0.rem),
       css('.lcd-ghost').styles(
         fontSize: 1.0.rem,
