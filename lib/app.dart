@@ -38,8 +38,8 @@ class AppState extends State<App> {
   Timer? _tuningIdleTimer;
   static const Duration _tuningIdleDelay = Duration(milliseconds: 400);
 
-  // Active UI language. Defaults to Spanish.
-  Lang _lang = Lang.es;
+  // Active UI language. Defaults to English.
+  Lang _lang = Lang.en;
 
   // Master volume [0.0 – 1.0]. Controlled by the small volume knob
   // on the left of the faceplate. Starts at 0.36 so the receiver is
