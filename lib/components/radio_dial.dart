@@ -778,16 +778,20 @@ class RadioDialState extends State<RadioDial> {
     ),
 
     // ── responsive ──
-    // ≤600 px: four-row vertical stack —
-    //   1. indicators (right-aligned)
-    //   2. LCD (90% width, centered)
-    //   3. dial strip (90% width, centered — the full band visibly
-    //      scrolls under the needle as the user drags)
-    //   4. knob (small, centered)
-    // Panel grows to 200 px tall to give the strip its own breathing row.
+    // ≤600 px: the panel-main becomes a 2×2 grid so we get a
+    // Row[ Column[LCD, dial], Knob ] layout without a DOM wrapper.
+    //
+    //   ┌──────────────┬───────┐
+    //   │     LCD      │       │
+    //   ├──────────────┤ Knob  │
+    //   │  dial strip  │       │
+    //   └──────────────┴───────┘
+    //
+    // Left column fills (`1fr`), knob column sizes to content, knob
+    // spans both rows and centres itself against the column.
     css.media(MediaQuery.screen(maxWidth: 600.px), [
       css('.radio-panel').styles(
-        height: 200.px,
+        height: 160.px,
         padding: Padding.symmetric(horizontal: 12.px, vertical: 8.px),
       ),
       // Brand text is redundant on phones — the faceplate itself is
@@ -806,18 +810,30 @@ class RadioDialState extends State<RadioDial> {
         padding: Padding.symmetric(horizontal: 4.px, vertical: 1.px),
         raw: {'letter-spacing': '0.12em'},
       ),
-      // Main region: stack everything vertically, centered.
+      // Row[Column[LCD, dial], Knob] via 2×2 grid.
       css('.panel-main').styles(
-        flexDirection: FlexDirection.column,
-        alignItems: AlignItems.center,
-        justifyContent: JustifyContent.center,
-        gap: Gap(row: 8.px),
+        raw: {
+          'display': 'grid',
+          'grid-template-columns': '1fr auto',
+          'grid-template-rows': 'auto auto',
+          'grid-template-areas': '"lcd knob" "dial knob"',
+          'column-gap': '10px',
+          'row-gap': '6px',
+          'align-items': 'stretch',
+          'justify-items': 'stretch',
+        },
       ),
+      // LCD fills the top-left cell.
       css('.lcd').styles(
-        maxWidth: 280.px,
         height: 34.px,
         padding: Padding.symmetric(horizontal: 10.px, vertical: 4.px),
-        raw: {'width': '90%', 'margin': '0 auto', 'flex': '0 0 auto'},
+        raw: {
+          'grid-area': 'lcd',
+          'width': '100%',
+          'max-width': 'none',
+          'margin': '0',
+          'flex': 'initial',
+        },
       ),
       css('.lcd-value').styles(fontSize: 1.15.rem),
       css('.lcd-ghost').styles(
@@ -826,21 +842,25 @@ class RadioDialState extends State<RadioDial> {
       ),
       css('.lcd-fm').styles(fontSize: Unit.pixels(9)),
       css('.lcd-st').styles(fontSize: Unit.pixels(8)),
-      // Dial-window is its own full-width row so the scrolling band
-      // stays readable — multiple ticks + numbers always visible.
-      css('.dial-window').styles(
-        height: 48.px,
-        raw: {
-          'width': '90%',
-          'max-width': '360px',
-          'flex': '0 0 auto',
-        },
+      // Dial frame fills the bottom-left cell; the dial-window inside
+      // stretches to whatever width the frame ends up at.
+      css('.dial-frame').styles(
+        raw: {'grid-area': 'dial', 'width': '100%'},
       ),
-      // Knob centered below the strip — smaller on mobile.
+      css('.dial-window').styles(
+        height: 44.px,
+        raw: {'width': '100%', 'max-width': 'none', 'flex': 'initial'},
+      ),
+      // Knob spans both rows, centered vertically against the column
+      // (so it aligns to the gap between LCD and dial).
       css('.knob').styles(
         width: 50.px,
         height: 50.px,
-        raw: {'flex': '0 0 auto'},
+        raw: {
+          'grid-area': 'knob',
+          'align-self': 'center',
+          'flex': 'initial',
+        },
       ),
       css('.knob-cap').styles(raw: {'inset': '5px'}),
       css('.knob-notch').styles(
@@ -850,7 +870,7 @@ class RadioDialState extends State<RadioDial> {
     ]),
     // ≤380 px: very narrow phones — tighten LCD + knob further.
     css.media(MediaQuery.screen(maxWidth: 380.px), [
-      css('.lcd').styles(maxWidth: 240.px, height: 30.px),
+      css('.lcd').styles(height: 30.px),
       css('.lcd-value').styles(fontSize: 1.0.rem),
       css('.lcd-ghost').styles(
         fontSize: 1.0.rem,
