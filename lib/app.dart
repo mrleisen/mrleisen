@@ -41,6 +41,12 @@ class AppState extends State<App> {
   // Active UI language. Defaults to Spanish.
   Lang _lang = Lang.es;
 
+  // Master volume [0.0 – 1.0]. Controlled by the small volume knob
+  // on the left of the faceplate. 0.0 is "off" — the receiver starts
+  // in this state so arriving users have to turn it on, like a real
+  // car stereo. Non-zero values scale the audio engine's output gain.
+  double _volume = 0.0;
+
   // Window-level event listeners (stored for cleanup).
   JSFunction? _keyDownListener;
   JSFunction? _wheelListener;
@@ -164,6 +170,7 @@ class AppState extends State<App> {
         frequency: _frequency,
         noiseLevel: _noiseLevel,
         isTuning: _isTuning,
+        volume: _volume,
       ),
 
       // Effect overlays (order = paint order).
@@ -227,6 +234,8 @@ class AppState extends State<App> {
         onFrequencyChanged: _tune,
         signalStrength: _signalStrength,
         activeStation: _activeStation,
+        volume: _volume,
+        onVolumeChanged: _setVolume,
       ),
     ]);
   }
@@ -235,6 +244,12 @@ class AppState extends State<App> {
     setState(() {
       _lang = _lang == Lang.es ? Lang.en : Lang.es;
     });
+  }
+
+  void _setVolume(double v) {
+    final clamped = v.clamp(0.0, 1.0);
+    if (clamped == _volume) return;
+    setState(() => _volume = clamped);
   }
 
   @css

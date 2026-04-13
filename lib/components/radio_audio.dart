@@ -50,12 +50,19 @@ class RadioAudio extends StatefulComponent {
     required this.frequency,
     required this.noiseLevel,
     required this.isTuning,
+    this.volume = 0.0,
     super.key,
   });
 
   final double frequency;
   final double noiseLevel;
   final bool isTuning;
+
+  /// Master volume [0.0 – 1.0]. Applied as a scalar multiplier to the
+  /// final static + whistle gains. `0.0` fades everything to silence
+  /// over `_silenceRamp` without tearing down the audio graph —
+  /// flipping volume back up restores instantly.
+  final double volume;
 
   @override
   State<RadioAudio> createState() => _RadioAudioState();
@@ -362,6 +369,16 @@ class _RadioAudioState extends State<RadioAudio> {
     final freq = component.frequency;
     final noise = component.noiseLevel;
     final tuning = component.isTuning;
+    final volume = component.volume.clamp(0.0, 1.0);
+
+    // Volume 0 → fade everything to silence over _silenceRamp and
+    // short-circuit the rest of the scheduling. The audio graph is
+    // kept alive so turning volume back up restores instantly.
+    if (volume <= 0.0) {
+      _ramp(_staticGain!.gain, 0, now, _silenceRamp);
+      _ramp(_whistleGain!.gain, 0, now, _silenceRamp);
+      return;
+    }
 
     // ── 1) STATIC gain ──
     // The radio is "on" whenever we're between stations — static plays
@@ -412,10 +429,12 @@ class _RadioAudioState extends State<RadioAudio> {
     }
 
     // ── 3) Schedule everything with smooth ramps ──
+    // Master volume scales both gain paths linearly. We already
+    // short-circuited on volume == 0 above, so here volume ∈ (0, 1].
     final gainSec = tuning ? _gainRamp : _silenceRamp;
 
-    _ramp(_staticGain!.gain, staticTarget, now, gainSec);
-    _ramp(_whistleGain!.gain, whistleTarget, now, gainSec);
+    _ramp(_staticGain!.gain, staticTarget * volume, now, gainSec);
+    _ramp(_whistleGain!.gain, whistleTarget * volume, now, gainSec);
 
     if (whistleHz != _scheduledWhistleHz) {
       _ramp(_whistle!.frequency, whistleHz, now, _paramRamp);

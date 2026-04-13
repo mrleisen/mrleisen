@@ -50,6 +50,8 @@ class RadioDial extends StatefulComponent {
     required this.onFrequencyChanged,
     this.signalStrength = 0.0,
     this.activeStation,
+    this.volume = 0.0,
+    this.onVolumeChanged,
     super.key,
   });
 
@@ -57,6 +59,14 @@ class RadioDial extends StatefulComponent {
   final ValueChanged<double> onFrequencyChanged;
   final double signalStrength;
   final Station? activeStation;
+
+  /// Current master volume [0.0 – 1.0]. Drives both the small volume
+  /// knob's notch rotation and the colour of the power LED embedded
+  /// in its cap (amber when 0, green otherwise).
+  final double volume;
+
+  /// Reports volume changes from the volume-knob drag gesture.
+  final ValueChanged<double>? onVolumeChanged;
 
   @override
   State<RadioDial> createState() => RadioDialState();
@@ -66,9 +76,19 @@ class RadioDialState extends State<RadioDial> {
   // --- drag state ---
   bool _draggingStrip = false;
   bool _draggingKnob = false;
+  bool _draggingVol = false;
   double _dragStartFreq = 0;
   double _dragStartX = 0;
   double _dragStartY = 0;
+
+  // Volume-knob drag start: cache the initial volume + Y so every
+  // move event computes from the anchor rather than accumulating
+  // floating-point error.
+  double _volDragStartVolume = 0;
+  double _volDragStartY = 0;
+
+  /// Pixels of vertical drag that equal a full 0→1 volume sweep.
+  static const double _volPxPerFull = 120.0;
 
   // --- LCD tap glitch ---
   // Incrementing counter used to force the tap animation to restart on
@@ -94,6 +114,10 @@ class RadioDialState extends State<RadioDial> {
   double get _knobAngle {
     return ((_freq - minFrequency) / (maxFrequency - minFrequency)) * 270 - 135;
   }
+
+  /// Notch rotation for the volume knob: -135° at volume 0 (fully
+  /// counter-clockwise, "off" position) → +135° at volume 1.
+  double get _volAngle => component.volume * 270.0 - 135.0;
 
   void _setFrequency(double v) {
     v = (v * 10).roundToDouble() / 10;
@@ -149,6 +173,33 @@ class RadioDialState extends State<RadioDial> {
     (pe.currentTarget as web.Element).releasePointerCapture(pe.pointerId);
   }
 
+  // --- volume knob drag ---
+
+  void _onVolDown(web.Event event) {
+    final pe = event as web.PointerEvent;
+    (pe.currentTarget as web.Element).setPointerCapture(pe.pointerId);
+    _draggingVol = true;
+    _volDragStartVolume = component.volume;
+    _volDragStartY = _clientY(pe);
+  }
+
+  void _onVolMove(web.Event event) {
+    if (!_draggingVol) return;
+    final pe = event as web.PointerEvent;
+    // Drag up (negative dy) raises volume, drag down lowers it.
+    final dy = _clientY(pe) - _volDragStartY;
+    final next =
+        (_volDragStartVolume - dy / _volPxPerFull).clamp(0.0, 1.0);
+    component.onVolumeChanged?.call(next);
+  }
+
+  void _onVolUp(web.Event event) {
+    if (!_draggingVol) return;
+    _draggingVol = false;
+    final pe = event as web.PointerEvent;
+    (pe.currentTarget as web.Element).releasePointerCapture(pe.pointerId);
+  }
+
   // --- wheel on panel ---
 
   // --- LCD tap ---
@@ -200,8 +251,41 @@ class RadioDialState extends State<RadioDial> {
           ]),
         ]),
 
-        // Main row: LCD readout + dial window + knob.
+        // Main row: volume knob + LCD + dial window + tuning knob.
         div(classes: 'panel-main', [
+          // Volume knob (small, doubles as power switch — volume 0
+          // is "off"). Drag up to raise, down to lower. Embedded LED
+          // turns green once any audio is audible.
+          div(classes: 'vol-knob-wrap', [
+            div(
+              classes: 'vol-knob',
+              events: {
+                'pointerdown': _onVolDown,
+                'pointermove': _onVolMove,
+                'pointerup': _onVolUp,
+                'pointercancel': _onVolUp,
+              },
+              [
+                div(classes: 'vol-knob-cap', [
+                  div(
+                    classes: 'vol-knob-notch',
+                    styles: Styles(
+                      transform:
+                          Transform.rotate(Angle.deg(_volAngle)),
+                    ),
+                    [],
+                  ),
+                  div(
+                    classes: 'knob-led'
+                        '${component.volume > 0 ? ' knob-led-on' : ''}',
+                    [],
+                  ),
+                ]),
+              ],
+            ),
+            div(classes: 'vol-knob-label', [text('VOL')]),
+          ]),
+
           // LCD frequency readout. Clicking/tapping runs the tap-
           // glitch animation via an inline override; the nonce in the
           // animation-delay forces a restart on each consecutive tap.
@@ -255,7 +339,7 @@ class RadioDialState extends State<RadioDial> {
             ),
           ]),
 
-          // Rotary knob (ribbed metallic).
+          // Tuning knob (ribbed metallic). Drag up/down to tune.
           div(
             classes: 'knob',
             events: {
@@ -777,31 +861,134 @@ class RadioDialState extends State<RadioDial> {
       },
     ),
 
+    // ── volume knob (smaller sibling of the tuning knob) ──
+    // Geometry mirrors `.knob` at 36 px (52% of the tuner's 68 px).
+    // The LED inside doubles as the power indicator — amber at
+    // volume 0, green for any non-zero volume.
+    css('.vol-knob-wrap').styles(
+      display: Display.flex,
+      flexDirection: FlexDirection.column,
+      alignItems: AlignItems.center,
+      gap: Gap(row: 3.px),
+      raw: {'flex-shrink': '0'},
+    ),
+    css('.vol-knob', [
+      css('&').styles(
+        width: 36.px,
+        height: 36.px,
+        radius: BorderRadius.all(Radius.circular(18.px)),
+        cursor: Cursor.grab,
+        position: Position.relative(),
+        raw: {
+          'background':
+              'repeating-conic-gradient(from 0deg, #555560 0deg 4deg, #1a1a24 4deg 8deg)',
+          'box-shadow':
+              '0 2px 6px rgba(0,0,0,0.65), 0 1px 0 rgba(255,255,255,0.08), inset 0 0 0 1px rgba(0,0,0,0.6)',
+          'touch-action': 'none',
+          'flex-shrink': '0',
+        },
+      ),
+      css('&:active').styles(cursor: Cursor.grabbing),
+    ]),
+    css('.vol-knob-cap').styles(
+      position: Position.absolute(),
+      pointerEvents: PointerEvents.none,
+      raw: {
+        'inset': '4px',
+        'border-radius': '50%',
+        'background':
+            'radial-gradient(circle at 38% 32%, #6a6a78 0%, #3a3a45 45%, #1a1a22 100%)',
+        'box-shadow':
+            'inset 0 1px 1.5px rgba(255,255,255,0.18), inset 0 -1.5px 3px rgba(0,0,0,0.6), 0 1px 2px rgba(0,0,0,0.4)',
+      },
+    ),
+    css('.vol-knob-notch').styles(
+      position: Position.absolute(top: 3.px, left: 50.percent),
+      width: 2.px,
+      height: 8.px,
+      radius: BorderRadius.all(Radius.circular(1.px)),
+      pointerEvents: PointerEvents.none,
+      raw: {
+        'background':
+            'linear-gradient(to bottom, #f5f5f8 0%, #c8c8d0 60%, #888894 100%)',
+        'box-shadow':
+            '0 0 3px rgba(255,255,255,0.55), 0 0 1px rgba(0,0,0,0.6)',
+        'transform-origin': '50% 11px',
+        'margin-left': '-1px',
+      },
+    ),
+    // Smaller LED inside the smaller knob.
+    css('.vol-knob-cap .knob-led').styles(
+      width: 5.px,
+      height: 5.px,
+      radius: BorderRadius.all(Radius.circular(2.5.px)),
+    ),
+    css('.vol-knob-label').styles(
+      fontFamily: const FontFamily.list([FontFamilies.monospace]),
+      fontSize: Unit.pixels(8),
+      fontWeight: FontWeight.w500,
+      letterSpacing: 0.2.em,
+      color: const Color(_lcdAmberDim),
+      raw: {
+        'text-transform': 'uppercase',
+        'text-shadow': '0 1px 0 rgba(0,0,0,0.6)',
+        'user-select': 'none',
+        '-webkit-user-select': 'none',
+      },
+    ),
+
+    // ── embedded power LED ──
+    // A 6 px dot recessed into the top of the knob cap, roughly 22%
+    // from the top edge. Amber/dim by default; turns green with a
+    // soft glow when volume > 0. Sits on the non-rotating cap so
+    // it doesn't spin with the notch.
+    css('.knob-led', [
+      css('&').styles(
+        position: Position.absolute(top: 22.percent, left: 50.percent),
+        width: 6.px,
+        height: 6.px,
+        radius: BorderRadius.all(Radius.circular(3.px)),
+        pointerEvents: PointerEvents.none,
+        backgroundColor: const Color('#4a3418'),
+        raw: {
+          'transform': 'translate(-50%, -50%)',
+          // Outer ring = recessed socket; inner inset = dark well.
+          'box-shadow':
+              'inset 0 1px 1.5px rgba(0,0,0,0.75), 0 0 0 1px rgba(0,0,0,0.55), 0 1px 0 rgba(255,255,255,0.06)',
+          'transition':
+              'background-color 0.2s ease, box-shadow 0.2s ease',
+        },
+      ),
+      css('&.knob-led-on').styles(
+        backgroundColor: const Color('#3fc46a'),
+        raw: {
+          'box-shadow':
+              'inset 0 1px 1.5px rgba(0,0,0,0.45), 0 0 0 1px rgba(0,0,0,0.55), 0 0 5px rgba(63,196,106,0.7), 0 0 10px rgba(63,196,106,0.35)',
+        },
+      ),
+    ]),
+
     // ── responsive ──
-    // ≤600 px: the panel-main becomes a 2×2 grid so we get a
-    // Row[ Column[LCD, dial], Knob ] layout without a DOM wrapper.
+    // ≤600 px: 3-column grid so we get a
+    // Row[ VOL, Column[LCD, dial], TUNE ] layout without a DOM wrapper.
     //
-    //   ┌──────────────┬───────┐
-    //   │     LCD      │       │
-    //   ├──────────────┤ Knob  │
-    //   │  dial strip  │       │
-    //   └──────────────┴───────┘
+    //   ┌──────┬──────────────┬────────┐
+    //   │ VOL  │     LCD      │        │
+    //   │      ├──────────────┤  TUNE  │
+    //   │      │  dial strip  │        │
+    //   └──────┴──────────────┴────────┘
     //
-    // Left column fills (`1fr`), knob column sizes to content, knob
-    // spans both rows and centres itself against the column.
+    // VOL stays on row 1 (next to the LCD); TUNE stays on row 2 (next
+    // to the dial). Both are `align-self: center` so they sit mid-row.
     css.media(MediaQuery.screen(maxWidth: 600.px), [
       css('.radio-panel').styles(
         height: 160.px,
         padding: Padding.symmetric(horizontal: 12.px, vertical: 8.px),
       ),
-      // Brand text is redundant on phones — the faceplate itself is
-      // unmistakable. Collapsing it lets the indicator row right-align.
       css('.brand').styles(display: Display.none),
       css('.panel-header').styles(
         raw: {'margin-bottom': '6px', 'justify-content': 'flex-end'},
       ),
-      // Hide the decorative AM (2nd pill) and MONO (4th pill) —
-      // only FM and ST carry actual state.
       css('.indicator-row .ind:nth-child(2), .indicator-row .ind:nth-child(4)')
           .styles(display: Display.none),
       css('.indicator-row').styles(gap: Gap(column: 4.px)),
@@ -810,20 +997,30 @@ class RadioDialState extends State<RadioDial> {
         padding: Padding.symmetric(horizontal: 4.px, vertical: 1.px),
         raw: {'letter-spacing': '0.12em'},
       ),
-      // Row[Column[LCD, dial], Knob] via 2×2 grid.
       css('.panel-main').styles(
         raw: {
           'display': 'grid',
-          'grid-template-columns': '1fr auto',
+          'grid-template-columns': 'auto 1fr auto',
           'grid-template-rows': 'auto auto',
-          'grid-template-areas': '"lcd knob" "dial knob"',
+          'grid-template-areas': '"vol lcd ." ". dial tune"',
           'column-gap': '10px',
           'row-gap': '6px',
-          'align-items': 'stretch',
+          'align-items': 'center',
           'justify-items': 'stretch',
         },
       ),
-      // LCD fills the top-left cell.
+      // Volume knob sits in row 1, col 1 (beside the LCD).
+      css('.vol-knob-wrap').styles(
+        raw: {'grid-area': 'vol', 'align-self': 'center'},
+      ),
+      css('.vol-knob').styles(width: 32.px, height: 32.px),
+      css('.vol-knob-cap').styles(raw: {'inset': '3px'}),
+      css('.vol-knob-notch').styles(
+        height: 7.px,
+        raw: {'top': '2px', 'transform-origin': '50% 10px'},
+      ),
+      css('.vol-knob-label').styles(fontSize: Unit.pixels(7)),
+      // LCD fills row 1, col 2.
       css('.lcd').styles(
         height: 34.px,
         padding: Padding.symmetric(horizontal: 10.px, vertical: 4.px),
@@ -842,8 +1039,7 @@ class RadioDialState extends State<RadioDial> {
       ),
       css('.lcd-fm').styles(fontSize: Unit.pixels(9)),
       css('.lcd-st').styles(fontSize: Unit.pixels(8)),
-      // Dial frame fills the bottom-left cell; the dial-window inside
-      // stretches to whatever width the frame ends up at.
+      // Dial fills row 2, col 2.
       css('.dial-frame').styles(
         raw: {'grid-area': 'dial', 'width': '100%'},
       ),
@@ -851,13 +1047,12 @@ class RadioDialState extends State<RadioDial> {
         height: 44.px,
         raw: {'width': '100%', 'max-width': 'none', 'flex': 'initial'},
       ),
-      // Knob spans both rows, centered vertically against the column
-      // (so it aligns to the gap between LCD and dial).
+      // Tuning knob sits in row 2, col 3 (beside the dial).
       css('.knob').styles(
         width: 50.px,
         height: 50.px,
         raw: {
-          'grid-area': 'knob',
+          'grid-area': 'tune',
           'align-self': 'center',
           'flex': 'initial',
         },
