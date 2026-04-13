@@ -339,7 +339,9 @@ class RadioDialState extends State<RadioDial> {
             ),
           ]),
 
-          // Tuning knob (ribbed metallic). Drag up/down to tune.
+          // Tuning knob (ribbed metallic). Drag up/down to tune. The
+          // embedded LED mirrors the LCD's "ST" badge — it lights
+          // green whenever a station is actively locked.
           div(
             classes: 'knob',
             events: {
@@ -355,6 +357,10 @@ class RadioDialState extends State<RadioDial> {
                   styles: Styles(
                     transform: Transform.rotate(Angle.deg(_knobAngle)),
                   ),
+                  [],
+                ),
+                div(
+                  classes: 'knob-led${tuned ? ' knob-led-on' : ''}',
                   [],
                 ),
               ]),
