@@ -316,6 +316,39 @@ void main() {
       // Orbitron — geometric/digital display face used for the LCD.
       // Self-hosted: no runtime dependency on Google Fonts.
       link(rel: 'stylesheet', href: 'fonts.css'),
+      // Primary meta tags
+      meta(name: 'title', content: 'Rafael Camargo — Software Engineer'),
+      meta(
+        name: 'description',
+        content:
+            'Software engineer with 7+ years of experience. I build things — like this. Built entirely in Dart.',
+      ),
+      // Open Graph / Facebook / LinkedIn
+      meta(attributes: {'property': 'og:type', 'content': 'website'}),
+      meta(attributes: {'property': 'og:url', 'content': 'https://rafahcf.com/'}),
+      meta(attributes: {
+        'property': 'og:title',
+        'content': 'Rafael Camargo — Software Engineer',
+      }),
+      meta(attributes: {
+        'property': 'og:description',
+        'content':
+            'Software engineer with 7+ years of experience. I build things — like this. Built entirely in Dart.',
+      }),
+      meta(attributes: {
+        'property': 'og:image',
+        'content': 'https://rafahcf.com/og-image.svg',
+      }),
+      // Twitter
+      meta(name: 'twitter:card', content: 'summary_large_image'),
+      meta(name: 'twitter:url', content: 'https://rafahcf.com/'),
+      meta(name: 'twitter:title', content: 'Rafael Camargo — Software Engineer'),
+      meta(
+        name: 'twitter:description',
+        content:
+            'Software engineer with 7+ years of experience. I build things — like this. Built entirely in Dart.',
+      ),
+      meta(name: 'twitter:image', content: 'https://rafahcf.com/og-image.svg'),
     ],
     body: App(),
   ));

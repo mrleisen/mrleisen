@@ -1,0 +1,138 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" role="img" aria-label="Radio — rafahcf.com">
+  <defs>
+    <radialGradient id="backlight" cx="50%" cy="45%" r="65%">
+      <stop offset="0%"   stop-color="#1b1108"/>
+      <stop offset="70%"  stop-color="#0b0a0c"/>
+      <stop offset="100%" stop-color="#06060a"/>
+    </radialGradient>
+
+    <filter id="amber-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Strong red glow for the needle/I -->
+    <filter id="needle-glow" x="-400%" y="-20%" width="900%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="6" result="blur"/>
+      <feFlood flood-color="#FF4444" flood-opacity="0.8" result="flood"/>
+      <feComposite in="flood" in2="blur" operator="in" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <pattern id="scanlines" x="0" y="0" width="3" height="4" patternUnits="userSpaceOnUse">
+      <rect width="3" height="1" fill="#000" opacity="0.28"/>
+    </pattern>
+
+    <radialGradient id="knob-grad" cx="38%" cy="35%" r="78%">
+      <stop offset="0%"   stop-color="#3d3633"/>
+      <stop offset="55%"  stop-color="#1e1916"/>
+      <stop offset="100%" stop-color="#0a0806"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background panel (full 1200x630) -->
+  <rect width="1200" height="630" fill="#0a0a0c"/>
+  <rect width="1200" height="630" fill="url(#backlight)"/>
+  <rect width="1200" height="630" fill="url(#scanlines)"/>
+  <rect x="0.5" y="0.5" width="1199" height="629" fill="none" stroke="#1d1712" stroke-width="1"/>
+
+  <!--
+    Banner layout scaled 1.5x and centered on the 1200x630 canvas.
+    Original banner is 800x200 → scaled becomes 1200x300.
+    Centered vertically: (630 - 300) / 2 = 165.
+  -->
+  <g transform="translate(0, 165) scale(1.5)">
+    <!-- Strip line -->
+    <line x1="160" y1="85" x2="640" y2="85"
+          stroke="#a87a3a" stroke-width="1" opacity="0.6"/>
+
+    <!-- Major ticks -->
+    <g stroke="#a87a3a" stroke-width="1.5">
+      <line x1="200" y1="77" x2="200" y2="85"/>
+      <line x1="280" y1="77" x2="280" y2="85"/>
+      <line x1="360" y1="77" x2="360" y2="85"/>
+      <line x1="440" y1="77" x2="440" y2="85"/>
+      <line x1="520" y1="77" x2="520" y2="85"/>
+      <line x1="600" y1="77" x2="600" y2="85"/>
+    </g>
+
+    <!-- Minor ticks -->
+    <g stroke="#5a4018" stroke-width="1">
+      <line x1="220" y1="81" x2="220" y2="85"/>
+      <line x1="260" y1="81" x2="260" y2="85"/>
+      <line x1="300" y1="81" x2="300" y2="85"/>
+      <line x1="340" y1="81" x2="340" y2="85"/>
+      <line x1="380" y1="81" x2="380" y2="85"/>
+      <line x1="420" y1="81" x2="420" y2="85"/>
+      <line x1="460" y1="81" x2="460" y2="85"/>
+      <line x1="500" y1="81" x2="500" y2="85"/>
+      <line x1="540" y1="81" x2="540" y2="85"/>
+      <line x1="580" y1="81" x2="580" y2="85"/>
+    </g>
+
+    <!-- Frequency labels -->
+    <g font-family="'Courier New', monospace" font-size="10" fill="#a87a3a"
+       text-anchor="middle" letter-spacing="1">
+      <text x="200" y="105">88</text>
+      <text x="280" y="105">92</text>
+      <text x="360" y="105">96</text>
+      <text x="440" y="105">100</text>
+      <text x="520" y="105">104</text>
+      <text x="600" y="105">108</text>
+    </g>
+
+    <!-- Letters R, A, D -->
+    <g font-family="'Rockwell', 'Georgia', 'Times New Roman', serif"
+       font-weight="900"
+       font-size="52"
+       fill="#E8A035"
+       filter="url(#amber-glow)"
+       text-anchor="middle">
+      <text x="240" y="104">R</text>
+      <text x="320" y="104">A</text>
+      <text x="400" y="104">D</text>
+    </g>
+
+    <!-- "O" as rotary tuning knob -->
+    <g transform="translate(560, 85)">
+      <circle r="28" fill="url(#knob-grad)" stroke="#2a211c" stroke-width="1"/>
+      <circle r="28" fill="none" stroke="#4a3828" stroke-width="2"
+              stroke-dasharray="3 3.2" opacity="0.8"/>
+      <circle r="26" fill="none" stroke="#6a5038" stroke-width="0.6"
+              stroke-opacity="0.45"/>
+      <line x1="0" y1="-22" x2="0" y2="-12"
+            stroke="#E8A035" stroke-width="2.2" stroke-linecap="round"
+            filter="url(#amber-glow)"/>
+    </g>
+
+    <!-- "I" as the red tuner needle -->
+    <rect x="478" y="61" width="4" height="48" fill="#FF4444"
+          filter="url(#needle-glow)"/>
+
+    <!-- Domain line -->
+    <text x="400" y="170"
+          text-anchor="middle"
+          font-family="'Courier New', monospace"
+          font-size="10"
+          font-weight="500"
+          letter-spacing="3"
+          fill="#7a5510">rafahcf.com</text>
+  </g>
+
+  <!-- Tagline below the banner composition, only on the OG canvas -->
+  <text x="600" y="540"
+        text-anchor="middle"
+        font-family="'Courier New', monospace"
+        font-size="18"
+        font-weight="500"
+        letter-spacing="4"
+        fill="#8a6220">RAFAEL CAMARGO — SOFTWARE ENGINEER</text>
+</svg>
