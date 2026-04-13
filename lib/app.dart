@@ -336,10 +336,10 @@ class AppState extends State<App> {
         position: Position.fixed(top: 10.px, right: 10.px),
       ),
       // Idle content sits a touch higher so it can't overlap the
-      // mobile radio panel (height 160 px).
+      // mobile radio panel (height 200 px).
       css('.content').styles(
         position: Position.absolute(
-          top: Unit.expression('calc(50% - 80px)'),
+          top: Unit.expression('calc(50% - 100px)'),
           left: 50.percent,
         ),
       ),

@@ -61,17 +61,6 @@ class RadioAudio extends StatefulComponent {
   State<RadioAudio> createState() => _RadioAudioState();
 }
 
-enum _AudioDebugState {
-  /// Component mounted, waiting for the first user gesture.
-  idle,
-
-  /// Context created, graph wired, sources started.
-  running,
-
-  /// No AudioContext available (very old browser, or construction threw).
-  unavailable,
-}
-
 class _RadioAudioState extends State<RadioAudio> {
   // Lazily-built nodes — null until the first user gesture.
   web.AudioContext? _ctx;
@@ -89,8 +78,6 @@ class _RadioAudioState extends State<RadioAudio> {
   JSFunction? _gestureListener;
   bool _gestureFired = false;
   bool _sourcesStarted = false;
-
-  _AudioDebugState _debugState = _AudioDebugState.idle;
 
   /// Event names we listen for to satisfy the first-gesture policy.
   /// `touchstart` is what iOS Safari reliably treats as a user gesture
@@ -218,12 +205,7 @@ class _RadioAudioState extends State<RadioAudio> {
 
   void _initAudio() {
     final ctx = _createContext();
-    if (ctx == null) {
-      if (mounted) {
-        setState(() => _debugState = _AudioDebugState.unavailable);
-      }
-      return;
-    }
+    if (ctx == null) return;
     _ctx = ctx;
 
     // iOS Safari unlock sequence — must run inside the user gesture:
@@ -254,9 +236,6 @@ class _RadioAudioState extends State<RadioAudio> {
       try {
         _ctx?.resume();
       } catch (_) {}
-      if (mounted) {
-        setState(() => _debugState = _AudioDebugState.running);
-      }
       _applyState();
     });
   }
@@ -471,37 +450,15 @@ class _RadioAudioState extends State<RadioAudio> {
   }
 
   // ── render ──
-  // Renders a tiny fixed-position indicator dot so mobile devices
-  // (where no console is available) can see whether audio initialised.
-  //   amber — waiting for first gesture
-  //   green — context running, sources started
-  //   red   — AudioContext could not be created
+  // Invisible — exists only to participate in the component tree so
+  // jaspr preserves its State across rebuilds.
   @override
   Component build(BuildContext context) {
-    final (color, shadow) = switch (_debugState) {
-      _AudioDebugState.idle => ('#8a6a30', '#8a6a3055'),
-      _AudioDebugState.running => ('#3fc46a', '#3fc46a99'),
-      _AudioDebugState.unavailable => ('#e05555', '#e0555599'),
-    };
-    return span(classes: 'radio-audio', [
-      span(
-        classes: 'radio-audio-debug',
-        styles: Styles(raw: {
-          'position': 'fixed',
-          'bottom': '10px',
-          'right': '10px',
-          'width': '10px',
-          'height': '10px',
-          'border-radius': '50%',
-          'background': color,
-          'box-shadow': '0 0 6px $shadow',
-          'pointer-events': 'none',
-          'z-index': '9999',
-          'transition': 'background 0.3s, box-shadow 0.3s',
-        }),
-        [],
-      ),
-    ]);
+    return span(
+      classes: 'radio-audio',
+      styles: Styles(display: Display.none),
+      [],
+    );
   }
 }
 

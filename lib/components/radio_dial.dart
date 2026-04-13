@@ -778,24 +778,26 @@ class RadioDialState extends State<RadioDial> {
     ),
 
     // ── responsive ──
-    // ≤600 px: three-row stack — indicators / LCD / (dial+knob). The
-    // "RADIO" brand and the decorative AM/MONO pills are hidden to
-    // reclaim vertical space; the dial-window stretches to fill the
-    // remaining width beside the knob.
+    // ≤600 px: four-row vertical stack —
+    //   1. indicators (right-aligned)
+    //   2. LCD (90% width, centered)
+    //   3. dial strip (90% width, centered — the full band visibly
+    //      scrolls under the needle as the user drags)
+    //   4. knob (small, centered)
+    // Panel grows to 200 px tall to give the strip its own breathing row.
     css.media(MediaQuery.screen(maxWidth: 600.px), [
       css('.radio-panel').styles(
-        height: 160.px,
+        height: 200.px,
         padding: Padding.symmetric(horizontal: 12.px, vertical: 8.px),
       ),
       // Brand text is redundant on phones — the faceplate itself is
-      // unmistakable. Collapsing it also lets the indicator row
-      // right-align cleanly against the panel edge.
+      // unmistakable. Collapsing it lets the indicator row right-align.
       css('.brand').styles(display: Display.none),
       css('.panel-header').styles(
         raw: {'margin-bottom': '6px', 'justify-content': 'flex-end'},
       ),
-      // Hide the decorative AM (2nd pill) and MONO (4th pill) on
-      // mobile — FM and ST are the only ones that change state.
+      // Hide the decorative AM (2nd pill) and MONO (4th pill) —
+      // only FM and ST carry actual state.
       css('.indicator-row .ind:nth-child(2), .indicator-row .ind:nth-child(4)')
           .styles(display: Display.none),
       css('.indicator-row').styles(gap: Gap(column: 4.px)),
@@ -804,20 +806,18 @@ class RadioDialState extends State<RadioDial> {
         padding: Padding.symmetric(horizontal: 4.px, vertical: 1.px),
         raw: {'letter-spacing': '0.12em'},
       ),
-      // Main region: LCD full-width on its own row, then dial+knob
-      // share the row below with the dial-window taking all spare
-      // width next to the knob.
+      // Main region: stack everything vertically, centered.
       css('.panel-main').styles(
-        flexWrap: FlexWrap.wrap,
-        gap: Gap(row: 8.px, column: 10.px),
-        raw: {'align-content': 'center'},
+        flexDirection: FlexDirection.column,
+        alignItems: AlignItems.center,
+        justifyContent: JustifyContent.center,
+        gap: Gap(row: 8.px),
       ),
       css('.lcd').styles(
-        width: 100.percent,
         maxWidth: 280.px,
         height: 34.px,
         padding: Padding.symmetric(horizontal: 10.px, vertical: 4.px),
-        raw: {'flex': '0 0 100%', 'margin': '0 auto'},
+        raw: {'width': '90%', 'margin': '0 auto', 'flex': '0 0 auto'},
       ),
       css('.lcd-value').styles(fontSize: 1.15.rem),
       css('.lcd-ghost').styles(
@@ -826,11 +826,17 @@ class RadioDialState extends State<RadioDial> {
       ),
       css('.lcd-fm').styles(fontSize: Unit.pixels(9)),
       css('.lcd-st').styles(fontSize: Unit.pixels(8)),
-      // Dial-window fills the remaining width; knob stays fixed-size.
+      // Dial-window is its own full-width row so the scrolling band
+      // stays readable — multiple ticks + numbers always visible.
       css('.dial-window').styles(
         height: 48.px,
-        raw: {'flex': '1 1 auto', 'min-width': '0', 'width': 'auto'},
+        raw: {
+          'width': '90%',
+          'max-width': '360px',
+          'flex': '0 0 auto',
+        },
       ),
+      // Knob centered below the strip — smaller on mobile.
       css('.knob').styles(
         width: 50.px,
         height: 50.px,
@@ -842,10 +848,9 @@ class RadioDialState extends State<RadioDial> {
         raw: {'transform-origin': '50% 16px'},
       ),
     ]),
-    // ≤380 px: very narrow phones — tighten LCD + knob further; the
-    // dial-window keeps filling whatever width is left.
+    // ≤380 px: very narrow phones — tighten LCD + knob further.
     css.media(MediaQuery.screen(maxWidth: 380.px), [
-      css('.lcd').styles(maxWidth: 220.px, height: 30.px),
+      css('.lcd').styles(maxWidth: 240.px, height: 30.px),
       css('.lcd-value').styles(fontSize: 1.0.rem),
       css('.lcd-ghost').styles(
         fontSize: 1.0.rem,
