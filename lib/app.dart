@@ -42,10 +42,9 @@ class AppState extends State<App> {
   Lang _lang = Lang.es;
 
   // Master volume [0.0 – 1.0]. Controlled by the small volume knob
-  // on the left of the faceplate. 0.0 is "off" — the receiver starts
-  // in this state so arriving users have to turn it on, like a real
-  // car stereo. Non-zero values scale the audio engine's output gain.
-  double _volume = 0.0;
+  // on the left of the faceplate. Starts at 0.36 so the receiver is
+  // already on (LED green, gentle static) when the page loads.
+  double _volume = 0.36;
 
   // Window-level event listeners (stored for cleanup).
   JSFunction? _keyDownListener;
