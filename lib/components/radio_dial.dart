@@ -504,14 +504,36 @@ class RadioDialState extends State<RadioDial> {
     ]),
 
     // ── main row ──
+    // Three-column grid: LCD on the left, dial-strip in the middle,
+    // and a stacked knob column on the right (VOL on top, TUNE below).
+    // Both LCD and dial span the two knob rows and centre themselves
+    // vertically against the knob stack.
+    //
+    //   ┌──────┬─────────────┬──────┐
+    //   │      │             │ VOL  │
+    //   │ LCD  │    dial     ├──────┤
+    //   │      │             │ TUNE │
+    //   └──────┴─────────────┴──────┘
     css('.panel-main').styles(
-      display: Display.flex,
-      flexDirection: FlexDirection.row,
-      alignItems: AlignItems.center,
-      justifyContent: JustifyContent.center,
-      gap: Gap(column: 16.px),
-      raw: {'flex': '1'},
+      raw: {
+        'display': 'grid',
+        'grid-template-columns': 'auto 1fr auto',
+        'grid-template-rows': 'auto auto',
+        'grid-template-areas': '"lcd dial vol" "lcd dial tune"',
+        'column-gap': '16px',
+        'row-gap': '6px',
+        'align-items': 'center',
+        'align-content': 'center',
+        'justify-items': 'stretch',
+        'flex': '1',
+      },
     ),
+    // Fixed grid placements — the same media-query breakpoints just
+    // change the grid *template*, never the per-item `grid-area`.
+    css('.lcd').styles(raw: {'grid-area': 'lcd'}),
+    css('.dial-frame').styles(raw: {'grid-area': 'dial'}),
+    css('.vol-knob-wrap').styles(raw: {'grid-area': 'vol'}),
+    css('.knob').styles(raw: {'grid-area': 'tune'}),
 
     // ── LCD readout (aged backlit-LCD look) ──
     // The layered backgrounds, top to bottom, are:
@@ -975,14 +997,19 @@ class RadioDialState extends State<RadioDial> {
     //   ┌──────┬──────────────┬────────┐
     //   │ VOL  │     LCD      │        │
     //   │      ├──────────────┤  TUNE  │
-    //   │      │  dial strip  │        │
-    //   └──────┴──────────────┴────────┘
+    //   ┌──────────────┬────────┐
+    //   │     LCD      │        │  row 1
+    //   ├──────────────┤  VOL   │  row 2
+    //   │              ├────────┤
+    //   │  dial strip  │  TUNE  │  row 3
+    //   └──────────────┴────────┘
     //
-    // VOL stays on row 1 (next to the LCD); TUNE stays on row 2 (next
-    // to the dial). Both are `align-self: center` so they sit mid-row.
+    // LCD spans the full top row; the dial occupies rows 2–3 on the
+    // left; VOL (row 2) and TUNE (row 3) share the right column,
+    // stacking the two knobs vertically like a real car stereo.
     css.media(MediaQuery.screen(maxWidth: 600.px), [
       css('.radio-panel').styles(
-        height: 160.px,
+        height: 180.px,
         padding: Padding.symmetric(horizontal: 12.px, vertical: 8.px),
       ),
       css('.brand').styles(display: Display.none),
@@ -999,19 +1026,12 @@ class RadioDialState extends State<RadioDial> {
       ),
       css('.panel-main').styles(
         raw: {
-          'display': 'grid',
-          'grid-template-columns': 'auto 1fr auto',
-          'grid-template-rows': 'auto auto',
-          'grid-template-areas': '"vol lcd ." ". dial tune"',
+          'grid-template-columns': '1fr auto',
+          'grid-template-rows': 'auto 1fr 1fr',
+          'grid-template-areas': '"lcd lcd" "dial vol" "dial tune"',
           'column-gap': '10px',
           'row-gap': '6px',
-          'align-items': 'center',
-          'justify-items': 'stretch',
         },
-      ),
-      // Volume knob sits in row 1, col 1 (beside the LCD).
-      css('.vol-knob-wrap').styles(
-        raw: {'grid-area': 'vol', 'align-self': 'center'},
       ),
       css('.vol-knob').styles(width: 32.px, height: 32.px),
       css('.vol-knob-cap').styles(raw: {'inset': '3px'}),
@@ -1020,12 +1040,10 @@ class RadioDialState extends State<RadioDial> {
         raw: {'top': '2px', 'transform-origin': '50% 10px'},
       ),
       css('.vol-knob-label').styles(fontSize: Unit.pixels(7)),
-      // LCD fills row 1, col 2.
       css('.lcd').styles(
         height: 34.px,
         padding: Padding.symmetric(horizontal: 10.px, vertical: 4.px),
         raw: {
-          'grid-area': 'lcd',
           'width': '100%',
           'max-width': 'none',
           'margin': '0',
@@ -1039,31 +1057,24 @@ class RadioDialState extends State<RadioDial> {
       ),
       css('.lcd-fm').styles(fontSize: Unit.pixels(9)),
       css('.lcd-st').styles(fontSize: Unit.pixels(8)),
-      // Dial fills row 2, col 2.
-      css('.dial-frame').styles(
-        raw: {'grid-area': 'dial', 'width': '100%'},
-      ),
+      css('.dial-frame').styles(raw: {'width': '100%'}),
       css('.dial-window').styles(
         height: 44.px,
         raw: {'width': '100%', 'max-width': 'none', 'flex': 'initial'},
       ),
-      // Tuning knob sits in row 2, col 3 (beside the dial).
       css('.knob').styles(
-        width: 50.px,
-        height: 50.px,
-        raw: {
-          'grid-area': 'tune',
-          'align-self': 'center',
-          'flex': 'initial',
-        },
+        width: 46.px,
+        height: 46.px,
+        raw: {'flex': 'initial'},
       ),
       css('.knob-cap').styles(raw: {'inset': '5px'}),
       css('.knob-notch').styles(
-        height: 11.px,
-        raw: {'transform-origin': '50% 16px'},
+        height: 10.px,
+        raw: {'transform-origin': '50% 14px'},
       ),
     ]),
-    // ≤380 px: very narrow phones — tighten LCD + knob further.
+    // ≤380 px: very narrow phones — just tighten the LCD + pill type.
+    // Knob sizes already shrunk in the ≤600 block.
     css.media(MediaQuery.screen(maxWidth: 380.px), [
       css('.lcd').styles(height: 30.px),
       css('.lcd-value').styles(fontSize: 1.0.rem),
@@ -1073,11 +1084,6 @@ class RadioDialState extends State<RadioDial> {
       ),
       css('.lcd-fm').styles(fontSize: Unit.pixels(8)),
       css('.lcd-st').styles(fontSize: Unit.pixels(7)),
-      css('.knob').styles(width: 46.px, height: 46.px),
-      css('.knob-notch').styles(
-        height: 10.px,
-        raw: {'transform-origin': '50% 14px'},
-      ),
     ]),
   ];
 }

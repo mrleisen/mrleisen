@@ -681,12 +681,12 @@ class StationDisplay extends StatelessComponent {
     // Mobile sizing.
     css.media(MediaQuery.screen(maxWidth: 600.px), [
       // Track the same vertical offset as the idle content so we don't
-      // overlap the mobile radio panel (height 160 px → shift content
+      // overlap the mobile radio panel (height 180 px → shift content
       // up by ~half the panel height so its vertical centre lands in
       // the free space above the faceplate).
       css('.station-display').styles(
         position: Position.absolute(
-          top: Unit.expression('calc(50% - 80px)'),
+          top: Unit.expression('calc(50% - 90px)'),
           left: 50.percent,
         ),
       ),
