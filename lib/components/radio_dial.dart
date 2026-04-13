@@ -31,9 +31,6 @@ const double _pxPerMhz = 60.0;
 /// Total width of the scrollable strip in pixels.
 const double _stripWidth = (maxFrequency - minFrequency) * _pxPerMhz;
 
-/// Visible width of the dial window viewport.
-const double _windowWidth = 320.0;
-
 // Amber-LED palette — warm Pioneer/Kenwood segment colour. Matches the
 // text-shadow values below; change both together or the glow goes off.
 const String _lcdAmber = '#E8A035';
@@ -106,10 +103,15 @@ class RadioDialState extends State<RadioDial> {
 
   double get _freq => component.frequency;
 
-  double get _stripOffset {
-    final freqX = (_freq - minFrequency) * _pxPerMhz;
-    return -(freqX - _windowWidth / 2);
-  }
+  /// Horizontal translation applied to `.dial-strip`.
+  ///
+  /// The strip is CSS-anchored at `left: 50%` of `.dial-window` (i.e.
+  /// its left edge sits on the needle, which is also at `left: 50%`).
+  /// Shifting it by `-freqX` drops the strip-local tick for the current
+  /// frequency exactly on the needle, independent of the actual window
+  /// width. This is what lets the dial stretch to fill whatever grid
+  /// cell it lands in without the needle drifting off-tick.
+  double get _stripOffset => -((_freq - minFrequency) * _pxPerMhz);
 
   double get _knobAngle {
     return ((_freq - minFrequency) / (maxFrequency - minFrequency)) * 270 - 135;
@@ -754,7 +756,7 @@ class RadioDialState extends State<RadioDial> {
     ),
     css('.dial-window').styles(
       position: Position.relative(),
-      width: _windowWidth.px,
+      width: 100.percent,
       height: 56.px,
       overflow: Overflow.hidden,
       cursor: Cursor.grab,
@@ -783,7 +785,10 @@ class RadioDialState extends State<RadioDial> {
     ),
 
     css('.dial-strip').styles(
-      position: Position.absolute(top: Unit.zero),
+      // Anchored at `left: 50%` so a translateX(-freqX) inline style
+      // (see `_stripOffset`) lands the current-frequency tick on top
+      // of the needle regardless of how wide `.dial-window` is.
+      position: Position.absolute(top: Unit.zero, left: 50.percent),
       height: 100.percent,
       // The strip and its children (ticks, labels, markers) MUST NOT
       // capture pointer events — every press should land on `.dial-window`
