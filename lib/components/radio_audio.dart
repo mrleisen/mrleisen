@@ -86,6 +86,14 @@ class _RadioAudioState extends State<RadioAudio> {
   bool _gestureFired = false;
   bool _sourcesStarted = false;
 
+  // Guards _resumeAndApply against concurrent re-entry while an
+  // awaited resume() is still in flight.
+  bool _isResuming = false;
+
+  // visibilitychange listener — mobile browsers suspend the
+  // AudioContext when the tab/app backgrounds; we resume on return.
+  JSFunction? _visibilityListener;
+
   /// Event names we listen for to satisfy the first-gesture policy.
   /// `touchstart` is what iOS Safari reliably treats as a user gesture
   /// for audio unlock; `click` covers desktop; `pointerdown` and
@@ -142,6 +150,9 @@ class _RadioAudioState extends State<RadioAudio> {
     for (final ev in _unlockEvents) {
       web.document.addEventListener(ev, _gestureListener, opts);
     }
+
+    _visibilityListener = _onVisibilityChange.toJS;
+    web.document.addEventListener('visibilitychange', _visibilityListener);
   }
 
   @override
@@ -158,6 +169,10 @@ class _RadioAudioState extends State<RadioAudio> {
         for (final ev in _unlockEvents) {
           web.document.removeEventListener(ev, _gestureListener);
         }
+      }
+      if (_visibilityListener != null) {
+        web.document
+            .removeEventListener('visibilitychange', _visibilityListener);
       }
       if (_ctx != null) {
         try {
@@ -210,41 +225,38 @@ class _RadioAudioState extends State<RadioAudio> {
     }
   }
 
-  void _initAudio() {
+  Future<void> _initAudio() async {
     final ctx = _createContext();
     if (ctx == null) return;
     _ctx = ctx;
 
-    // iOS Safari unlock sequence — must run inside the user gesture:
-    //   1) resume() the (possibly suspended) context,
-    //   2) play a 1-sample silent buffer through destination so iOS
-    //      registers the pipeline as "user-initiated".
+    // iOS Safari / Android Chrome unlock sequence — must run inside the
+    // user gesture and must AWAIT the resume promise: prior versions
+    // treated resume() as synchronous and proceeded to start sources
+    // while the context was still 'suspended', producing silence on
+    // mobile. AudioContext.resume() returns a JS Promise — .toDart
+    // converts it to a Dart Future we can await.
     try {
-      ctx.resume();
-    } catch (_) {/* best-effort */}
-    _playSilentUnlockBuffer(ctx);
+      await ctx.resume().toDart;
+    } catch (e) {
+      print('AudioContext resume failed: $e');
+    }
+    if (!mounted || _ctx == null) return;
 
+    // Canonical iOS unlock buffer + graph build happen only after the
+    // context has actually transitioned to 'running'.
+    _playSilentUnlockBuffer(ctx);
     _buildGraph(ctx);
 
-    // Small delay before starting the real sources. Gives the context
-    // time to finish transitioning to 'running' on platforms where
-    // resume() is asynchronous (notably iOS Safari). The sources' first
-    // samples then go out into a fully-unlocked pipeline.
-    Future.delayed(const Duration(milliseconds: 80), () {
-      if (!mounted || _ctx == null) return;
-      try {
-        _noiseA?.start();
-        _noiseB?.start();
-        _whistle?.start();
-        _sourcesStarted = true;
-      } catch (_) {/* already started */}
-      // Defensive second resume — some Android Chrome builds re-suspend
-      // between context construction and the first scheduled node event.
-      try {
-        _ctx?.resume();
-      } catch (_) {}
-      _applyState();
-    });
+    try {
+      _noiseA?.start();
+      _noiseB?.start();
+      _whistle?.start();
+      _sourcesStarted = true;
+    } catch (e) {
+      print('AudioContext source start failed: $e');
+    }
+    _applyState();
   }
 
   /// Short silent buffer → destination. This is the canonical iOS
@@ -256,7 +268,9 @@ class _RadioAudioState extends State<RadioAudio> {
       final source = ctx.createBufferSource()..buffer = buffer;
       source.connect(ctx.destination);
       source.start(0);
-    } catch (_) {/* best-effort */}
+    } catch (e) {
+      print('AudioContext silent-unlock buffer failed: $e');
+    }
   }
 
   /// Constructs the noise + whistle graph. Sources are NOT started
@@ -352,17 +366,49 @@ class _RadioAudioState extends State<RadioAudio> {
 
   // ── per-frame parameter updates ──
 
+  /// Awaited resume + re-apply. Used by [_applyState] when the context
+  /// is detected as suspended, and by the visibilitychange listener
+  /// when the tab returns to the foreground. [_isResuming] prevents
+  /// concurrent callers from stacking resume() promises.
+  Future<void> _resumeAndApply() async {
+    if (_isResuming) return;
+    final ctx = _ctx;
+    if (ctx == null) return;
+    _isResuming = true;
+    try {
+      await ctx.resume().toDart;
+    } catch (e) {
+      print('AudioContext resume failed: $e');
+    }
+    _isResuming = false;
+    if (!mounted || _ctx == null) return;
+    // If the context is still suspended (resume rejected, or the
+    // browser is waiting for a fresh user gesture) don't retry in a
+    // tight loop — wait for the next visibility / interaction event.
+    if (_ctx!.state == 'suspended') return;
+    _applyState();
+  }
+
+  void _onVisibilityChange(web.Event _) {
+    if (_ctx == null) return;
+    if (!web.document.hidden) {
+      _resumeAndApply();
+    }
+  }
+
   void _applyState() {
     final ctx = _ctx;
     if (ctx == null) return;
 
-    // Some browsers (Android Chrome, in particular) can silently
-    // re-suspend the context after construction. Poke it back awake
-    // before scheduling any parameter changes.
+    // Some browsers (Android Chrome, iOS Safari on return from
+    // background) silently re-suspend the context. Hand off to the
+    // async resume path and bail — _resumeAndApply will re-enter this
+    // method once the context is actually 'running' again. Scheduling
+    // ramps against a suspended context reliably produces silence on
+    // mobile, which is exactly the bug we're fixing.
     if (ctx.state == 'suspended') {
-      try {
-        ctx.resume();
-      } catch (_) {}
+      _resumeAndApply();
+      return;
     }
 
     final now = ctx.currentTime;
