@@ -94,6 +94,12 @@ class _RadioAudioState extends State<RadioAudio> {
   // AudioContext when the tab/app backgrounds; we resume on return.
   JSFunction? _visibilityListener;
 
+  // On-screen debug overlay nodes (temporary — mirrors RADIO_DBG logs
+  // to a fixed-position div so they're visible on mobile without
+  // remote devtools).
+  web.Element? _dbgOverlay;
+  web.Element? _dbgLog;
+
   /// Event names we listen for to satisfy the first-gesture policy.
   /// `touchstart` is what iOS Safari reliably treats as a user gesture
   /// for audio unlock; `click` covers desktop; `pointerdown` and
@@ -192,7 +198,8 @@ class _RadioAudioState extends State<RadioAudio> {
 
   // ── one-shot autoplay unlock ──
 
-  void _onFirstGesture(web.Event _) {
+  void _onFirstGesture(web.Event event) {
+    _dbg('gesture=${event.type}');
     if (_gestureFired || !mounted) return;
     _gestureFired = true;
     if (_gestureListener != null) {
@@ -201,6 +208,66 @@ class _RadioAudioState extends State<RadioAudio> {
       }
     }
     _initAudio();
+  }
+
+  // ── debug overlay (temporary) ──
+
+  void _dbg(String msg) {
+    print('RADIO_DBG: $msg');
+    if (!kIsWeb) return;
+    _ensureDbgOverlay();
+    final log = _dbgLog;
+    if (log == null) return;
+    final line = web.document.createElement('div');
+    line.textContent = msg;
+    log.appendChild(line);
+    final overlay = _dbgOverlay;
+    if (overlay != null) {
+      overlay.scrollTop = overlay.scrollHeight;
+    }
+  }
+
+  void _ensureDbgOverlay() {
+    if (_dbgOverlay != null) return;
+    final doc = web.document;
+    final body = doc.body;
+    if (body == null) return;
+
+    final overlay = doc.createElement('div');
+    overlay.setAttribute('id', 'radio-dbg-overlay');
+    overlay.setAttribute(
+      'style',
+      'position:fixed;bottom:0;left:0;right:0;max-height:30vh;'
+      'overflow-y:auto;background:rgba(0,0,0,0.85);color:#0f0;'
+      'font:10px monospace;z-index:999999;pointer-events:none;'
+      'padding:4px;',
+    );
+
+    final closeBtn = doc.createElement('div');
+    closeBtn.setAttribute(
+      'style',
+      'position:fixed;bottom:calc(30vh - 22px);right:4px;'
+      'pointer-events:auto;cursor:pointer;color:#f00;'
+      'background:rgba(0,0,0,0.85);font:bold 12px monospace;'
+      'padding:2px 8px;z-index:1000000;',
+    );
+    closeBtn.textContent = 'X';
+    closeBtn.addEventListener('click', ((web.Event _) {
+      overlay.remove();
+      closeBtn.remove();
+      _dbgOverlay = null;
+      _dbgLog = null;
+    }).toJS);
+
+    final log = doc.createElement('div');
+    log.setAttribute('style', 'padding-right:20px;');
+
+    overlay.appendChild(log);
+    body.appendChild(overlay);
+    body.appendChild(closeBtn);
+
+    _dbgOverlay = overlay;
+    _dbgLog = log;
   }
 
   // ── audio graph construction ──
@@ -226,6 +293,7 @@ class _RadioAudioState extends State<RadioAudio> {
   }
 
   Future<void> _initAudio() async {
+    _dbg('initAudio start');
     final ctx = _createContext();
     if (ctx == null) return;
     _ctx = ctx;
@@ -241,11 +309,13 @@ class _RadioAudioState extends State<RadioAudio> {
     } catch (e) {
       print('AudioContext resume failed: $e');
     }
+    _dbg('resume done, state=${ctx.state}');
     if (!mounted || _ctx == null) return;
 
     // Canonical iOS unlock buffer + graph build happen only after the
     // context has actually transitioned to 'running'.
     _playSilentUnlockBuffer(ctx);
+    _dbg('silent buffer played');
     _buildGraph(ctx);
 
     try {
@@ -256,7 +326,9 @@ class _RadioAudioState extends State<RadioAudio> {
     } catch (e) {
       print('AudioContext source start failed: $e');
     }
+    _dbg('sources started, state=${ctx.state}');
     _applyState();
+    _dbg('initAudio complete');
   }
 
   /// Short silent buffer → destination. This is the canonical iOS
@@ -374,12 +446,14 @@ class _RadioAudioState extends State<RadioAudio> {
     if (_isResuming) return;
     final ctx = _ctx;
     if (ctx == null) return;
+    _dbg('resumeAndApply start, state=${ctx.state}');
     _isResuming = true;
     try {
       await ctx.resume().toDart;
     } catch (e) {
       print('AudioContext resume failed: $e');
     }
+    _dbg('resumeAndApply resumed, state=${ctx.state}');
     _isResuming = false;
     if (!mounted || _ctx == null) return;
     // If the context is still suspended (resume rejected, or the
@@ -390,6 +464,7 @@ class _RadioAudioState extends State<RadioAudio> {
   }
 
   void _onVisibilityChange(web.Event _) {
+    _dbg('visibility=${web.document.hidden} ctx=${_ctx?.state}');
     if (_ctx == null) return;
     if (!web.document.hidden) {
       _resumeAndApply();
@@ -400,6 +475,9 @@ class _RadioAudioState extends State<RadioAudio> {
     final ctx = _ctx;
     if (ctx == null) return;
 
+    _dbg(
+        'applyState ctx=${ctx.state} vol=${component.volume} freq=${component.frequency} tuning=${component.isTuning} sourcesStarted=$_sourcesStarted');
+
     // Some browsers (Android Chrome, iOS Safari on return from
     // background) silently re-suspend the context. Hand off to the
     // async resume path and bail — _resumeAndApply will re-enter this
@@ -407,6 +485,7 @@ class _RadioAudioState extends State<RadioAudio> {
     // ramps against a suspended context reliably produces silence on
     // mobile, which is exactly the bug we're fixing.
     if (ctx.state == 'suspended') {
+      _dbg('applyState -> resumeAndApply');
       _resumeAndApply();
       return;
     }
