@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:jaspr/dom.dart';
 import 'package:jaspr/jaspr.dart';
@@ -112,6 +113,22 @@ class RadioDialState extends State<RadioDial> {
   Timer? _lcdTapTimer;
   static const Duration _lcdTapDuration = Duration(milliseconds: 850);
 
+  // --- LCD digit scramble ---
+  // While [_scrambleValue] is non-null it replaces the live frequency
+  // in the LCD. A periodic timer swaps it for fresh random values every
+  // [_scrambleTickDuration] until [_scrambleTotalTicks] iterations have
+  // run, producing a brief "display rebooting" readout. Triggered on
+  // power-on (after a short delay) and on any LCD tap.
+  bool _isScrambling = false;
+  int _scrambleCount = 0;
+  String? _scrambleValue;
+  Timer? _scrambleTimer;
+  Timer? _scramblePowerOnTimer;
+  static final math.Random _scrambleRng = math.Random();
+  static const Duration _scrambleTickDuration = Duration(milliseconds: 60);
+  static const int _scrambleTotalTicks = 9;
+  static const Duration _scramblePowerOnDelay = Duration(milliseconds: 300);
+
   // --- helpers ---
 
   double get _freq => component.frequency;
@@ -224,6 +241,13 @@ class RadioDialState extends State<RadioDial> {
 
   void _onLcdTap(web.Event _) {
     if (!component.isPowered) return;
+    _triggerLcdGlitch();
+    _startScramble();
+  }
+
+  /// Runs the one-shot opacity-flicker keyframe on the LCD. Used by
+  /// [_onLcdTap] and by the power-on sequence in [didUpdateComponent].
+  void _triggerLcdGlitch() {
     _lcdTapTimer?.cancel();
     setState(() => _lcdTapNonce++);
     _lcdTapTimer = Timer(_lcdTapDuration, () {
@@ -231,6 +255,43 @@ class RadioDialState extends State<RadioDial> {
         setState(() => _lcdTapNonce = 0);
       }
     });
+  }
+
+  /// Kicks off the digit scramble: ~9 random FM readouts at 60 ms
+  /// intervals, then clears [_scrambleValue] so the live frequency
+  /// text returns. Safe to call while a previous scramble is still
+  /// running — the in-flight timer is cancelled and restarted.
+  void _startScramble() {
+    _scrambleTimer?.cancel();
+    _scrambleCount = 0;
+    setState(() {
+      _isScrambling = true;
+      _scrambleValue = _randomFreqString();
+    });
+    _scrambleTimer = Timer.periodic(_scrambleTickDuration, (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      _scrambleCount++;
+      if (_scrambleCount >= _scrambleTotalTicks) {
+        timer.cancel();
+        setState(() {
+          _isScrambling = false;
+          _scrambleValue = null;
+        });
+        return;
+      }
+      setState(() => _scrambleValue = _randomFreqString());
+    });
+  }
+
+  String _randomFreqString() {
+    final range = maxFrequency - minFrequency;
+    final v = minFrequency + _scrambleRng.nextDouble() * range;
+    // Match the display format: single decimal, same precision as the
+    // real tuner so the width is visually stable during scramble.
+    return ((v * 10).round() / 10).toStringAsFixed(1);
   }
 
   void _onPowerTap(web.Event event) {
@@ -251,8 +312,38 @@ class RadioDialState extends State<RadioDial> {
   }
 
   @override
+  void didUpdateComponent(RadioDial oldComponent) {
+    super.didUpdateComponent(oldComponent);
+    final wasPowered = oldComponent.isPowered;
+    final isPowered = component.isPowered;
+    if (isPowered && !wasPowered) {
+      // Defer so the CRT turn-on animation gets to start before the
+      // scramble + glitch kick in.
+      _scramblePowerOnTimer?.cancel();
+      _scramblePowerOnTimer = Timer(_scramblePowerOnDelay, () {
+        if (!mounted || !component.isPowered) return;
+        _triggerLcdGlitch();
+        _startScramble();
+      });
+    } else if (!isPowered && wasPowered) {
+      // Cancel any in-flight scramble — it shouldn't outlive the
+      // powered state it started in.
+      _scramblePowerOnTimer?.cancel();
+      _scrambleTimer?.cancel();
+      if (_isScrambling || _scrambleValue != null) {
+        setState(() {
+          _isScrambling = false;
+          _scrambleValue = null;
+        });
+      }
+    }
+  }
+
+  @override
   void dispose() {
     _lcdTapTimer?.cancel();
+    _scrambleTimer?.cancel();
+    _scramblePowerOnTimer?.cancel();
     super.dispose();
   }
 
@@ -356,7 +447,10 @@ class RadioDialState extends State<RadioDial> {
             // unlit cells on a real 7-segment LED panel. Uses `188.8`
             // which lights every segment (once our font matches).
             span(classes: 'lcd-ghost', [text('188.8')]),
-            span(classes: 'lcd-value', [text(_freq.toStringAsFixed(1))]),
+            span(
+              classes: 'lcd-value',
+              [text(_scrambleValue ?? _freq.toStringAsFixed(1))],
+            ),
             // Right-side badges: always-on "FM" + station-lock "ST".
             div(classes: 'lcd-badges', [
               span(classes: 'lcd-fm', [text('FM')]),
