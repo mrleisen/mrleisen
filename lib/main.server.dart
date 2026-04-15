@@ -307,6 +307,87 @@ void main() {
         '0%, 100%': Styles(opacity: 0.25),
         '50%': Styles(opacity: 0.55),
       }),
+      // Keyframe: CRT turn-on
+      // A thin bright horizontal line expands to fill the screen, then
+      // fades from white to transparent — classic cathode-ray pickup.
+      css.keyframes('crt-on', {
+        '0%': Styles(
+          opacity: 1,
+          raw: {
+            'background': '#ffffff',
+            'clip-path': 'inset(50% 0 50% 0)',
+          },
+        ),
+        '15%': Styles(
+          opacity: 1,
+          raw: {
+            'background': '#ffffff',
+            'clip-path': 'inset(48% 0 48% 0)',
+          },
+        ),
+        '40%': Styles(
+          opacity: 1,
+          raw: {
+            'background': '#ffffff',
+            'clip-path': 'inset(0% 0 0% 0)',
+          },
+        ),
+        '65%': Styles(
+          opacity: 0.7,
+          raw: {
+            'background': '#ffffff',
+            'clip-path': 'inset(0% 0 0% 0)',
+          },
+        ),
+        '100%': Styles(
+          opacity: 0,
+          raw: {
+            'background': 'transparent',
+            'clip-path': 'inset(0% 0 0% 0)',
+            'pointer-events': 'none',
+          },
+        ),
+      }),
+      // Keyframe: CRT turn-off
+      // Inverse of crt-on: flash white, collapse toward a horizontal
+      // seam, then expand back to solid black as the "screen" goes dark.
+      css.keyframes('crt-off', {
+        '0%': Styles(
+          opacity: 0,
+          raw: {
+            'background': 'transparent',
+            'clip-path': 'inset(0% 0 0% 0)',
+          },
+        ),
+        '15%': Styles(
+          opacity: 1,
+          raw: {
+            'background': '#ffffff',
+            'clip-path': 'inset(0% 0 0% 0)',
+          },
+        ),
+        '45%': Styles(
+          opacity: 1,
+          raw: {
+            'background': '#ffffff',
+            'clip-path': 'inset(0% 0 0% 0)',
+          },
+        ),
+        '75%': Styles(
+          opacity: 1,
+          raw: {
+            'background': '#000000',
+            'clip-path': 'inset(48% 0 48% 0)',
+          },
+        ),
+        '100%': Styles(
+          opacity: 1,
+          raw: {
+            'background': '#000000',
+            'clip-path': 'inset(0% 0 0% 0)',
+          },
+        ),
+      }),
     ],
     head: [
       link(rel: 'manifest', href: 'manifest.json'),

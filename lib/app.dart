@@ -46,6 +46,24 @@ class AppState extends State<App> {
   // already on (LED green, gentle static) when the page loads.
   double _volume = 0.36;
 
+  // Radio power state. Starts off — the faceplate is dimmed and the
+  // audio graph is gated on this until the user taps the power button.
+  // The power-on gesture is where AudioContext gets created.
+  bool _isPowered = false;
+
+  // CRT animation phase for the screen overlay:
+  //   'off'         → solid-black overlay covering the content (initial
+  //                   load; no animation plays)
+  //   'turning-on'  → crt-on keyframe is running
+  //   'on'          → overlay transparent, content visible
+  //   'turning-off' → crt-off keyframe is running
+  // Separate from _isPowered so the overlay can linger on the screen
+  // until the animation completes.
+  String _crtPhase = 'off';
+  Timer? _crtTimer;
+  static const Duration _crtOnDuration = Duration(milliseconds: 800);
+  static const Duration _crtOffDuration = Duration(milliseconds: 500);
+
   // Window-level event listeners (stored for cleanup).
   JSFunction? _keyDownListener;
   JSFunction? _wheelListener;
@@ -72,6 +90,7 @@ class AppState extends State<App> {
   @override
   void dispose() {
     _tuningIdleTimer?.cancel();
+    _crtTimer?.cancel();
     if (kIsWeb) {
       web.document.removeEventListener('keydown', _keyDownListener);
       web.document.removeEventListener('wheel', _wheelListener);
@@ -157,23 +176,43 @@ class AppState extends State<App> {
     final nearestDist = _nearestStation != null
         ? (_frequency - _nearestStation!.frequency).abs()
         : double.infinity;
-    final contentOpacity = nearestDist >= stationTolerance
+    final distanceOpacity = nearestDist >= stationTolerance
         ? 1.0
         : ((nearestDist - 0.7) / 0.3).clamp(0.0, 1.0);
+    // Power gates every upper layer — when off, the CRT overlay is
+    // opaque black anyway, but we also zero out content opacity so
+    // nothing animates or allocates behind the overlay.
+    final contentOpacity = _isPowered ? distanceOpacity : 0.0;
 
     final idleHint = _lang == Lang.es ? 'sintoniza' : 'tune in';
 
-    return div(classes: 'signal-app', [
+    final rootClass =
+        'signal-app ${_isPowered ? 'powered-on' : 'powered-off'}';
+    final crtClass = switch (_crtPhase) {
+      'turning-on' => 'crt-screen crt-animate-on',
+      'on' => 'crt-screen crt-on-done',
+      'turning-off' => 'crt-screen crt-animate-off',
+      _ => 'crt-screen',
+    };
+
+    return div(classes: rootClass, [
       // Audio engine (renders no visible DOM).
       RadioAudio(
         frequency: _frequency,
         noiseLevel: _noiseLevel,
         isTuning: _isTuning,
         volume: _volume,
+        isPowered: _isPowered,
       ),
 
+      // CRT power-on/off overlay — fills the viewport under all
+      // content layers but above the root background. Opaque black
+      // when off, transparent when on, plays clip-path flash on
+      // transitions.
+      div(classes: crtClass, []),
+
       // Effect overlays (order = paint order).
-      StaticNoise(noiseLevel: _noiseLevel),
+      StaticNoise(noiseLevel: _noiseLevel, isPowered: _isPowered),
       const Scanlines(),
       const Vignette(),
 
@@ -202,7 +241,7 @@ class AppState extends State<App> {
             // Jitter only kicks in when noise is meaningfully present.
             // When tuned in (noiseLevel ≤ 0.3) the animation is removed
             // entirely so the title sits perfectly still.
-            'animation': _noiseLevel > 0.3
+            'animation': (_isPowered && _noiseLevel > 0.3)
                 ? 'content-jitter 0.22s steps(2, end) infinite'
                 : 'none',
           },
@@ -225,6 +264,7 @@ class AppState extends State<App> {
       StationDisplay(
         frequency: _frequency,
         lang: _lang,
+        isPowered: _isPowered,
       ),
 
       // Radio dial
@@ -235,6 +275,8 @@ class AppState extends State<App> {
         activeStation: _activeStation,
         volume: _volume,
         onVolumeChanged: _setVolume,
+        isPowered: _isPowered,
+        onPowerToggle: _togglePower,
       ),
     ]);
   }
@@ -251,6 +293,20 @@ class AppState extends State<App> {
     setState(() => _volume = clamped);
   }
 
+  void _togglePower() {
+    _crtTimer?.cancel();
+    final powering = !_isPowered;
+    setState(() {
+      _isPowered = powering;
+      _crtPhase = powering ? 'turning-on' : 'turning-off';
+    });
+    final dur = powering ? _crtOnDuration : _crtOffDuration;
+    _crtTimer = Timer(dur, () {
+      if (!mounted) return;
+      setState(() => _crtPhase = _isPowered ? 'on' : 'off');
+    });
+  }
+
   @css
   static List<StyleRule> get styles => [
     css('.signal-app').styles(
@@ -260,6 +316,48 @@ class AppState extends State<App> {
       overflow: Overflow.hidden,
       backgroundColor: const Color('#050507'),
     ),
+    // ── CRT power overlay ──
+    // Fills the viewport above the root background (#050507) but
+    // below the noise layer (z:10). When the radio is off the
+    // overlay is opaque black; tapping the power switch runs the
+    // crt-on / crt-off keyframes with fill-forwards so the final
+    // keyframe value holds until the phase class rotates to the
+    // matching steady state (`crt-on-done` or the default `.crt-screen`).
+    css('.crt-screen', [
+      css('&').styles(
+        position: Position.fixed(
+          top: Unit.zero,
+          left: Unit.zero,
+          right: Unit.zero,
+          bottom: Unit.zero,
+        ),
+        zIndex: ZIndex(5),
+        pointerEvents: PointerEvents.auto,
+        backgroundColor: const Color('#000000'),
+        opacity: 1,
+      ),
+      css('&.crt-animate-on').styles(raw: {
+        'animation': 'crt-on 0.8s ease-out forwards',
+      }),
+      css('&.crt-animate-off').styles(raw: {
+        'animation': 'crt-off 0.5s ease-in forwards',
+      }),
+      css('&.crt-on-done').styles(
+        pointerEvents: PointerEvents.none,
+        opacity: 0,
+        raw: {'background': 'transparent'},
+      ),
+    ]),
+    // Scanlines + vignette opacity gated on the root power class.
+    // They have no opacity prop so we drive them purely from CSS.
+    css('.signal-app .scanlines, .signal-app .vignette').styles(raw: {
+      'transition': 'opacity 0.3s ease',
+    }),
+    css('.signal-app.powered-off .scanlines, '
+            '.signal-app.powered-off .vignette')
+        .styles(raw: {
+      'opacity': '0',
+    }),
     // Language toggle pill — fixed top-right.
     css('.lang-toggle', [
       css('&').styles(

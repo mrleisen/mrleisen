@@ -16,20 +16,35 @@ import 'package:jaspr/jaspr.dart';
 ///   * Wrapped in `.tv-flicker-host` so a brief opacity dip can run
 ///     without colliding with the per-layer opacity values.
 class StaticNoise extends StatelessComponent {
-  const StaticNoise({this.noiseLevel = 0.5, super.key});
+  const StaticNoise({
+    this.noiseLevel = 0.5,
+    this.isPowered = true,
+    super.key,
+  });
 
   /// 0.0 (clean) … 1.0 (heavy snow). The caller maps signal strength into
   /// this range; we treat anything ≥ 1.0 as "fully detuned".
   final double noiseLevel;
 
-  // Layer opacities derived from noiseLevel.
-  double get _grainOpacity => (0.04 + noiseLevel * 0.85).clamp(0.0, 0.95);
-  double get _coarseOpacity => (noiseLevel * 0.7).clamp(0.0, 0.75);
+  /// When false every layer collapses to opacity 0 and the animations
+  /// are disabled so the snow pattern doesn't silently burn CPU behind
+  /// the CRT-off overlay.
+  final bool isPowered;
+
+  // Layer opacities derived from noiseLevel — zeroed when powered off.
+  double get _grainOpacity =>
+      isPowered ? (0.04 + noiseLevel * 0.85).clamp(0.0, 0.95) : 0.0;
+  double get _coarseOpacity =>
+      isPowered ? (noiseLevel * 0.7).clamp(0.0, 0.75) : 0.0;
   // Band only appears once we're well off-station.
-  double get _bandOpacity =>
-      noiseLevel < 0.35 ? 0.0 : ((noiseLevel - 0.35) * 1.4).clamp(0.0, 0.85);
+  double get _bandOpacity => !isPowered
+      ? 0.0
+      : (noiseLevel < 0.35
+          ? 0.0
+          : ((noiseLevel - 0.35) * 1.4).clamp(0.0, 0.85));
   // Flicker amplitude — full strength when noisy, off when locked.
-  double get _flickerStrength => noiseLevel.clamp(0.0, 1.0);
+  double get _flickerStrength =>
+      isPowered ? noiseLevel.clamp(0.0, 1.0) : 0.0;
 
   @override
   Component build(BuildContext context) {
@@ -41,8 +56,9 @@ class StaticNoise extends StatelessComponent {
         // lets us scale the dip by noise level.
         raw: {
           '--tv-flicker-amp': _flickerStrength.toStringAsFixed(3),
-          'animation':
-              'tv-flicker 7.3s steps(1, end) infinite',
+          'animation': isPowered
+              ? 'tv-flicker 7.3s steps(1, end) infinite'
+              : 'none',
         },
       ),
       [
@@ -51,7 +67,10 @@ class StaticNoise extends StatelessComponent {
           classes: 'tv-grain',
           styles: Styles(
             opacity: _grainOpacity,
-            raw: {'transition': 'opacity 0.25s ease'},
+            raw: {
+              'transition': 'opacity 0.3s ease',
+              if (!isPowered) 'animation': 'none',
+            },
           ),
           [],
         ),
@@ -60,7 +79,10 @@ class StaticNoise extends StatelessComponent {
           classes: 'tv-coarse',
           styles: Styles(
             opacity: _coarseOpacity,
-            raw: {'transition': 'opacity 0.3s ease'},
+            raw: {
+              'transition': 'opacity 0.3s ease',
+              if (!isPowered) 'animation': 'none',
+            },
           ),
           [],
         ),
@@ -69,7 +91,10 @@ class StaticNoise extends StatelessComponent {
           classes: 'tv-band',
           styles: Styles(
             opacity: _bandOpacity,
-            raw: {'transition': 'opacity 0.4s ease'},
+            raw: {
+              'transition': 'opacity 0.4s ease',
+              if (!isPowered) 'animation': 'none',
+            },
           ),
           [],
         ),

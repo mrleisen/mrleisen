@@ -6,6 +6,7 @@ import 'package:universal_web/js_interop.dart';
 import 'package:universal_web/web.dart' as web;
 
 import '../models/station.dart';
+import 'radio_audio.dart' show unlockAudioContext;
 
 /// Re-typed view over `PointerEvent` whose `clientX`/`clientY` are
 /// declared as `double` instead of `int`.
@@ -45,10 +46,12 @@ class RadioDial extends StatefulComponent {
   const RadioDial({
     required this.frequency,
     required this.onFrequencyChanged,
+    required this.isPowered,
     this.signalStrength = 0.0,
     this.activeStation,
     this.volume = 0.0,
     this.onVolumeChanged,
+    this.onPowerToggle,
     super.key,
   });
 
@@ -64,6 +67,16 @@ class RadioDial extends StatefulComponent {
 
   /// Reports volume changes from the volume-knob drag gesture.
   final ValueChanged<double>? onVolumeChanged;
+
+  /// Whether the radio is powered on. When false the panel dims and
+  /// every control except the power button is non-interactive.
+  final bool isPowered;
+
+  /// Fires when the user taps the power toggle. Runs inside the raw
+  /// user gesture — on the first power-on, [unlockAudioContext] is
+  /// called synchronously just before this to satisfy mobile autoplay
+  /// policy.
+  final VoidCallback? onPowerToggle;
 
   @override
   State<RadioDial> createState() => RadioDialState();
@@ -130,6 +143,7 @@ class RadioDialState extends State<RadioDial> {
   // --- strip drag ---
 
   void _onStripDown(web.Event event) {
+    if (!component.isPowered) return;
     final pe = event as web.PointerEvent;
     (pe.currentTarget as web.Element).setPointerCapture(pe.pointerId);
     _draggingStrip = true;
@@ -154,6 +168,7 @@ class RadioDialState extends State<RadioDial> {
   // --- knob drag ---
 
   void _onKnobDown(web.Event event) {
+    if (!component.isPowered) return;
     final pe = event as web.PointerEvent;
     (pe.currentTarget as web.Element).setPointerCapture(pe.pointerId);
     _draggingKnob = true;
@@ -178,6 +193,7 @@ class RadioDialState extends State<RadioDial> {
   // --- volume knob drag ---
 
   void _onVolDown(web.Event event) {
+    if (!component.isPowered) return;
     final pe = event as web.PointerEvent;
     (pe.currentTarget as web.Element).setPointerCapture(pe.pointerId);
     _draggingVol = true;
@@ -207,6 +223,7 @@ class RadioDialState extends State<RadioDial> {
   // --- LCD tap ---
 
   void _onLcdTap(web.Event _) {
+    if (!component.isPowered) return;
     _lcdTapTimer?.cancel();
     setState(() => _lcdTapNonce++);
     _lcdTapTimer = Timer(_lcdTapDuration, () {
@@ -216,6 +233,23 @@ class RadioDialState extends State<RadioDial> {
     });
   }
 
+  void _onPowerTap(web.Event event) {
+    event.preventDefault();
+    // Only unlock AudioContext on the first power-on. Subsequent
+    // toggles just flip state — the context stays alive across off/on
+    // cycles so re-creating it would leak graphs (and unlockAudioContext
+    // itself guards against that, but skipping the call is clearer).
+    //
+    // AudioContext creation MUST be synchronous inside this gesture
+    // handler — deferring it until onPowerToggle propagates through
+    // Jaspr loses user-gesture attribution on mobile and resume() never
+    // transitions the context to 'running'.
+    if (!component.isPowered) {
+      unlockAudioContext();
+    }
+    component.onPowerToggle?.call();
+  }
+
   @override
   void dispose() {
     _lcdTapTimer?.cancel();
@@ -223,6 +257,7 @@ class RadioDialState extends State<RadioDial> {
   }
 
   void _onPanelWheel(web.Event event) {
+    if (!component.isPowered) return;
     final we = event as web.WheelEvent;
     we.preventDefault();
     final delta = we.deltaY > 0 ? 0.2 : -0.2;
@@ -234,21 +269,35 @@ class RadioDialState extends State<RadioDial> {
   @override
   Component build(BuildContext context) {
     final tuned = component.activeStation != null;
+    final powered = component.isPowered;
 
     return div(
-      classes: 'radio-panel',
+      classes: 'radio-panel${powered ? '' : ' panel-off'}',
       events: {'wheel': _onPanelWheel},
       [
         // Top bevel highlight (purely cosmetic).
         div(classes: 'panel-bevel-top', []),
 
-        // Header row: brand + indicators.
+        // Header row: brand + power + indicators.
         div(classes: 'panel-header', [
           span(classes: 'brand', [text('RADIO')]),
+          div(
+            classes: 'power-rocker${powered ? ' power-on' : ''}',
+            events: {'click': _onPowerTap, 'touchend': _onPowerTap},
+            attributes: {
+              'role': 'switch',
+              'aria-label': 'Power',
+              'aria-checked': powered ? 'true' : 'false',
+            },
+            [
+              span(classes: 'rocker-half rocker-on', [text('ON')]),
+              span(classes: 'rocker-half rocker-off', [text('OFF')]),
+            ],
+          ),
           div(classes: 'indicator-row', [
-            _indicator('FM', active: true),
+            _indicator('FM', active: powered),
             _indicator('AM'),
-            _indicator('ST', active: tuned),
+            _indicator('ST', active: powered && tuned),
             _indicator('MONO'),
           ]),
         ]),
@@ -465,8 +514,149 @@ class RadioDialState extends State<RadioDial> {
       flexDirection: FlexDirection.row,
       alignItems: AlignItems.center,
       justifyContent: JustifyContent.spaceBetween,
+      gap: Gap(column: 10.px),
       raw: {'margin-bottom': '10px'},
     ),
+    // ── rocker power switch ──
+    // Two-half molded-plastic rocker: the lit side reads as "pressed
+    // down" (inset shadow, amber glyph), the other side as "raised"
+    // (subtle highlight, grey). A faint divider separates the halves.
+    // Deliberately not an iOS pill — this is the chunky ON/OFF rocker
+    // you'd find on a 90s amp or power strip.
+    css('.power-rocker', [
+      css('&').styles(
+        position: Position.relative(),
+        width: 52.px,
+        height: 22.px,
+        radius: BorderRadius.all(Radius.circular(4.px)),
+        cursor: Cursor.pointer,
+        display: Display.flex,
+        flexDirection: FlexDirection.row,
+        alignItems: AlignItems.stretch,
+        overflow: Overflow.hidden,
+        raw: {
+          'box-sizing': 'border-box',
+          'background': '#1a1a1a',
+          'border': '1px solid rgba(255,255,255,0.12)',
+          'box-shadow':
+              'inset 0 1px 3px rgba(0,0,0,0.75), 0 1px 0 rgba(255,255,255,0.05)',
+          'user-select': 'none',
+          '-webkit-user-select': 'none',
+          '-webkit-tap-highlight-color': 'transparent',
+          'flex-shrink': '0',
+          'pointer-events': 'auto',
+          'touch-action': 'manipulation',
+        },
+      ),
+    ]),
+    css('.rocker-half', [
+      css('&').styles(
+        display: Display.flex,
+        alignItems: AlignItems.center,
+        justifyContent: JustifyContent.center,
+        fontFamily: const FontFamily.list([FontFamilies.monospace]),
+        fontSize: Unit.pixels(7),
+        fontWeight: FontWeight.bold,
+        color: const Color('#444'),
+        raw: {
+          'flex': '1',
+          'letter-spacing': '0.5px',
+          'text-transform': 'uppercase',
+          'background':
+              'linear-gradient(to bottom, #2a2a2a 0%, #1e1e1e 100%)',
+          'box-shadow':
+              'inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.3)',
+          'transition':
+              'background 0.15s ease, box-shadow 0.15s ease, color 0.15s ease, text-shadow 0.15s ease',
+        },
+      ),
+    ]),
+    // Faint moulded seam between the two halves.
+    css('.rocker-half + .rocker-half').styles(raw: {
+      'border-left': '1px solid rgba(0,0,0,0.55)',
+      'box-shadow':
+          'inset 1px 0 0 rgba(255,255,255,0.04), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.3)',
+    }),
+    // Pressed (lit) half styling — a single rule reused for both
+    // states via compound selectors below.
+    css(
+      '.power-rocker:not(.power-on) .rocker-off, '
+          '.power-rocker.power-on .rocker-on',
+    ).styles(raw: {
+      'background':
+          'linear-gradient(to bottom, #0d0d0d 0%, #050505 100%)',
+      'box-shadow':
+          'inset 0 2px 4px rgba(0,0,0,0.9), inset 0 -1px 1px rgba(0,0,0,0.4)',
+      'color': _lcdAmber,
+      'text-shadow':
+          '0 0 3px rgba(232,160,53,0.75), 0 0 6px rgba(232,160,53,0.35)',
+    }),
+    // ── powered-off faceplate ──
+    // The header (brand + power button + indicators) keeps full
+    // brightness so the power button stays clearly tappable. The main
+    // row (LCD, dial, knobs) gets dimmed + desaturated + non-
+    // interactive until the user taps the power button.
+    css('.radio-panel', [
+      css('&').styles(raw: {
+        'transition':
+            'filter 0.6s ease',
+      }),
+    ]),
+    css('.panel-off .panel-main').styles(raw: {
+      'filter': 'brightness(0.3) saturate(0.4)',
+      'transition': 'filter 0.6s ease, opacity 0.6s ease',
+      'pointer-events': 'none',
+      'opacity': '0.85',
+    }),
+    css('.panel-off .indicator-row').styles(raw: {
+      'opacity': '0.35',
+      'transition': 'opacity 0.6s ease',
+      'pointer-events': 'none',
+    }),
+    // ── LCD off-state ──
+    // When powered off the backlit LCD should read as fully dead:
+    // no amber gradient, no glow, no glitch animation, and all the
+    // digits/badges hidden. The dark brown-grey tone evokes an
+    // unpowered liquid-crystal panel under ambient light.
+    css('.panel-off .lcd').styles(raw: {
+      'background': '#1a1510',
+      'box-shadow':
+          'inset 0 2px 4px rgba(0,0,0,0.6), inset 0 -1px 2px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(0,0,0,0.6)',
+      'animation': 'none',
+      'transition': 'background 0.4s ease, box-shadow 0.4s ease',
+    }),
+    css('.panel-off .lcd::after').styles(raw: {
+      'opacity': '0',
+      'transition': 'opacity 0.4s ease',
+    }),
+    css(
+      '.panel-off .lcd-value, .panel-off .lcd-ghost, '
+          '.panel-off .lcd-fm, .panel-off .lcd-st',
+    ).styles(raw: {
+      'opacity': '0',
+      'transition': 'opacity 0.4s ease',
+    }),
+    // Base transitions so on→off AND off→on both animate. Must be
+    // written AFTER the base element rules to merge transitions with
+    // their original declarations (CSS `transition` is not additive —
+    // the last declaration wins wholesale, so we repeat existing
+    // animated properties here where needed).
+    css('.lcd-value').styles(raw: {
+      'transition':
+          'color 0.3s ease, text-shadow 0.3s ease, opacity 0.4s ease',
+    }),
+    css('.lcd-ghost').styles(raw: {
+      'transition': 'opacity 0.4s ease',
+    }),
+    css('.lcd-fm').styles(raw: {
+      'transition': 'opacity 0.4s ease',
+    }),
+    css('.panel-main').styles(raw: {
+      'transition': 'filter 0.6s ease, opacity 0.6s ease',
+    }),
+    css('.indicator-row').styles(raw: {
+      'transition': 'opacity 0.6s ease',
+    }),
     css('.brand').styles(
       fontFamily: const FontFamily.list([FontFamilies.monospace]),
       fontSize: Unit.pixels(9),

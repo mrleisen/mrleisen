@@ -24,11 +24,16 @@ class StationDisplay extends StatelessComponent {
   const StationDisplay({
     required this.frequency,
     required this.lang,
+    this.isPowered = true,
     super.key,
   });
 
   final double frequency;
   final Lang lang;
+
+  /// When false every panel collapses to opacity 0 and skips the
+  /// distortion animations so nothing runs behind the CRT-off overlay.
+  final bool isPowered;
 
   /// Identify which (if any) station's panel should be active. Stations
   /// sit >3 MHz apart, so at most one is ever within [stationTolerance]
@@ -53,7 +58,7 @@ class StationDisplay extends StatelessComponent {
       for (final s in stations)
         _stationPanel(
           station: s,
-          isVisible: visible?.callSign == s.callSign,
+          isVisible: isPowered && visible?.callSign == s.callSign,
           distance: (frequency - s.frequency).abs(),
           lang: lang,
         ),
@@ -72,7 +77,10 @@ class StationDisplay extends StatelessComponent {
     //   d ≥ 1.5        → panel hidden
     double opacity;
     double distortion;
-    if (distance <= stationLockRange) {
+    if (!isPowered) {
+      opacity = 0.0;
+      distortion = 0.0;
+    } else if (distance <= stationLockRange) {
       opacity = 1.0;
       distortion = 0.0;
     } else if (distance < stationTolerance) {

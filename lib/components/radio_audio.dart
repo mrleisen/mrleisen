@@ -8,6 +8,38 @@ import 'package:universal_web/web.dart' as web;
 
 import '../models/station.dart';
 
+/// `window.__radioAudioCtx` — the AudioContext created synchronously
+/// inside the power-button's click/touchend handler. Mobile browsers
+/// (iOS Safari, Android Chrome) only accept `resume()` as a user-
+/// initiated unlock when it's called in the direct DOM-handler
+/// callstack of a clicked element; document-level listeners do not
+/// qualify. We stash the context on `window` so the async audio-graph
+/// builder in [_RadioAudioState._waitForJsContext] can pick it up
+/// after the power-on state propagates through Jaspr without having
+/// to thread a reference through Dart closures.
+@JS('__radioAudioCtx')
+external JSAny? get _jsRadioCtx;
+@JS('__radioAudioCtx')
+external set _jsRadioCtx(JSAny? value);
+
+/// Synchronously creates the AudioContext and kicks `resume()`. Must
+/// be called from inside a real user-gesture handler attached to a
+/// UI element (e.g. the power button's click/touchend) — mobile
+/// browsers refuse to transition the context to `running` otherwise.
+/// Publishes the context on `window.__radioAudioCtx` so RadioAudio's
+/// [_RadioAudioState._waitForJsContext] can pick it up after power-on
+/// propagates through the component tree.
+void unlockAudioContext() {
+  if (_jsRadioCtx != null) return;
+  try {
+    final ctx = web.AudioContext();
+    ctx.resume();
+    _jsRadioCtx = ctx as JSAny;
+  } catch (e) {
+    print('AudioContext create/resume failed: $e');
+  }
+}
+
 /// Web-Audio engine that mimics a real FM radio mid-tuning.
 ///
 /// The graph is two crackly noise paths summed into a master static
@@ -30,17 +62,13 @@ import '../models/station.dart';
 ///   on a station the beat is 0 Hz (silence), 1 MHz away it whines at
 ///   2 kHz. That IS the heterodyne effect on a real superhet receiver.
 ///
-/// Initialisation runs inside a real user-gesture handler attached in
-/// [initState] so the browser autoplay policy is satisfied. We listen
-/// for `touchstart`, `pointerdown`, `click`, and `keydown` to cover
-/// iOS Safari + Android Chrome + desktop + keyboard users.
-///
-/// iOS Safari needs three things, all inside the gesture:
-///   1) the context created (webkit-prefixed on pre-14.5 Safari),
-///   2) `resume()` called immediately,
-///   3) a 1-sample silent buffer played to "unlock" the pipeline.
-/// The actual crackle / whistle sources start on a short delay so the
-/// context is fully running before we ask it to emit audible output.
+/// Audio unlock is gated behind a fullscreen "TAP TO TUNE IN" overlay
+/// installed in [initState]. A direct Dart-attached click/touchend
+/// handler on that overlay synchronously constructs an AudioContext
+/// and calls `resume()`, then publishes it to `window.__radioAudioCtx`
+/// for [_waitForJsContext] to pick up. Going through any document-
+/// level or Jaspr-synthesised event path causes mobile browsers to
+/// refuse the unlock.
 ///
 /// NOTE: deliberately NOT marked `@client`. The parent App is already a
 /// client island; nesting `@client` here generates a separate
@@ -50,6 +78,7 @@ class RadioAudio extends StatefulComponent {
     required this.frequency,
     required this.noiseLevel,
     required this.isTuning,
+    required this.isPowered,
     this.volume = 0.0,
     super.key,
   });
@@ -57,6 +86,11 @@ class RadioAudio extends StatefulComponent {
   final double frequency;
   final double noiseLevel;
   final bool isTuning;
+
+  /// Whether the radio is powered on. The audio graph is only built
+  /// once this flips to true — [unlockAudioContext] must have run in
+  /// the same user gesture that raised the flag.
+  final bool isPowered;
 
   /// Master volume [0.0 – 1.0]. Applied as a scalar multiplier to the
   /// final static + whistle gains. `0.0` fades everything to silence
@@ -69,7 +103,7 @@ class RadioAudio extends StatefulComponent {
 }
 
 class _RadioAudioState extends State<RadioAudio> {
-  // Lazily-built nodes — null until the first user gesture.
+  // Lazily-built nodes — null until the user taps the start overlay.
   web.AudioContext? _ctx;
   web.AudioBufferSourceNode? _noiseA;
   web.AudioBufferSourceNode? _noiseB;
@@ -81,29 +115,19 @@ class _RadioAudioState extends State<RadioAudio> {
   web.OscillatorNode? _whistle;
   web.GainNode? _whistleGain;
 
-  // One-shot autoplay-unlock listener.
-  JSFunction? _gestureListener;
-  bool _gestureFired = false;
   bool _sourcesStarted = false;
 
   // Guards _resumeAndApply against concurrent re-entry while an
-  // awaited resume() is still in flight.
+  // in-flight resume() is still being polled.
   bool _isResuming = false;
 
   // visibilitychange listener — mobile browsers suspend the
   // AudioContext when the tab/app backgrounds; we resume on return.
   JSFunction? _visibilityListener;
 
-  /// Event names we listen for to satisfy the first-gesture policy.
-  /// `touchstart` is what iOS Safari reliably treats as a user gesture
-  /// for audio unlock; `click` covers desktop; `pointerdown` and
-  /// `keydown` are belt-and-braces.
-  static const _unlockEvents = <String>[
-    'touchstart',
-    'pointerdown',
-    'click',
-    'keydown',
-  ];
+  // Tracks whether _waitForJsContext has been kicked off so we don't
+  // start a second poll loop if isPowered flips multiple times.
+  bool _initStarted = false;
 
   // ── tuning constants ──
 
@@ -141,14 +165,12 @@ class _RadioAudioState extends State<RadioAudio> {
     super.initState();
     if (!kIsWeb) return;
 
-    // One-shot autoplay-unlock. Capture phase + once: the handler runs
-    // before any other listener and the browser auto-removes it after
-    // it fires. We register on four event types so any first
-    // interaction unlocks audio on every platform we care about.
-    _gestureListener = _onFirstGesture.toJS;
-    final opts = web.AddEventListenerOptions(capture: true, once: true);
-    for (final ev in _unlockEvents) {
-      web.document.addEventListener(ev, _gestureListener, opts);
+    // If the parent somehow mounted us already-powered (e.g. state
+    // persistence), kick off init immediately. Normally power-on
+    // arrives later via didUpdateComponent.
+    if (component.isPowered) {
+      _initStarted = true;
+      _waitForJsContext();
     }
 
     _visibilityListener = _onVisibilityChange.toJS;
@@ -158,18 +180,18 @@ class _RadioAudioState extends State<RadioAudio> {
   @override
   void didUpdateComponent(RadioAudio oldComponent) {
     super.didUpdateComponent(oldComponent);
-    if (!kIsWeb || _ctx == null) return;
-    _applyState();
+    if (!kIsWeb) return;
+    if (component.isPowered && !_initStarted) {
+      _initStarted = true;
+      _waitForJsContext();
+      return;
+    }
+    if (_ctx != null) _applyState();
   }
 
   @override
   void dispose() {
     if (kIsWeb) {
-      if (!_gestureFired && _gestureListener != null) {
-        for (final ev in _unlockEvents) {
-          web.document.removeEventListener(ev, _gestureListener);
-        }
-      }
       if (_visibilityListener != null) {
         web.document
             .removeEventListener('visibilitychange', _visibilityListener);
@@ -190,63 +212,49 @@ class _RadioAudioState extends State<RadioAudio> {
     super.dispose();
   }
 
-  // ── one-shot autoplay unlock ──
-
-  void _onFirstGesture(web.Event _) {
-    if (_gestureFired || !mounted) return;
-    _gestureFired = true;
-    if (_gestureListener != null) {
-      for (final ev in _unlockEvents) {
-        web.document.removeEventListener(ev, _gestureListener);
-      }
-    }
-    _initAudio();
-  }
-
   // ── audio graph construction ──
 
-  /// Creates an AudioContext, preferring the standard constructor and
-  /// falling back to the webkit-prefixed one for legacy iOS Safari.
-  /// Returns `null` if neither works.
-  web.AudioContext? _createContext() {
-    try {
-      return web.AudioContext();
-    } catch (_) {
-      // Fall through to webkit fallback.
+  /// Polls `window.__radioAudioCtx` every 50 ms waiting for the tap
+  /// overlay to publish a context. Once found, builds the Dart-side
+  /// graph, starts the sources, and hands off to [_applyState]. The
+  /// poll limit is deliberately generous — the overlay blocks all
+  /// interaction until the user taps, so a long wait is normal.
+  Future<void> _waitForJsContext() async {
+    web.AudioContext? ctx;
+    // 600 × 50 ms = 30 s. Past that the session is effectively dead.
+    for (var i = 0; i < 600; i++) {
+      if (!mounted) return;
+      final raw = _jsRadioCtx;
+      if (raw != null) {
+        ctx = raw as web.AudioContext;
+        break;
+      }
+      await Future.delayed(const Duration(milliseconds: 50));
     }
-    try {
-      // `_WebkitAudioContext` is an extension type over JSObject bound
-      // to `window.webkitAudioContext`. If that property is missing the
-      // constructor call throws and we return null.
-      final raw = _WebkitAudioContext() as JSObject;
-      return raw as web.AudioContext;
-    } catch (_) {
-      return null;
-    }
-  }
-
-  Future<void> _initAudio() async {
-    final ctx = _createContext();
-    if (ctx == null) return;
+    if (!mounted || ctx == null) return;
     _ctx = ctx;
 
-    // iOS Safari / Android Chrome unlock sequence — must run inside the
-    // user gesture and must AWAIT the resume promise: prior versions
-    // treated resume() as synchronous and proceeded to start sources
-    // while the context was still 'suspended', producing silence on
-    // mobile. AudioContext.resume() returns a JS Promise — .toDart
-    // converts it to a Dart Future we can await.
-    try {
-      await ctx.resume().toDart;
-    } catch (e) {
-      print('AudioContext resume failed: $e');
+    // Belt-and-suspenders: if the context got re-suspended between the
+    // tap handler and our pickup, ask politely to resume again.
+    if (ctx.state == 'suspended') {
+      try {
+        ctx.resume();
+      } catch (e) {
+        print('AudioContext resume failed: $e');
+      }
     }
-    if (!mounted || _ctx == null) return;
 
-    // Canonical iOS unlock buffer + graph build happen only after the
-    // context has actually transitioned to 'running'.
     _playSilentUnlockBuffer(ctx);
     _buildGraph(ctx);
+
+    // Poll for running state before starting sources — up to 30 ×
+    // 50 ms = 1.5 s.
+    for (var i = 0; i < 30; i++) {
+      if (!mounted || _ctx == null) return;
+      if (ctx.state == 'running') break;
+      await Future.delayed(const Duration(milliseconds: 50));
+    }
+    if (!mounted || _ctx == null) return;
 
     try {
       _noiseA?.start();
@@ -274,7 +282,7 @@ class _RadioAudioState extends State<RadioAudio> {
   }
 
   /// Constructs the noise + whistle graph. Sources are NOT started
-  /// here — see [_initAudio] for the delayed start.
+  /// here — see [_waitForJsContext] for the delayed start.
   void _buildGraph(web.AudioContext ctx) {
     // Two independent sparse-noise buffers. Different seeds + different
     // sparsity densities so the crackles never line up (which would
@@ -366,19 +374,29 @@ class _RadioAudioState extends State<RadioAudio> {
 
   // ── per-frame parameter updates ──
 
-  /// Awaited resume + re-apply. Used by [_applyState] when the context
-  /// is detected as suspended, and by the visibilitychange listener
-  /// when the tab returns to the foreground. [_isResuming] prevents
-  /// concurrent callers from stacking resume() promises.
+  /// Fire-and-forget resume + re-apply. Used by [_applyState] when the
+  /// context is detected as suspended, and by the visibilitychange
+  /// listener when the tab returns to the foreground. [_isResuming]
+  /// prevents concurrent callers from stacking resume() promises.
   Future<void> _resumeAndApply() async {
     if (_isResuming) return;
     final ctx = _ctx;
     if (ctx == null) return;
     _isResuming = true;
     try {
-      await ctx.resume().toDart;
+      ctx.resume();
     } catch (e) {
       print('AudioContext resume failed: $e');
+    }
+
+    // Poll for running state — up to 10 × 50 ms = 500 ms.
+    for (var i = 0; i < 10; i++) {
+      if (!mounted || _ctx == null) {
+        _isResuming = false;
+        return;
+      }
+      if (ctx.state == 'running') break;
+      await Future.delayed(const Duration(milliseconds: 50));
     }
     _isResuming = false;
     if (!mounted || _ctx == null) return;
@@ -416,6 +434,14 @@ class _RadioAudioState extends State<RadioAudio> {
     final noise = component.noiseLevel;
     final tuning = component.isTuning;
     final volume = component.volume.clamp(0.0, 1.0);
+
+    // Powered off — fade everything to silence. The graph stays wired
+    // so power-on restores smoothly without rebuilding nodes.
+    if (!component.isPowered) {
+      _ramp(_staticGain!.gain, 0, now, _silenceRamp);
+      _ramp(_whistleGain!.gain, 0, now, _silenceRamp);
+      return;
+    }
 
     // Volume 0 → fade everything to silence over _silenceRamp and
     // short-circuit the rest of the scheduling. The audio graph is
@@ -525,12 +551,4 @@ class _RadioAudioState extends State<RadioAudio> {
       [],
     );
   }
-}
-
-/// Legacy iOS Safari (< 14.5) exposes the AudioContext constructor as
-/// `window.webkitAudioContext`. Modern browsers leave it undefined, so
-/// the factory call throws — handled by the caller's try/catch.
-@JS('webkitAudioContext')
-extension type _WebkitAudioContext._(JSObject _) implements JSObject {
-  external factory _WebkitAudioContext();
 }
