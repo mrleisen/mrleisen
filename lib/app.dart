@@ -221,6 +221,7 @@ class AppState extends State<App> {
         signalStrength: _signalStrength,
         activeStation: _activeStation,
         nearestStation: _nearestStation,
+        isPowered: _isPowered,
       ),
 
       // Language toggle (top-right).

@@ -307,6 +307,15 @@ void main() {
         '0%, 100%': Styles(opacity: 0.25),
         '50%': Styles(opacity: 0.55),
       }),
+      // Keyframe: signal-scan
+      // Per-bar pulse used for the "searching for signal" animation on
+      // the signal-strength meter. Each bar gets a staggered delay so
+      // the group reads as a left→right sweep.
+      css.keyframes('signal-scan', {
+        '0%': Styles(opacity: 0.2),
+        '50%': Styles(opacity: 1),
+        '100%': Styles(opacity: 0.2),
+      }),
       // Keyframe: CRT turn-on
       // A thin bright horizontal line expands to fill the screen, then
       // fades from white to transparent — classic cathode-ray pickup.
