@@ -278,23 +278,25 @@ class RadioDialState extends State<RadioDial> {
         // Top bevel highlight (purely cosmetic).
         div(classes: 'panel-bevel-top', []),
 
-        // Header row: brand + power + indicators.
+        // Header row: brand on the left, power rocker + indicators on
+        // the right. The rocker sits inside `.indicator-row` so it
+        // shares the same baseline as the FM/AM/ST/MONO pills.
         div(classes: 'panel-header', [
           span(classes: 'brand', [text('RADIO')]),
-          div(
-            classes: 'power-rocker${powered ? ' power-on' : ''}',
-            events: {'click': _onPowerTap, 'touchend': _onPowerTap},
-            attributes: {
-              'role': 'switch',
-              'aria-label': 'Power',
-              'aria-checked': powered ? 'true' : 'false',
-            },
-            [
-              span(classes: 'rocker-half rocker-on', [text('ON')]),
-              span(classes: 'rocker-half rocker-off', [text('OFF')]),
-            ],
-          ),
           div(classes: 'indicator-row', [
+            div(
+              classes: 'power-rocker${powered ? ' power-on' : ''}',
+              events: {'click': _onPowerTap, 'touchend': _onPowerTap},
+              attributes: {
+                'role': 'switch',
+                'aria-label': 'Power',
+                'aria-checked': powered ? 'true' : 'false',
+              },
+              [
+                span(classes: 'rocker-half rocker-on', [text('ON')]),
+                span(classes: 'rocker-half rocker-off', [text('OFF')]),
+              ],
+            ),
             _indicator('FM', active: powered),
             _indicator('AM'),
             _indicator('ST', active: powered && tuned),
@@ -328,7 +330,7 @@ class RadioDialState extends State<RadioDial> {
                   ),
                   div(
                     classes: 'knob-led'
-                        '${component.volume > 0 ? ' knob-led-on' : ''}',
+                        '${(powered && component.volume > 0) ? ' knob-led-on' : ''}',
                     [],
                   ),
                 ]),
@@ -576,6 +578,11 @@ class RadioDialState extends State<RadioDial> {
       'border-left': '1px solid rgba(0,0,0,0.55)',
       'box-shadow':
           'inset 1px 0 0 rgba(255,255,255,0.04), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.3)',
+    }),
+    // Visually separate the rocker from the FM/AM/ST/MONO pills when
+    // they share the indicator row.
+    css('.indicator-row .power-rocker').styles(raw: {
+      'margin-right': '4px',
     }),
     // Pressed (lit) half styling — a single rule reused for both
     // states via compound selectors below.
