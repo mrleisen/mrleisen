@@ -174,9 +174,8 @@ class StationDisplay extends StatelessComponent {
         return _nftPanel(s, lang);
       case 'PNK':
         return _pnkPanel(s, lang);
-      default:
-        return _classifiedPanel(s, lang);
     }
+    return div([]);
   }
 
   /// Uniform station label ("FM 95.7 — decoded transmission" /
@@ -262,24 +261,27 @@ class StationDisplay extends StatelessComponent {
     );
   }
 
-  Component _classifiedPanel(Station s, Lang lang) {
+  Component _itnwPanel(Station s, Lang lang) {
+    final subtitle = lang == Lang.es
+        ? 'Canal de YouTube — audio inmersivo'
+        : 'YouTube channel — immersive audio';
     final body = lang == Lang.es
-        ? 'Esta frecuencia aún no ha sido decodificada.'
-        : 'This frequency has not been decoded yet.';
-    return div(classes: 'panel-shell', [
-      div(classes: 'panel-label', [text(_stationLabel(s, lang))]),
-      // Glitched title — re-uses the existing `glitch` / `glitch-alt`
-      // keyframes from main.server.dart.
-      div(classes: 'glitch-title-wrapper', [
-        h2(classes: 'panel-title glitch-title', [text('???')]),
-        h2(
-          classes: 'panel-title glitch-title glitch-title-alt',
-          attributes: {'aria-hidden': 'true'},
-          [text('???')],
-        ),
-      ]),
-      p(classes: 'panel-body', [text(body)]),
-    ]);
+        ? 'Exploraciones sonoras inmersivas de realidades imaginadas. '
+            'Paisajes en capas, texturas narrativas y experimentos sónicos.'
+        : 'Immersive audio explorations of imagined realities. '
+            'Layered soundscapes, narrative textures, and sonic experiments.';
+    return _panelShell(
+      color: s.color,
+      label: _stationLabel(s, lang),
+      title: 'In This New World',
+      children: [
+        div(classes: 'panel-subtitle', [text(subtitle)]),
+        p(classes: 'panel-body', [text(body)]),
+        div(classes: 'pill-row', [
+          _pill('YouTube', href: 'https://www.youtube.com/@InThisNewWorld'),
+        ]),
+      ],
+    );
   }
 
   // ── AM idea-stage panels (lo-fi shell) ──
@@ -304,16 +306,6 @@ class StationDisplay extends StatelessComponent {
         div(classes: 'pill-row', [_pill('SoundCloud', href: href)]),
     ]);
   }
-
-  Component _itnwPanel(Station s, Lang lang) => _amPanel(
-        s: s,
-        lang: lang,
-        title: 'ITNW Machine',
-        subtitle: 'In This New World',
-        body: lang == Lang.es
-            ? 'Exploración sonora inmersiva de realidades imaginadas'
-            : 'Immersive audio exploration of imagined realities',
-      );
 
   Component _bblPanel(Station s, Lang lang) => _amPanel(
         s: s,
@@ -490,6 +482,27 @@ class StationDisplay extends StatelessComponent {
                 '0 0 16px var(--sc-glow-dim, rgba(232,160,53,0.15)), '
                 'calc(var(--distortion, 0) * 2px) 0 rgba(255,0,0,0.55), '
                 'calc(var(--distortion, 0) * -2px) 0 rgba(0,255,255,0.55)',
+      },
+    ),
+
+    // Subtitle — small uppercase descriptor sitting under the title.
+    // Uses the same letterspaced mono treatment as .panel-label but a
+    // touch less dim so it reads as a caption rather than metadata.
+    css('.panel-subtitle').styles(
+      fontFamily: const FontFamily.list([
+        FontFamily('IBM Plex Mono'),
+        FontFamilies.monospace,
+      ]),
+      fontSize: Unit.pixels(11),
+      fontWeight: FontWeight.w500,
+      letterSpacing: 0.3.em,
+      textTransform: TextTransform.upperCase,
+      raw: {
+        'color':
+            'color-mix(in srgb, var(--sc, #E8A035) 80%, #cfc9b8)',
+        'opacity': '0.8',
+        'text-shadow':
+            '0 0 3px var(--sc-glow, rgba(232,160,53,0.3))',
       },
     ),
 
@@ -707,23 +720,6 @@ class StationDisplay extends StatelessComponent {
         'line-height': '1.55',
         'margin': '0',
         'text-align': 'center',
-      },
-    ),
-
-    // Glitch title (used by the "???" station).
-    css('.glitch-title-wrapper').styles(
-      position: Position.relative(),
-      display: Display.inlineBlock,
-    ),
-    css('.glitch-title').styles(
-      raw: {'animation': 'glitch 4s infinite'},
-    ),
-    css('.glitch-title-alt').styles(
-      position: Position.absolute(top: Unit.zero, left: Unit.zero),
-      width: 100.percent,
-      raw: {
-        'animation': 'glitch-alt 4s infinite 200ms',
-        'opacity': '0.8',
       },
     ),
 
