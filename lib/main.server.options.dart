@@ -33,12 +33,12 @@ ServerOptions get defaultServerOptions => ServerOptions(
   clientId: 'main.client.dart.js',
   clients: {_app.App: ClientTarget<_app.App>('app')},
   styles: () => [
+    ..._app.AppState.styles,
     ..._radio_dial.RadioDialState.styles,
     ..._scanlines.Scanlines.styles,
     ..._signal_bars.SignalBars.styles,
     ..._static_noise.StaticNoise.styles,
     ..._station_display.StationDisplay.styles,
     ..._vignette.Vignette.styles,
-    ..._app.AppState.styles,
   ],
 );
