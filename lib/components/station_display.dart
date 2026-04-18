@@ -23,27 +23,30 @@ enum Lang { es, en }
 class StationDisplay extends StatelessComponent {
   const StationDisplay({
     required this.frequency,
+    required this.band,
     required this.lang,
     this.isPowered = true,
     super.key,
   });
 
   final double frequency;
+  final Band band;
   final Lang lang;
 
   /// When false every panel collapses to opacity 0 and skips the
   /// distortion animations so nothing runs behind the CRT-off overlay.
   final bool isPowered;
 
-  /// Identify which (if any) station's panel should be active. Stations
-  /// sit >3 MHz apart, so at most one is ever within [stationTolerance]
-  /// of the dial.
+  /// Identify which (if any) station's panel should be active on the
+  /// active band. Stations within a band sit far enough apart that at
+  /// most one is ever inside [BandConfig.tolerance] of the dial.
   Station? _pickVisible() {
+    final cfg = configFor(band);
     Station? best;
     var bestDist = double.infinity;
-    for (final s in stations) {
+    for (final s in stationsFor(band)) {
       final d = (frequency - s.frequency).abs();
-      if (d < bestDist && d < stationTolerance) {
+      if (d < bestDist && d < cfg.tolerance) {
         bestDist = d;
         best = s;
       }
@@ -55,7 +58,10 @@ class StationDisplay extends StatelessComponent {
   Component build(BuildContext context) {
     final visible = _pickVisible();
     return div(classes: 'station-display', [
-      for (final s in stations)
+      // Only render panels for stations on the active band — switching
+      // bands mounts a fresh set of panels, keeping the visibility
+      // transition logic per-panel simple.
+      for (final s in stationsFor(band))
         _stationPanel(
           station: s,
           isVisible: isPowered && visible?.callSign == s.callSign,
@@ -72,20 +78,20 @@ class StationDisplay extends StatelessComponent {
     required Lang lang,
   }) {
     // Opacity + distortion curves:
-    //   d ≤ 0.2        → opacity 1.0, distortion 0 (clean lock)
-    //   0.2 < d < 1.5  → opacity 1.0→0.3, distortion 0→1 (glitch zone)
-    //   d ≥ 1.5        → panel hidden
+    //   d ≤ lockRange   → opacity 1.0, distortion 0 (clean lock)
+    //   d  <  tolerance → opacity 1.0→0.3, distortion 0→1 (glitch zone)
+    //   d ≥ tolerance   → panel hidden
+    final cfg = configFor(station.band);
     double opacity;
     double distortion;
     if (!isPowered) {
       opacity = 0.0;
       distortion = 0.0;
-    } else if (distance <= stationLockRange) {
+    } else if (distance <= cfg.lockRange) {
       opacity = 1.0;
       distortion = 0.0;
-    } else if (distance < stationTolerance) {
-      final t = (distance - stationLockRange) /
-          (stationTolerance - stationLockRange);
+    } else if (distance < cfg.tolerance) {
+      final t = (distance - cfg.lockRange) / (cfg.tolerance - cfg.lockRange);
       opacity = 1.0 - t * 0.7; // 1.0 → 0.3
       distortion = t; // 0 → 1
     } else {
@@ -110,8 +116,9 @@ class StationDisplay extends StatelessComponent {
     final scGlowDim = '${sc}26'; // ~15% alpha — soft halo
 
     return div(
-      classes:
-          'station-panel station-${station.callSign.toLowerCase()}${isVisible ? ' is-visible' : ''}',
+      classes: 'station-panel station-${station.callSign.toLowerCase()} '
+          'band-${station.band.name}'
+          '${isVisible ? ' is-visible' : ''}',
       styles: Styles(
         opacity: opacity,
         raw: {
@@ -153,19 +160,42 @@ class StationDisplay extends StatelessComponent {
         return _aboutPanel(s, lang);
       case 'UIS':
         return _detodouisPanel(s, lang);
-      case 'DEV':
-        return _projectsPanel(s, lang);
       case 'NET':
         return _connectPanel(s, lang);
+      case 'ITN':
+        return _itnwPanel(s, lang);
+      case 'BBL':
+        return _bblPanel(s, lang);
+      case 'TRP':
+        return _tropPanel(s, lang);
+      case 'AWS':
+        return _awsPanel(s, lang);
+      case 'NFT':
+        return _nftPanel(s, lang);
+      case 'PNK':
+        return _pnkPanel(s, lang);
       default:
         return _classifiedPanel(s, lang);
     }
   }
 
+  /// Uniform station label ("FM 95.7 — decoded transmission" /
+  /// "AM 620 — decoded transmission") derived from the station's band
+  /// and frequency. Keeps per-panel boilerplate minimal and ensures
+  /// labels update automatically if a station moves on the band plan.
+  String _stationLabel(Station s, Lang lang) {
+    final unit = s.band == Band.fm ? 'MHz' : 'kHz';
+    final freq = s.band == Band.fm
+        ? s.frequency.toStringAsFixed(1)
+        : s.frequency.toInt().toString();
+    final bandStr = s.band.name.toUpperCase();
+    final suffix = lang == Lang.es
+        ? 'transmisión decodificada'
+        : 'decoded transmission';
+    return '$bandStr $freq $unit — $suffix';
+  }
+
   Component _aboutPanel(Station s, Lang lang) {
-    final label = lang == Lang.es
-        ? 'FM 95.7 — transmisión decodificada'
-        : 'FM 95.7 — decoded transmission';
     final body = lang == Lang.es
         ? 'Ingeniero de software con más de 8 años de experiencia. '
             'Construyo cosas — como esta. Este sitio fue construido '
@@ -178,7 +208,7 @@ class StationDisplay extends StatelessComponent {
             'framework. No JavaScript frameworks. No external libraries.';
     return _panelShell(
       color: s.color,
-      label: label,
+      label: _stationLabel(s, lang),
       title: 'Rafael Camargo',
       children: [
         p(classes: 'panel-body', [text(body)]),
@@ -187,9 +217,6 @@ class StationDisplay extends StatelessComponent {
   }
 
   Component _detodouisPanel(Station s, Lang lang) {
-    final label = lang == Lang.es
-        ? 'FM 91.3 — señal interceptada'
-        : 'FM 91.3 — intercepted signal';
     final body = lang == Lang.es
         ? 'La app de la comunidad UIS. Puntajes de corte, profesores, '
             'materias, el Oráculo y más.'
@@ -197,7 +224,7 @@ class StationDisplay extends StatelessComponent {
             'Oracle and more.';
     return _panelShell(
       color: s.color,
-      label: label,
+      label: _stationLabel(s, lang),
       title: 'DeTodoUIS',
       children: [
         p(classes: 'panel-body', [text(body)]),
@@ -217,72 +244,11 @@ class StationDisplay extends StatelessComponent {
     );
   }
 
-  Component _projectsPanel(Station s, Lang lang) {
-    final label = lang == Lang.es
-        ? 'FM 87.5 — señales débiles'
-        : 'FM 87.5 — weak signals';
-    final title = lang == Lang.es ? 'Proyectos' : 'Projects';
-
-    final projects = <_ProjectEntry>[
-      _ProjectEntry(
-        name: 'ITNW Machine',
-        subtitle: 'In This New World',
-        descEn: 'Immersive audio exploration of imagined realities',
-        descEs: 'Exploración sonora inmersiva de realidades imaginadas',
-      ),
-      _ProjectEntry(
-        name: 'BBL',
-        subtitle: 'Boom Boom Lottery',
-        descEn: 'Lottery ticket manager for MiLoto',
-        descEs: 'Gestor de boletos de lotería para MiLoto',
-      ),
-      _ProjectEntry(
-        name: 'Tropelorio',
-        subtitle: 'Character universe',
-        descEn: 'A character and universe. Comics, games, apps.',
-        descEs: 'Un personaje y universo. Cómics, juegos, apps.',
-      ),
-      _ProjectEntry(
-        name: 'A Wired Spine',
-        subtitle: 'Music',
-        descEn: 'Original music tracks',
-        descEs: 'Tracks de música originales',
-        href: 'https://soundcloud.com/awiredspine',
-      ),
-      _ProjectEntry(
-        name: 'MyNFTGenerator',
-        subtitle: 'Concept',
-        descEn: 'NFT generation tool',
-        descEs: 'Herramienta de generación de NFTs',
-      ),
-      _ProjectEntry(
-        name: 'PunkLLM',
-        subtitle: 'Experiment',
-        descEn: 'An attempt to create a punk LLM',
-        descEs: 'Un intento de crear un LLM punk',
-      ),
-    ];
-
-    return _panelShell(
-      color: s.color,
-      label: label,
-      title: title,
-      children: [
-        div(classes: 'project-grid', [
-          for (final p in projects) _projectCard(p, s.color, lang),
-        ]),
-      ],
-    );
-  }
-
   Component _connectPanel(Station s, Lang lang) {
-    final label = lang == Lang.es
-        ? 'FM 99.1 — canales abiertos'
-        : 'FM 99.1 — open channels';
     final title = lang == Lang.es ? 'Conectar' : 'Connect';
     return _panelShell(
       color: s.color,
-      label: label,
+      label: _stationLabel(s, lang),
       title: title,
       children: [
         div(classes: 'pill-row', [
@@ -297,14 +263,11 @@ class StationDisplay extends StatelessComponent {
   }
 
   Component _classifiedPanel(Station s, Lang lang) {
-    final label = lang == Lang.es
-        ? 'FM 103.5 — frecuencia clasificada'
-        : 'FM 103.5 — classified frequency';
     final body = lang == Lang.es
         ? 'Esta frecuencia aún no ha sido decodificada.'
         : 'This frequency has not been decoded yet.';
     return div(classes: 'panel-shell', [
-      div(classes: 'panel-label', [text(label)]),
+      div(classes: 'panel-label', [text(_stationLabel(s, lang))]),
       // Glitched title — re-uses the existing `glitch` / `glitch-alt`
       // keyframes from main.server.dart.
       div(classes: 'glitch-title-wrapper', [
@@ -318,6 +281,90 @@ class StationDisplay extends StatelessComponent {
       p(classes: 'panel-body', [text(body)]),
     ]);
   }
+
+  // ── AM idea-stage panels (lo-fi shell) ──
+
+  /// Minimal AM panel: label, small title, subtitle, one-line
+  /// description, optional link pill. No grids, no cards — the layout
+  /// is intentionally bare to match the "unfinished idea" vibe.
+  Component _amPanel({
+    required Station s,
+    required Lang lang,
+    required String title,
+    required String subtitle,
+    required String body,
+    String? href,
+  }) {
+    return div(classes: 'am-shell', [
+      div(classes: 'panel-label am-label', [text(_stationLabel(s, lang))]),
+      h2(classes: 'am-title', [text(title)]),
+      div(classes: 'am-subtitle', [text(subtitle)]),
+      p(classes: 'am-body', [text(body)]),
+      if (href != null)
+        div(classes: 'pill-row', [_pill('SoundCloud', href: href)]),
+    ]);
+  }
+
+  Component _itnwPanel(Station s, Lang lang) => _amPanel(
+        s: s,
+        lang: lang,
+        title: 'ITNW Machine',
+        subtitle: 'In This New World',
+        body: lang == Lang.es
+            ? 'Exploración sonora inmersiva de realidades imaginadas'
+            : 'Immersive audio exploration of imagined realities',
+      );
+
+  Component _bblPanel(Station s, Lang lang) => _amPanel(
+        s: s,
+        lang: lang,
+        title: 'Boom Boom Lottery',
+        subtitle: 'Lottery ticket manager',
+        body: lang == Lang.es
+            ? 'Gestor de tiquetes de lotería para MiLoto'
+            : 'Lottery ticket manager for MiLoto',
+      );
+
+  Component _tropPanel(Station s, Lang lang) => _amPanel(
+        s: s,
+        lang: lang,
+        title: 'Tropelorio',
+        subtitle: 'Character universe',
+        body: lang == Lang.es
+            ? 'Un personaje y universo. Cómics, juegos, apps.'
+            : 'A character and universe. Comics, games, apps.',
+      );
+
+  Component _awsPanel(Station s, Lang lang) => _amPanel(
+        s: s,
+        lang: lang,
+        title: 'A Wired Spine',
+        subtitle: 'Music',
+        body: lang == Lang.es
+            ? 'Tracks musicales originales'
+            : 'Original music tracks',
+        href: 'https://soundcloud.com/awiredspine',
+      );
+
+  Component _nftPanel(Station s, Lang lang) => _amPanel(
+        s: s,
+        lang: lang,
+        title: 'MyNFTGenerator',
+        subtitle: 'Concept',
+        body: lang == Lang.es
+            ? 'Herramienta de generación de NFTs'
+            : 'NFT generation tool',
+      );
+
+  Component _pnkPanel(Station s, Lang lang) => _amPanel(
+        s: s,
+        lang: lang,
+        title: 'PunkLLM',
+        subtitle: 'Experiment',
+        body: lang == Lang.es
+            ? 'Un intento de crear un LLM punk'
+            : 'An attempt to create a punk LLM',
+      );
 
   // ── shared building blocks ──
 
@@ -350,26 +397,6 @@ class StationDisplay extends StatelessComponent {
       target: Target.blank,
       attributes: {'rel': 'noopener noreferrer'},
       [text(label)],
-    );
-  }
-
-  Component _projectCard(_ProjectEntry p, String color, Lang lang) {
-    final desc = lang == Lang.es ? p.descEs : p.descEn;
-    final children = <Component>[
-      div(classes: 'project-name', [text(p.name)]),
-      div(classes: 'project-subtitle', [text(p.subtitle)]),
-      div(classes: 'project-desc', [text(desc)]),
-    ];
-
-    if (p.href == null) {
-      return div(classes: 'project-card', children);
-    }
-    return a(
-      classes: 'project-card project-card-link',
-      href: p.href!,
-      target: Target.blank,
-      attributes: {'rel': 'noopener noreferrer'},
-      children,
     );
   }
 
@@ -579,93 +606,107 @@ class StationDisplay extends StatelessComponent {
       ),
     ]),
 
-    // Projects — responsive grid: 3 cols desktop, 2 cols mobile.
-    css('.project-grid').styles(
+    // ── AM lo-fi panel aesthetic ──
+    // AM is for idea-stage projects, so the panels are intentionally
+    // less polished than the FM ones: default body font (no Orbitron),
+    // lighter weights, dashed border, desaturated station-colour
+    // accent, and a subtle grain overlay.
+    css('.am-shell').styles(
+      position: Position.relative(),
+      display: Display.flex,
+      flexDirection: FlexDirection.column,
+      alignItems: AlignItems.center,
+      gap: Gap(row: 10.px),
+      padding: Padding.symmetric(horizontal: 22.px, vertical: 18.px),
+      maxWidth: 420.px,
+      raw: {
+        'margin': '0 auto',
+        'border': '1px dashed rgba(255,255,255,0.10)',
+        'border-color':
+            'color-mix(in srgb, var(--sc, #888) 35%, rgba(255,255,255,0.10))',
+        'border-radius': '3px',
+        'background': 'rgba(10, 10, 14, 0.4)',
+        'overflow': 'hidden',
+      },
+    ),
+    // Grain overlay via a repeating inline SVG noise filter, stacked
+    // at ~10% opacity. Sits above the background but below content.
+    css('.am-shell::before').styles(
+      position: Position.absolute(
+        top: Unit.zero,
+        left: Unit.zero,
+      ),
       width: 100.percent,
+      height: 100.percent,
+      pointerEvents: PointerEvents.none,
       raw: {
-        'display': 'grid',
-        'grid-template-columns': 'repeat(3, minmax(0, 1fr))',
-        'gap': '10px',
+        'content': '""',
+        'background':
+            'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'120\' height=\'120\'><filter id=\'n\'><feTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'2\' stitchTiles=\'stitch\'/><feColorMatrix values=\'0 0 0 0 0.7  0 0 0 0 0.65  0 0 0 0 0.55  0 0 0 0.6 0\'/></filter><rect width=\'100%\' height=\'100%\' filter=\'url(%23n)\'/></svg>")',
+        'opacity': '0.10',
+        'mix-blend-mode': 'screen',
       },
     ),
-    // Project cards look like debossed sections milled into the
-    // stereo faceplate: dark recessed body, inset shadow for the
-    // depth, station-colour title, monospace description.
-    css('.project-card', [
-      css('&').styles(
-        padding: Padding.symmetric(horizontal: 14.px, vertical: 11.px),
-        textDecoration: const TextDecoration(line: TextDecorationLine.none),
-        raw: {
-          'border': '1px solid rgba(0,0,0,0.65)',
-          'border-radius': '5px',
-          'background':
-              'linear-gradient(180deg, #0b0b0e 0%, #0d0d11 100%)',
-          'box-shadow':
-              'inset 0 1px 2px rgba(0,0,0,0.7), '
-                  'inset 0 -1px 0 rgba(255,255,255,0.03), '
-                  '0 1px 0 rgba(255,255,255,0.04)',
-          'text-align': 'left',
-          'display': 'block',
-          'color': 'inherit',
-          'transition': 'border-color 0.2s ease, box-shadow 0.2s ease, '
-              'transform 0.2s ease',
-        },
-      ),
-      css('&.project-card-link').styles(cursor: Cursor.pointer),
-      css('&.project-card-link:hover').styles(
-        raw: {
-          'border-color': 'rgba(0,0,0,0.8)',
-          'box-shadow':
-              'inset 0 1px 2px rgba(0,0,0,0.7), '
-                  'inset 0 -1px 0 rgba(255,255,255,0.03), '
-                  '0 0 10px var(--sc-glow-dim, rgba(232,160,53,0.15))',
-          'transform': 'translateY(-1px)',
-        },
-      ),
-    ]),
-    // Name: station colour with faint glow, feels like a label milled
-    // into the faceplate and lit from behind.
-    css('.project-name').styles(
-      fontFamily: const FontFamily.list([
-        FontFamily('Orbitron'),
-        FontFamilies.sansSerif,
-      ]),
-      fontSize: Unit.pixels(12),
-      fontWeight: FontWeight.w700,
-      letterSpacing: 0.06.em,
-      textTransform: TextTransform.upperCase,
+    // Keep content above the grain overlay.
+    css('.am-shell > *').styles(
+      position: Position.relative(),
+      raw: {'z-index': '1'},
+    ),
+    // Label: dimmer than the FM version.
+    css('.am-label').styles(
       raw: {
-        'color': 'var(--sc, #E8A035)',
-        'text-shadow':
-            '0 0 3px var(--sc-glow, rgba(232,160,53,0.3))',
+        'opacity': '0.55',
+        'letter-spacing': '0.3em',
       },
     ),
-    css('.project-subtitle').styles(
+    // Title: default body font (NOT Orbitron), lighter weight,
+    // understated letter-spacing. The station colour carries through
+    // but the glow is dialled back.
+    css('.am-title').styles(
       fontFamily: const FontFamily.list([
         FontFamily('IBM Plex Mono'),
         FontFamilies.monospace,
       ]),
-      fontSize: Unit.pixels(10),
-      fontWeight: FontWeight.w400,
-      color: const Color('#b8a97c'),
+      fontSize: 1.4.rem,
+      fontWeight: FontWeight.w500,
+      letterSpacing: 0.02.em,
       raw: {
-        'margin-top': '3px',
+        'color':
+            'color-mix(in srgb, var(--sc, #E8A035) 85%, #cfc9b8)',
+        'opacity': '0.9',
+        'margin': '0',
+        'line-height': '1.2',
+        'text-shadow':
+            '0 0 4px color-mix(in srgb, var(--sc, #E8A035) 40%, transparent)',
+      },
+    ),
+    css('.am-subtitle').styles(
+      fontFamily: const FontFamily.list([
+        FontFamily('IBM Plex Mono'),
+        FontFamilies.monospace,
+      ]),
+      fontSize: Unit.pixels(11),
+      fontWeight: FontWeight.w300,
+      color: const Color('#a89a78'),
+      raw: {
         'opacity': '0.7',
         'letter-spacing': '0.04em',
+        'text-transform': 'uppercase',
       },
     ),
-    css('.project-desc').styles(
+    css('.am-body').styles(
       fontFamily: const FontFamily.list([
         FontFamily('IBM Plex Mono'),
         FontFamilies.monospace,
       ]),
-      fontSize: Unit.pixels(10),
-      color: const Color('#8a8570'),
+      fontSize: Unit.pixels(12),
+      fontWeight: FontWeight.w300,
+      color: const Color('#b8ac90'),
       raw: {
-        'margin-top': '7px',
-        'opacity': '0.75',
-        'line-height': '1.5',
-        'letter-spacing': '0.01em',
+        'opacity': '0.72',
+        'line-height': '1.55',
+        'margin': '0',
+        'text-align': 'center',
       },
     ),
 
@@ -707,36 +748,14 @@ class StationDisplay extends StatelessComponent {
         fontSize: Unit.pixels(11),
         padding: Padding.symmetric(horizontal: 14.px, vertical: 6.px),
       ),
-      // Projects: 2 columns instead of 3.
-      css('.project-grid').styles(
-        raw: {
-          'grid-template-columns': 'repeat(2, minmax(0, 1fr))',
-          'gap': '8px',
-        },
+      // AM panels tighten a touch on small screens.
+      css('.am-shell').styles(
+        padding: Padding.symmetric(horizontal: 16.px, vertical: 14.px),
+        maxWidth: 90.percent,
       ),
-      css('.project-card').styles(
-        padding: Padding.symmetric(horizontal: 12.px, vertical: 10.px),
-      ),
-      css('.project-name').styles(fontSize: Unit.pixels(12)),
-      css('.project-subtitle').styles(fontSize: Unit.pixels(10)),
-      css('.project-desc').styles(fontSize: Unit.pixels(9)),
+      css('.am-title').styles(fontSize: 1.15.rem),
+      css('.am-body').styles(fontSize: Unit.pixels(11)),
     ]),
   ];
 }
 
-/// Plain data class for a project card.
-class _ProjectEntry {
-  const _ProjectEntry({
-    required this.name,
-    required this.subtitle,
-    required this.descEn,
-    required this.descEs,
-    this.href,
-  });
-
-  final String name;
-  final String subtitle;
-  final String descEn;
-  final String descEs;
-  final String? href;
-}

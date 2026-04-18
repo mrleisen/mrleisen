@@ -27,12 +27,6 @@ extension type _DoublePointer._(JSObject _) implements JSObject {
 double _clientX(web.PointerEvent pe) => _DoublePointer(pe).clientX;
 double _clientY(web.PointerEvent pe) => _DoublePointer(pe).clientY;
 
-/// Pixels drawn per 1 MHz on the dial strip.
-const double _pxPerMhz = 60.0;
-
-/// Total width of the scrollable strip in pixels.
-const double _stripWidth = (maxFrequency - minFrequency) * _pxPerMhz;
-
 // Amber-LED palette — warm Pioneer/Kenwood segment colour. Matches the
 // text-shadow values below; change both together or the glow goes off.
 const String _lcdAmber = '#E8A035';
@@ -46,6 +40,7 @@ const String _lcdAmberDim = '#6d4a0e';
 class RadioDial extends StatefulComponent {
   const RadioDial({
     required this.frequency,
+    required this.band,
     required this.onFrequencyChanged,
     required this.isPowered,
     this.signalStrength = 0.0,
@@ -53,10 +48,12 @@ class RadioDial extends StatefulComponent {
     this.volume = 0.0,
     this.onVolumeChanged,
     this.onPowerToggle,
+    this.onBandToggle,
     super.key,
   });
 
   final double frequency;
+  final Band band;
   final ValueChanged<double> onFrequencyChanged;
   final double signalStrength;
   final Station? activeStation;
@@ -78,6 +75,10 @@ class RadioDial extends StatefulComponent {
   /// called synchronously just before this to satisfy mobile autoplay
   /// policy.
   final VoidCallback? onPowerToggle;
+
+  /// Fires when the user flips the FM/AM band rocker. No-op when the
+  /// radio is powered off.
+  final VoidCallback? onBandToggle;
 
   @override
   State<RadioDial> createState() => RadioDialState();
@@ -132,6 +133,11 @@ class RadioDialState extends State<RadioDial> {
   // --- helpers ---
 
   double get _freq => component.frequency;
+  BandConfig get _cfg => configFor(component.band);
+
+  /// Total width of the scrollable strip in pixels for the active band.
+  double get _stripWidth =>
+      ((_cfg.maxFreq - _cfg.minFreq) / _cfg.step) * _cfg.pxPerStep;
 
   /// Horizontal translation applied to `.dial-strip`.
   ///
@@ -141,10 +147,11 @@ class RadioDialState extends State<RadioDial> {
   /// frequency exactly on the needle, independent of the actual window
   /// width. This is what lets the dial stretch to fill whatever grid
   /// cell it lands in without the needle drifting off-tick.
-  double get _stripOffset => -((_freq - minFrequency) * _pxPerMhz);
+  double get _stripOffset =>
+      -((_freq - _cfg.minFreq) / _cfg.step) * _cfg.pxPerStep;
 
   double get _knobAngle {
-    return ((_freq - minFrequency) / (maxFrequency - minFrequency)) * 270 - 135;
+    return ((_freq - _cfg.minFreq) / (_cfg.maxFreq - _cfg.minFreq)) * 270 - 135;
   }
 
   /// Notch rotation for the volume knob: -135° at volume 0 (fully
@@ -152,8 +159,14 @@ class RadioDialState extends State<RadioDial> {
   double get _volAngle => component.volume * 270.0 - 135.0;
 
   void _setFrequency(double v) {
-    v = (v * 10).roundToDouble() / 10;
-    v = v.clamp(minFrequency, maxFrequency);
+    final cfg = _cfg;
+    if (cfg.step < 1.0) {
+      final scale = (1.0 / cfg.step).roundToDouble();
+      v = (v * scale).roundToDouble() / scale;
+    } else {
+      v = (v / cfg.step).roundToDouble() * cfg.step;
+    }
+    v = v.clamp(cfg.minFreq, cfg.maxFreq);
     component.onFrequencyChanged(v);
   }
 
@@ -172,7 +185,10 @@ class RadioDialState extends State<RadioDial> {
     if (!_draggingStrip) return;
     final pe = event as web.PointerEvent;
     final dx = _clientX(pe) - _dragStartX;
-    _setFrequency(_dragStartFreq - dx / _pxPerMhz);
+    // Strip pixels → frequency via pxPerStep: each step is
+    // `pxPerStep` pixels wide, so dx / pxPerStep = steps of drag.
+    final cfg = _cfg;
+    _setFrequency(_dragStartFreq - (dx / cfg.pxPerStep) * cfg.step);
   }
 
   void _onStripUp(web.Event event) {
@@ -197,7 +213,9 @@ class RadioDialState extends State<RadioDial> {
     if (!_draggingKnob) return;
     final pe = event as web.PointerEvent;
     final dy = _clientY(pe) - _dragStartY;
-    _setFrequency(_dragStartFreq - dy * 0.15);
+    // 1.5 steps per pixel keeps FM at the original 0.15 MHz/px feel
+    // and scales AM to 15 kHz/px.
+    _setFrequency(_dragStartFreq - dy * (_cfg.step * 1.5));
   }
 
   void _onKnobUp(web.Event event) {
@@ -287,11 +305,19 @@ class RadioDialState extends State<RadioDial> {
   }
 
   String _randomFreqString() {
-    final range = maxFrequency - minFrequency;
-    final v = minFrequency + _scrambleRng.nextDouble() * range;
-    // Match the display format: single decimal, same precision as the
-    // real tuner so the width is visually stable during scramble.
-    return ((v * 10).round() / 10).toStringAsFixed(1);
+    final cfg = _cfg;
+    final range = cfg.maxFreq - cfg.minFreq;
+    var v = cfg.minFreq + _scrambleRng.nextDouble() * range;
+    // Round to the band's native step so the digit count stays stable
+    // during the scramble.
+    if (cfg.step < 1.0) {
+      final scale = (1.0 / cfg.step).roundToDouble();
+      v = (v * scale).roundToDouble() / scale;
+      return v.toStringAsFixed(1);
+    } else {
+      v = (v / cfg.step).roundToDouble() * cfg.step;
+      return v.toInt().toString();
+    }
   }
 
   void _onPowerTap(web.Event event) {
@@ -309,6 +335,12 @@ class RadioDialState extends State<RadioDial> {
       unlockAudioContext();
     }
     component.onPowerToggle?.call();
+  }
+
+  void _onBandTap(web.Event event) {
+    if (!component.isPowered) return;
+    event.preventDefault();
+    component.onBandToggle?.call();
   }
 
   @override
@@ -336,6 +368,11 @@ class RadioDialState extends State<RadioDial> {
           _scrambleValue = null;
         });
       }
+    } else if (isPowered && oldComponent.band != component.band) {
+      // Band flip: scramble the LCD with the new band's values to sell
+      // the hand-off.
+      _triggerLcdGlitch();
+      _startScramble();
     }
   }
 
@@ -351,7 +388,8 @@ class RadioDialState extends State<RadioDial> {
     if (!component.isPowered) return;
     final we = event as web.WheelEvent;
     we.preventDefault();
-    final delta = we.deltaY > 0 ? 0.2 : -0.2;
+    final step = _cfg.step;
+    final delta = we.deltaY > 0 ? step * 2 : -step * 2;
     _setFrequency(_freq + delta);
   }
 
@@ -361,6 +399,8 @@ class RadioDialState extends State<RadioDial> {
   Component build(BuildContext context) {
     final tuned = component.activeStation != null;
     final powered = component.isPowered;
+    final band = component.band;
+    final isFm = band == Band.fm;
 
     return div(
       classes: 'radio-panel${powered ? '' : ' panel-off'}',
@@ -369,9 +409,10 @@ class RadioDialState extends State<RadioDial> {
         // Top bevel highlight (purely cosmetic).
         div(classes: 'panel-bevel-top', []),
 
-        // Header row: brand on the left, power rocker + indicators on
-        // the right. The rocker sits inside `.indicator-row` so it
-        // shares the same baseline as the FM/AM/ST/MONO pills.
+        // Header row: brand on the left, power rocker + band rocker +
+        // indicators on the right. Both rockers sit inside
+        // `.indicator-row` so they share the same baseline as the
+        // FM/AM/ST/MONO pills.
         div(classes: 'panel-header', [
           span(classes: 'brand', [text('RADIO')]),
           div(classes: 'indicator-row', [
@@ -388,8 +429,21 @@ class RadioDialState extends State<RadioDial> {
                 span(classes: 'rocker-half rocker-off', [text('OFF')]),
               ],
             ),
-            _indicator('FM', active: powered),
-            _indicator('AM'),
+            div(
+              classes: 'band-rocker band-${band.name}',
+              events: {'click': _onBandTap},
+              attributes: {
+                'role': 'switch',
+                'aria-label': 'Band',
+                'aria-checked': isFm ? 'false' : 'true',
+              },
+              [
+                span(classes: 'rocker-half rocker-fm', [text('FM')]),
+                span(classes: 'rocker-half rocker-am', [text('AM')]),
+              ],
+            ),
+            _indicator('FM', active: powered && isFm),
+            _indicator('AM', active: powered && !isFm),
             _indicator('ST', active: powered && tuned),
             _indicator('MONO'),
           ]),
@@ -444,16 +498,24 @@ class RadioDialState extends State<RadioDial> {
                 : null,
             [
             // Faded "ghost" segments behind the live digits, like the
-            // unlit cells on a real 7-segment LED panel. Uses `188.8`
-            // which lights every segment (once our font matches).
-            span(classes: 'lcd-ghost', [text('188.8')]),
+            // unlit cells on a real 7-segment LED panel. The ghost
+            // width matches the live value's digit count (3-digit AM
+            // needs an extra segment).
+            span(classes: 'lcd-ghost', [text(isFm ? '188.8' : '1888')]),
             span(
               classes: 'lcd-value',
-              [text(_scrambleValue ?? _freq.toStringAsFixed(1))],
+              [
+                text(
+                  _scrambleValue ??
+                      (isFm
+                          ? _freq.toStringAsFixed(1)
+                          : _freq.toInt().toString()),
+                ),
+              ],
             ),
-            // Right-side badges: always-on "FM" + station-lock "ST".
+            // Right-side badges: band indicator + station-lock "ST".
             div(classes: 'lcd-badges', [
-              span(classes: 'lcd-fm', [text('FM')]),
+              span(classes: 'lcd-fm', [text(isFm ? 'FM' : 'AM')]),
               span(
                 classes: 'lcd-st${tuned ? ' is-lit' : ''}',
                 [text('ST')],
@@ -528,21 +590,37 @@ class RadioDialState extends State<RadioDial> {
   // --- strip tick / marker generation ---
 
   List<Component> _buildStripChildren() {
+    final cfg = _cfg;
     final children = <Component>[];
 
-    final startTenth = (minFrequency * 10).round();
-    final endTenth = (maxFrequency * 10).round();
-    for (var t = startTenth; t <= endTenth; t += 2) {
-      final x = (t - startTenth) / 10.0 * _pxPerMhz;
-      final isMajor = t % 10 == 0;
+    // Unified step-based iteration. Majors land at whole frequency
+    // boundaries (FM: integer MHz, AM: multiples of 100 kHz), not at
+    // fixed strides from minFreq — minFreq itself rarely falls on one.
+    // FM thins minors to every 2nd step; AM draws every step.
+    final totalSteps = ((cfg.maxFreq - cfg.minFreq) / cfg.step).round();
+    final majorStep = cfg.step * 10;
+    final minorStride = component.band == Band.fm ? 2 : 1;
+
+    for (var i = 0; i <= totalSteps; i++) {
+      final freq = cfg.minFreq + i * cfg.step;
+      final majorMultiple = freq / majorStep;
+      final isMajor = (majorMultiple - majorMultiple.round()).abs() < 0.001;
+      if (!isMajor && i % minorStride != 0) continue;
+      final x = i * cfg.pxPerStep;
 
       if (isMajor) {
+        // FM labels show integer MHz (88, 89, …). AM labels are the
+        // frequency divided by 10 (600 kHz → "60", 1400 → "140"), the
+        // standard compact form on physical car-stereo AM dials.
+        final rawLabel = component.band == Band.fm
+            ? freq.round().toString()
+            : (freq / 10).round().toString();
         children.add(div(
           classes: 'tick tick-major',
           styles: Styles(
             position: Position.absolute(left: x.px, top: Unit.zero),
           ),
-          [span(classes: 'tick-label', [text('${t ~/ 10}')])],
+          [span(classes: 'tick-label', [text(rawLabel)])],
         ));
       } else {
         children.add(div(
@@ -613,13 +691,17 @@ class RadioDialState extends State<RadioDial> {
       gap: Gap(column: 10.px),
       raw: {'margin-bottom': '10px'},
     ),
-    // ── rocker power switch ──
+    // ── rocker switches (power + band) ──
     // Two-half molded-plastic rocker: the lit side reads as "pressed
     // down" (inset shadow, amber glyph), the other side as "raised"
     // (subtle highlight, grey). A faint divider separates the halves.
-    // Deliberately not an iOS pill — this is the chunky ON/OFF rocker
-    // you'd find on a 90s amp or power strip.
-    css('.power-rocker', [
+    // Deliberately not an iOS pill — this is the chunky rocker you'd
+    // find on a 90s amp or power strip.
+    //
+    // Shared shell for both rockers. The `pointer-events: auto`
+    // override is applied ONLY to `.power-rocker` below so the band
+    // rocker auto-locks with the rest of the panel when powered off.
+    css('.power-rocker, .band-rocker', [
       css('&').styles(
         position: Position.relative(),
         width: 52.px,
@@ -640,11 +722,13 @@ class RadioDialState extends State<RadioDial> {
           '-webkit-user-select': 'none',
           '-webkit-tap-highlight-color': 'transparent',
           'flex-shrink': '0',
-          'pointer-events': 'auto',
           'touch-action': 'manipulation',
         },
       ),
     ]),
+    // Power rocker stays interactive even when the panel is dimmed
+    // (powered off) — it's the only way back on.
+    css('.power-rocker').styles(raw: {'pointer-events': 'auto'}),
     css('.rocker-half', [
       css('&').styles(
         display: Display.flex,
@@ -673,16 +757,17 @@ class RadioDialState extends State<RadioDial> {
       'box-shadow':
           'inset 1px 0 0 rgba(255,255,255,0.04), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.3)',
     }),
-    // Visually separate the rocker from the FM/AM/ST/MONO pills when
-    // they share the indicator row.
-    css('.indicator-row .power-rocker').styles(raw: {
-      'margin-right': '4px',
-    }),
-    // Pressed (lit) half styling — a single rule reused for both
-    // states via compound selectors below.
+    // Visually separate the rockers from each other and from the
+    // FM/AM/ST/MONO pills in the indicator row.
+    css('.indicator-row .power-rocker, .indicator-row .band-rocker')
+        .styles(raw: {'margin-right': '4px'}),
+    // Pressed (lit) half styling — a single rule reused across both
+    // rockers via compound selectors.
     css(
       '.power-rocker:not(.power-on) .rocker-off, '
-          '.power-rocker.power-on .rocker-on',
+          '.power-rocker.power-on .rocker-on, '
+          '.band-rocker.band-fm .rocker-fm, '
+          '.band-rocker.band-am .rocker-am',
     ).styles(raw: {
       'background':
           'linear-gradient(to bottom, #0d0d0d 0%, #050505 100%)',
@@ -1317,7 +1402,12 @@ class RadioDialState extends State<RadioDial> {
       css('.panel-header').styles(
         raw: {'margin-bottom': '6px', 'justify-content': 'flex-end'},
       ),
-      css('.indicator-row .ind:nth-child(2), .indicator-row .ind:nth-child(4)')
+      // Hide the purely decorative ST / MONO pills on mobile — the
+      // FM/AM pills stay visible so the active band is always readable.
+      // Target by nth-of-type(span): rockers are divs, pills are spans,
+      // and the pills are the 1st–4th span children (FM, AM, ST, MONO).
+      css('.indicator-row .ind:nth-of-type(3), '
+              '.indicator-row .ind:nth-of-type(4)')
           .styles(display: Display.none),
       css('.indicator-row').styles(gap: Gap(column: 4.px)),
       css('.ind').styles(

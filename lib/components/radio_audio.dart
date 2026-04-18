@@ -76,6 +76,7 @@ void unlockAudioContext() {
 class RadioAudio extends StatefulComponent {
   const RadioAudio({
     required this.frequency,
+    required this.band,
     required this.noiseLevel,
     required this.isTuning,
     required this.isPowered,
@@ -84,6 +85,7 @@ class RadioAudio extends StatefulComponent {
   });
 
   final double frequency;
+  final Band band;
   final double noiseLevel;
   final bool isTuning;
 
@@ -131,12 +133,10 @@ class _RadioAudioState extends State<RadioAudio> {
 
   // ── tuning constants ──
 
-  /// Heterodyne whistle is audible within this many MHz of any station.
-  /// Matches the visual content-visibility range so the whistle starts
-  /// exactly when the distorted content begins fighting through.
-  static const double _whistleRangeMhz = 1.0;
-  /// Hz per MHz of detuning. 1 MHz off → 2000 Hz beat; 0 MHz → 0 Hz.
-  static const double _whistleHzPerMhz = 2000.0;
+  // Heterodyne whistle range/scale comes from the active band's
+  // BandConfig at runtime (FM: MHz × 2000, AM: kHz × 25) so the beat
+  // frequency tops out around 2 kHz for either band regardless of unit.
+
   /// Whistle peak amplitude (very thin, never loud — top of spec range).
   static const double _whistleCeiling = 0.09;
 
@@ -474,29 +474,30 @@ class _RadioAudioState extends State<RadioAudio> {
     }
 
     // ── 2) HETERODYNE whistle ──
-    // Distance to nearest station, in MHz. Lower = closer = lower beat
-    // frequency; exactly on a station = 0 Hz = silence.
+    // Distance to nearest station in the band's native unit (MHz on
+    // FM, kHz on AM). Lower = closer = lower beat frequency; exactly
+    // on a station = 0 Hz = silence.
     //
-    // The frequency dial rounds to 0.1 MHz steps, so `distMhz` is always
-    // a multiple of 0.1. The curve below is tuned so that the whistle
-    // is:
-    //   * clearly audible from ~1.5 MHz away (picks the user up early),
-    //   * at near-full amplitude from ~0.4 MHz in,
-    //   * muted only when the dial lands exactly on a station (distance
-    //     0.0) so the user hears the lock as a sudden silence.
-    final distMhz = _distanceToNearestStation(freq);
+    // The curve is tuned so the whistle is:
+    //   * clearly audible from the far edge of the tolerance window,
+    //   * at near-full amplitude from roughly 40% in,
+    //   * muted only when the dial lands exactly on a station so the
+    //     user hears the lock as a sudden silence.
+    final cfg = configFor(component.band);
+    final dist = _distanceToNearestStation(freq, component.band);
     double whistleHz = 0;
     double whistleTarget = 0;
-    if (tuning && distMhz < _whistleRangeMhz) {
-      whistleHz = distMhz * _whistleHzPerMhz;
+    if (tuning && dist < cfg.tolerance) {
+      whistleHz = dist * cfg.whistleScale;
       // Linear proximity, then a 0.6 exponent so the curve rises faster
       // at the far edge (more audible when approaching) and plateaus
       // near the station.
-      final proximity = 1.0 - (distMhz / _whistleRangeMhz);
+      final proximity = 1.0 - (dist / cfg.tolerance);
       final closeness = math.pow(proximity.clamp(0.0, 1.0), 0.6).toDouble();
-      // Mute exactly on station. 0.02 < 0.1 step so this only triggers
-      // at distMhz == 0.0.
-      final lockMute = (distMhz < 0.02) ? 0.0 : 1.0;
+      // Mute exactly on station. half-a-step threshold so only
+      // distance == 0 triggers (dial values are always multiples of
+      // cfg.step).
+      final lockMute = (dist < cfg.step / 2) ? 0.0 : 1.0;
       whistleTarget = _whistleCeiling * closeness * lockMute;
     }
 
@@ -516,11 +517,12 @@ class _RadioAudioState extends State<RadioAudio> {
 
   // ── helpers ──
 
-  /// Distance in MHz from [freq] to the nearest station, regardless of
-  /// the project-wide tolerance constant. Used to drive the whistle.
-  double _distanceToNearestStation(double freq) {
+  /// Distance from [freq] to the nearest station on [band], in the
+  /// band's native unit (MHz for FM, kHz for AM). Used to drive the
+  /// heterodyne whistle's frequency + amplitude.
+  double _distanceToNearestStation(double freq, Band band) {
     var best = double.infinity;
-    for (final s in stations) {
+    for (final s in stationsFor(band)) {
       final d = (freq - s.frequency).abs();
       if (d < best) best = d;
     }
