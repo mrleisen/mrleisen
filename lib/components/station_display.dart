@@ -195,10 +195,13 @@ class StationDisplay extends StatelessComponent {
   }
 
   Component _aboutPanel(Station s, Lang lang) {
+    final title = lang == Lang.es ? 'Bienvenido a mi Radio' : 'Welcome to my Radio';
     final intro = lang == Lang.es
-        ? 'Software engineer con 10+ años de experiencia, '
+        ? 'Hola, bienvenido a mi radio, mi nombre es Rafael Camargo. '
+            'Software engineer con 10+ años de experiencia, '
             'últimamente enfocado en construir experiencias crossplatform.'
-        : 'Software engineer with 10+ years of experience, '
+        : 'Hi, welcome to my radio, my name is Rafael Camargo. '
+            'Software engineer with 10+ years of experience, '
             'lately focused on building cross-platform experiences.';
     final note = lang == Lang.es
         ? 'Este sitio fue construido completamente en Dart, '
@@ -208,7 +211,7 @@ class StationDisplay extends StatelessComponent {
     return _panelShell(
       color: s.color,
       label: _stationLabel(s, lang),
-      title: 'Rafael Camargo',
+      title: title,
       children: [
         p(classes: 'panel-body', [text(intro)]),
         p(classes: 'panel-body', [text(note)]),
