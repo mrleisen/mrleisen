@@ -197,7 +197,7 @@ class StationDisplay extends StatelessComponent {
   Component _aboutPanel(Station s, Lang lang) {
     final body = lang == Lang.es
         ? 'Ingeniero de software con más de 8 años de experiencia. '
-            'Construyo cosas — como esta. Este sitio fue construido '
+            'Construyo cosas — como este sitio. Este sitio fue construido '
             'completamente en Dart, compilado a HTML estático con el '
             'framework Jaspr. Sin frameworks de JavaScript. '
             'Sin librerías externas.'
@@ -267,7 +267,7 @@ class StationDisplay extends StatelessComponent {
         : 'YouTube channel — immersive audio';
     final body = lang == Lang.es
         ? 'Exploraciones sonoras inmersivas de realidades imaginadas. '
-            'Paisajes en capas, texturas narrativas y experimentos sónicos.'
+            'Paisajes en capas, texturas narrativas y experimentos sonoros.'
         : 'Immersive audio explorations of imagined realities. '
             'Layered soundscapes, narrative textures, and sonic experiments.';
     return _panelShell(
@@ -286,7 +286,7 @@ class StationDisplay extends StatelessComponent {
 
   Component _tropPanel(Station s, Lang lang) {
     final subtitle = lang == Lang.es
-        ? 'Personaje y universo — en construcción'
+        ? 'Personaje y universo — en desarrollo'
         : 'Character and universe — a work in progress';
     final body = lang == Lang.es
         ? 'Un personaje y su universo. Cómics, juegos, apps — lo que la '
@@ -334,7 +334,7 @@ class StationDisplay extends StatelessComponent {
         s: s,
         lang: lang,
         title: 'Boom Boom Lottery',
-        subtitle: 'Lottery ticket manager',
+        subtitle: lang == Lang.es ? 'Gestor de loterías' : 'Lottery manager',
         body: lang == Lang.es
             ? 'Gestor de tiquetes de lotería para MiLoto'
             : 'Lottery ticket manager for MiLoto',
@@ -344,9 +344,10 @@ class StationDisplay extends StatelessComponent {
         s: s,
         lang: lang,
         title: 'A Wired Spine',
-        subtitle: 'Music',
+        subtitle:
+            lang == Lang.es ? 'Experimento musical' : 'Musical experiment',
         body: lang == Lang.es
-            ? 'Tracks musicales originales'
+            ? 'Canciones originales'
             : 'Original music tracks',
         href: 'https://soundcloud.com/awiredspine',
       );
@@ -355,7 +356,7 @@ class StationDisplay extends StatelessComponent {
         s: s,
         lang: lang,
         title: 'MyNFTGenerator',
-        subtitle: 'Concept',
+        subtitle: lang == Lang.es ? 'Concepto' : 'Concept',
         body: lang == Lang.es
             ? 'Herramienta de generación de NFTs'
             : 'NFT generation tool',
@@ -365,7 +366,7 @@ class StationDisplay extends StatelessComponent {
         s: s,
         lang: lang,
         title: 'PunkLLM',
-        subtitle: 'Experiment',
+        subtitle: lang == Lang.es ? 'Experimento' : 'Experiment',
         body: lang == Lang.es
             ? 'Un intento de crear un LLM punk'
             : 'An attempt to create a punk LLM',
