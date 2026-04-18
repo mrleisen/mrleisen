@@ -162,7 +162,7 @@ class StationDisplay extends StatelessComponent {
         return _detodouisPanel(s, lang);
       case 'NET':
         return _connectPanel(s, lang);
-      case 'ITN':
+      case 'ITNW':
         return _itnwPanel(s, lang);
       case 'BBL':
         return _bblPanel(s, lang);
@@ -224,10 +224,10 @@ class StationDisplay extends StatelessComponent {
 
   Component _detodouisPanel(Station s, Lang lang) {
     final body = lang == Lang.es
-        ? 'La app de la comunidad UIS. Puntajes de corte, profesores, '
-            'materias, el Oráculo y más.'
-        : 'The UIS community app. Cut scores, professors, subjects, the '
-            'Oracle and more.';
+        ? 'La app de la comunidad UIS desde 2015. Puntajes de corte, '
+            'profesores, materias, el Oráculo y más.'
+        : 'The UIS community app since 2015. Cut scores, professors, '
+            'subjects, the Oracle and more.';
     return _panelShell(
       color: s.color,
       label: _stationLabel(s, lang),
@@ -293,13 +293,13 @@ class StationDisplay extends StatelessComponent {
 
   Component _tropPanel(Station s, Lang lang) {
     final subtitle = lang == Lang.es
-        ? 'Personaje y universo — en desarrollo'
-        : 'Character and universe — a work in progress';
+        ? 'Universo narrativo en expansión'
+        : 'An expanding narrative universe';
     final body = lang == Lang.es
-        ? 'Un personaje y su universo. Cómics, juegos, apps — lo que la '
-            'historia quiera ser después.'
+        ? 'Un personaje y su universo. Cómics, juegos, apps — '
+            'creciendo desde 2017.'
         : 'A character and a universe of their own. Comics, games, apps — '
-            'whatever the story wants to become next.';
+            'growing since 2017.';
     return _panelShell(
       color: s.color,
       label: _stationLabel(s, lang),

@@ -79,7 +79,7 @@ class Station {
 
 const stations = <Station>[
   // ── FM: featured content. ──
-  Station(band: Band.fm, frequency: 89.5, callSign: 'ITN', color: '#4EBFB0'),
+  Station(band: Band.fm, frequency: 89.5, callSign: 'ITNW', color: '#4EBFB0'),
   Station(band: Band.fm, frequency: 93.6, callSign: 'NET', color: '#B085E0'),
   Station(band: Band.fm, frequency: 97.7, callSign: 'WHO', color: '#5BA4D9'),
   Station(band: Band.fm, frequency: 101.8, callSign: 'UIS', color: '#E8944A'),
