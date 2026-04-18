@@ -23,7 +23,13 @@ class App extends StatefulComponent {
 }
 
 class AppState extends State<App> {
-  double _frequency = 96.5; // default: between stations
+  // Active band + per-band tuned frequency. Switching bands restores
+  // whatever frequency the user last parked on in that band.
+  Band _band = Band.fm;
+  double _fmFreq = 96.5;
+  double _amFreq = 1100.0;
+
+  double get _frequency => _band == Band.fm ? _fmFreq : _amFreq;
 
   // Cached computations updated on every frequency change.
   double _signalStrength = 0.0;
@@ -102,12 +108,13 @@ class AppState extends State<App> {
 
   void _onKeyDown(web.Event event) {
     final ke = event as web.KeyboardEvent;
+    final step = configFor(_band).step;
     if (ke.key == 'ArrowRight') {
       ke.preventDefault();
-      _tune(_frequency + 0.1);
+      _tune(_frequency + step);
     } else if (ke.key == 'ArrowLeft') {
       ke.preventDefault();
-      _tune(_frequency - 0.1);
+      _tune(_frequency - step);
     }
   }
 
@@ -121,15 +128,25 @@ class AppState extends State<App> {
       if (target.closest('.radio-panel') != null) return; // handled by panel
     }
     we.preventDefault();
-    final delta = we.deltaY > 0 ? 0.2 : -0.2;
+    final step = configFor(_band).step;
+    final delta = we.deltaY > 0 ? step * 2 : -step * 2;
     _tune(_frequency + delta);
   }
 
   // --- frequency management ---
 
   void _tune(double newFreq) {
-    newFreq = (newFreq * 10).roundToDouble() / 10;
-    newFreq = newFreq.clamp(minFrequency, maxFrequency);
+    final cfg = configFor(_band);
+    // FM's step (0.1) isn't exactly representable in IEEE-754, so scale
+    // up before rounding to avoid drift; AM's integer step rounds
+    // cleanly via division.
+    if (cfg.step < 1.0) {
+      final scale = (1.0 / cfg.step).roundToDouble();
+      newFreq = (newFreq * scale).roundToDouble() / scale;
+    } else {
+      newFreq = (newFreq / cfg.step).roundToDouble() * cfg.step;
+    }
+    newFreq = newFreq.clamp(cfg.minFreq, cfg.maxFreq);
 
     // Mark the user as actively tuning regardless of whether the value
     // changed — clicking the dial without moving still counts as
@@ -138,7 +155,11 @@ class AppState extends State<App> {
 
     if (newFreq == _frequency) return;
     setState(() {
-      _frequency = newFreq;
+      if (_band == Band.fm) {
+        _fmFreq = newFreq;
+      } else {
+        _amFreq = newFreq;
+      }
       _recalc();
     });
   }
@@ -159,26 +180,41 @@ class AppState extends State<App> {
   }
 
   void _recalc() {
-    _signalStrength = getSignalStrength(_frequency);
-    _activeStation = getActiveStation(_frequency);
-    _nearestStation = getNearestStation(_frequency);
+    _signalStrength = getSignalStrength(_frequency, _band);
+    _activeStation = getActiveStation(_frequency, _band);
+    _nearestStation = getNearestStation(_frequency, _band);
     _noiseLevel = noiseFromSignal(_signalStrength);
+  }
+
+  void _toggleBand() {
+    if (!_isPowered) return;
+    setState(() {
+      _band = _band == Band.fm ? Band.am : Band.fm;
+      _recalc();
+    });
+    // Mark as tuning so the audio engine produces a short static burst
+    // while the dial rearranges.
+    _markTuning();
   }
 
   // --- build ---
 
   @override
   Component build(BuildContext context) {
-    // Idle title fades out as any station comes into content range
-    // (1.0 MHz). Distance ≥ 1.0 → fully visible; distance ≤ 0.7 →
-    // hidden. 0.3 MHz crossover buffer keeps the idle text from
-    // fighting the distorted station content in the overlap zone.
+    // Idle title fades out as any station comes into content range.
+    // Distance ≥ tolerance → fully visible; below that it fades in
+    // step with the rising station panel. The 30% hand-off buffer keeps
+    // the idle text from fighting the distorted station content in the
+    // overlap zone.
+    final cfg = configFor(_band);
     final nearestDist = _nearestStation != null
         ? (_frequency - _nearestStation!.frequency).abs()
         : double.infinity;
-    final distanceOpacity = nearestDist >= stationTolerance
+    final handoff = cfg.tolerance * 0.7;
+    final distanceOpacity = nearestDist >= cfg.tolerance
         ? 1.0
-        : ((nearestDist - 0.7) / 0.3).clamp(0.0, 1.0);
+        : ((nearestDist - handoff) / (cfg.tolerance - handoff))
+            .clamp(0.0, 1.0);
     // Power gates every upper layer — when off, the CRT overlay is
     // opaque black anyway, but we also zero out content opacity so
     // nothing animates or allocates behind the overlay.
@@ -199,6 +235,7 @@ class AppState extends State<App> {
       // Audio engine (renders no visible DOM).
       RadioAudio(
         frequency: _frequency,
+        band: _band,
         noiseLevel: _noiseLevel,
         isTuning: _isTuning,
         volume: _volume,
@@ -261,9 +298,10 @@ class AppState extends State<App> {
       ),
 
       // Decoded station content — fades in with distortion across the
-      // 1.5 MHz range, then locks cleanly inside ±0.2 MHz.
+      // band's tolerance window, then locks cleanly inside its lockRange.
       StationDisplay(
         frequency: _frequency,
+        band: _band,
         lang: _lang,
         isPowered: _isPowered,
       ),
@@ -271,7 +309,9 @@ class AppState extends State<App> {
       // Radio dial
       RadioDial(
         frequency: _frequency,
+        band: _band,
         onFrequencyChanged: _tune,
+        onBandToggle: _toggleBand,
         signalStrength: _signalStrength,
         activeStation: _activeStation,
         volume: _volume,
