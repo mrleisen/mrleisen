@@ -195,22 +195,29 @@ class StationDisplay extends StatelessComponent {
   }
 
   Component _aboutPanel(Station s, Lang lang) {
-    final body = lang == Lang.es
-        ? 'Ingeniero de software con más de 8 años de experiencia. '
-            'Construyo cosas — como este sitio. Este sitio fue construido '
-            'completamente en Dart, compilado a HTML estático con el '
-            'framework Jaspr. Sin frameworks de JavaScript. '
-            'Sin librerías externas.'
-        : 'Software engineer with 8+ years of experience. '
-            'I build things — like this. This site was built entirely '
-            'in Dart, compiled to static HTML through the Jaspr '
-            'framework. No JavaScript frameworks. No external libraries.';
+    final intro = lang == Lang.es
+        ? 'Software engineer con 10+ años de experiencia, '
+            'últimamente enfocado en construir experiencias crossplatform.'
+        : 'Software engineer with 10+ years of experience, '
+            'lately focused on building cross-platform experiences.';
+    final note = lang == Lang.es
+        ? 'Este sitio fue construido completamente en Dart, '
+            'compilado a HTML estático con Jaspr.'
+        : 'This site was built entirely in Dart, '
+            'compiled to static HTML with Jaspr.';
     return _panelShell(
       color: s.color,
       label: _stationLabel(s, lang),
       title: 'Rafael Camargo',
       children: [
-        p(classes: 'panel-body', [text(body)]),
+        p(classes: 'panel-body', [text(intro)]),
+        p(classes: 'panel-body', [text(note)]),
+        div(classes: 'pill-row', [
+          _pill(
+            'LinkedIn',
+            href: 'https://www.linkedin.com/in/rafael-c-a6132982/',
+          ),
+        ]),
       ],
     );
   }
