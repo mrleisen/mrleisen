@@ -79,16 +79,16 @@ class Station {
 
 const stations = <Station>[
   // ── FM: featured content. ──
-  Station(band: Band.fm, frequency: 90.5, callSign: 'WHO', color: '#5BA4D9'),
-  Station(band: Band.fm, frequency: 95.1, callSign: 'UIS', color: '#E8944A'),
-  Station(band: Band.fm, frequency: 99.7, callSign: 'NET', color: '#B085E0'),
-  Station(band: Band.fm, frequency: 104.3, callSign: 'ITN', color: '#4EBFB0'),
+  Station(band: Band.fm, frequency: 89.5, callSign: 'ITN', color: '#4EBFB0'),
+  Station(band: Band.fm, frequency: 93.6, callSign: 'NET', color: '#B085E0'),
+  Station(band: Band.fm, frequency: 97.7, callSign: 'WHO', color: '#5BA4D9'),
+  Station(band: Band.fm, frequency: 101.8, callSign: 'UIS', color: '#E8944A'),
+  Station(band: Band.fm, frequency: 105.9, callSign: 'TRP', color: '#E86A8A'),
   // ── AM: idea-stage projects, one per station. ──
-  Station(band: Band.am, frequency: 830.0, callSign: 'BBL', color: '#D4A843'),
-  Station(band: Band.am, frequency: 1040.0, callSign: 'TRP', color: '#E86A8A'),
-  Station(band: Band.am, frequency: 1250.0, callSign: 'AWS', color: '#A080D0'),
-  Station(band: Band.am, frequency: 1420.0, callSign: 'NFT', color: '#8BBF55'),
-  Station(band: Band.am, frequency: 1580.0, callSign: 'PNK', color: '#D05A8C'),
+  Station(band: Band.am, frequency: 640.0, callSign: 'BBL', color: '#D4A843'),
+  Station(band: Band.am, frequency: 960.0, callSign: 'AWS', color: '#A080D0'),
+  Station(band: Band.am, frequency: 1280.0, callSign: 'NFT', color: '#8BBF55'),
+  Station(band: Band.am, frequency: 1600.0, callSign: 'PNK', color: '#D05A8C'),
 ];
 
 Iterable<Station> stationsFor(Band band) =>

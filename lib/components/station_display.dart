@@ -284,6 +284,29 @@ class StationDisplay extends StatelessComponent {
     );
   }
 
+  Component _tropPanel(Station s, Lang lang) {
+    final subtitle = lang == Lang.es
+        ? 'Personaje y universo — en construcción'
+        : 'Character and universe — a work in progress';
+    final body = lang == Lang.es
+        ? 'Un personaje y su universo. Cómics, juegos, apps — lo que la '
+            'historia quiera ser después.'
+        : 'A character and a universe of their own. Comics, games, apps — '
+            'whatever the story wants to become next.';
+    return _panelShell(
+      color: s.color,
+      label: _stationLabel(s, lang),
+      title: 'Tropelorio',
+      children: [
+        div(classes: 'panel-subtitle', [text(subtitle)]),
+        p(classes: 'panel-body', [text(body)]),
+        div(classes: 'pill-row', [
+          _pill('Instagram', href: 'https://www.instagram.com/tropelorio'),
+        ]),
+      ],
+    );
+  }
+
   // ── AM idea-stage panels (lo-fi shell) ──
 
   /// Minimal AM panel: label, small title, subtitle, one-line
@@ -315,16 +338,6 @@ class StationDisplay extends StatelessComponent {
         body: lang == Lang.es
             ? 'Gestor de tiquetes de lotería para MiLoto'
             : 'Lottery ticket manager for MiLoto',
-      );
-
-  Component _tropPanel(Station s, Lang lang) => _amPanel(
-        s: s,
-        lang: lang,
-        title: 'Tropelorio',
-        subtitle: 'Character universe',
-        body: lang == Lang.es
-            ? 'Un personaje y universo. Cómics, juegos, apps.'
-            : 'A character and universe. Comics, games, apps.',
       );
 
   Component _awsPanel(Station s, Lang lang) => _amPanel(
