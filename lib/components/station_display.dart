@@ -235,6 +235,7 @@ class StationDisplay extends StatelessComponent {
       children: [
         p(classes: 'panel-body', [text(body)]),
         div(classes: 'pill-row', [
+          _pill('Web', href: 'https://detodouis.com'),
           _pill(
             'App Store',
             href:
