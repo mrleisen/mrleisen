@@ -197,10 +197,10 @@ class StationDisplay extends StatelessComponent {
   Component _aboutPanel(Station s, Lang lang) {
     final title = lang == Lang.es ? 'Bienvenido a mi Radio' : 'Welcome to my Radio';
     final intro = lang == Lang.es
-        ? 'Hola, bienvenido a mi radio, mi nombre es Rafael Camargo. '
+        ? 'Hola, mi nombre es Rafael Camargo. '
             'Software engineer con 10+ años de experiencia, '
             'últimamente enfocado en construir experiencias crossplatform.'
-        : 'Hi, welcome to my radio, my name is Rafael Camargo. '
+        : 'Hi, my name is Rafael Camargo. '
             'Software engineer with 10+ years of experience, '
             'lately focused on building cross-platform experiences.';
     final note = lang == Lang.es
