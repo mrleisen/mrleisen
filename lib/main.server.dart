@@ -234,79 +234,6 @@ void main() {
         '87%':  Styles(raw: {'opacity': '1'}),
         '100%': Styles(raw: {'opacity': '1'}),
       }),
-      // Keyframe: glitch effect
-      css.keyframes('glitch', {
-        '0%, 89%, 100%': Styles(
-          opacity: 0.9,
-          transform: Transform.translate(x: 0.px, y: 0.px),
-          textShadow: TextShadow.none,
-        ),
-        '90%': Styles(
-          textShadow: TextShadow.combine([
-            TextShadow(offsetX: 2.px, offsetY: 0.px, color: const Color('#0ff')),
-            TextShadow(offsetX: (-2).px, offsetY: 0.px, color: const Color('#f00')),
-          ]),
-          transform: Transform.translate(x: (-2).px, y: 1.px),
-        ),
-        '92%': Styles(
-          textShadow: TextShadow.combine([
-            TextShadow(offsetX: (-2).px, offsetY: 0.px, color: const Color('#0ff')),
-            TextShadow(offsetX: 2.px, offsetY: 0.px, color: const Color('#f00')),
-          ]),
-          transform: Transform.translate(x: 2.px, y: (-1).px),
-        ),
-        '94%': Styles(
-          opacity: 0.7,
-          textShadow: TextShadow.combine([
-            TextShadow(offsetX: 3.px, offsetY: 0.px, blur: 2.px, color: const Color('#0ff')),
-            TextShadow(offsetX: (-3).px, offsetY: 0.px, blur: 2.px, color: const Color('#f00')),
-          ]),
-          transform: Transform.translate(x: (-1).px, y: 2.px),
-        ),
-        '96%': Styles(
-          textShadow: TextShadow.combine([
-            TextShadow(offsetX: (-1).px, offsetY: 0.px, color: const Color('#0ff')),
-            TextShadow(offsetX: 1.px, offsetY: 0.px, color: const Color('#f00')),
-          ]),
-          transform: Transform.translate(x: 1.px, y: (-2).px),
-        ),
-        '98%': Styles(
-          opacity: 0.85,
-          textShadow: TextShadow.combine([
-            TextShadow(offsetX: 1.px, offsetY: 0.px, color: const Color('#0ff')),
-            TextShadow(offsetX: (-1).px, offsetY: 0.px, color: const Color('#f00')),
-          ]),
-          transform: Transform.translate(x: (-1).px, y: 0.px),
-        ),
-      }),
-      // Keyframe: glitch alternate (second layer, offset timing)
-      css.keyframes('glitch-alt', {
-        '0%, 85%, 100%': Styles(
-          transform: Transform.translate(x: 0.px, y: 0.px),
-          raw: {'clip-path': 'inset(0 0 0 0)'},
-        ),
-        '86%': Styles(
-          transform: Transform.translate(x: 3.px, y: 0.px),
-          raw: {'clip-path': 'inset(20% 0 60% 0)'},
-        ),
-        '88%': Styles(
-          transform: Transform.translate(x: (-3).px, y: 0.px),
-          raw: {'clip-path': 'inset(50% 0 10% 0)'},
-        ),
-        '90%': Styles(
-          transform: Transform.translate(x: 2.px, y: 0.px),
-          raw: {'clip-path': 'inset(10% 0 70% 0)'},
-        ),
-        '92%': Styles(
-          transform: Transform.translate(x: (-2).px, y: 0.px),
-          raw: {'clip-path': 'inset(40% 0 30% 0)'},
-        ),
-      }),
-      // Keyframe: pulse
-      css.keyframes('pulse', {
-        '0%, 100%': Styles(opacity: 0.25),
-        '50%': Styles(opacity: 0.55),
-      }),
       // Keyframe: signal-scan
       // Per-bar pulse used for the "searching for signal" animation on
       // the signal-strength meter. Each bar gets a staggered delay so
@@ -316,22 +243,74 @@ void main() {
         '50%': Styles(opacity: 1),
         '100%': Styles(opacity: 0.2),
       }),
+      // Keyframe: carrier-sweep
+      // Drives the idle-state band ribbon — a thin tracer moves across
+      // the range marker suggesting automated search. 100% offscreen
+      // right loops back to -10% for the next pass.
+      css.keyframes('carrier-sweep', {
+        '0%':   Styles(raw: {'left': '-10%', 'opacity': '0'}),
+        '8%':   Styles(raw: {'opacity': '0.9'}),
+        '92%':  Styles(raw: {'opacity': '0.9'}),
+        '100%': Styles(raw: {'left': '110%', 'opacity': '0'}),
+      }),
+      // Keyframe: carrier-breathe
+      // Slow ±opacity wobble on the CARRIER ABSENT label so the idle
+      // state doesn't sit completely static. The amplitude is modest —
+      // 0.55↔0.85 — so it reads as a receiver hum, not a blink.
+      css.keyframes('carrier-breathe', {
+        '0%, 100%': Styles(opacity: 0.55),
+        '50%':      Styles(opacity: 0.85),
+      }),
+      // Keyframe: dash-drift
+      // Slowly drifts the large dash array horizontally so the block
+      // of dashes subtly moves like it's trying to track a phantom
+      // carrier. Paired with a letter-opacity wave below.
+      css.keyframes('dash-drift', {
+        '0%, 100%': Styles(raw: {'transform': 'translateX(0)'}),
+        '25%':      Styles(raw: {'transform': 'translateX(-2px)'}),
+        '50%':      Styles(raw: {'transform': 'translateX(3px)'}),
+        '75%':      Styles(raw: {'transform': 'translateX(-1px)'}),
+      }),
       // Keyframe: CRT turn-on
-      // A thin bright horizontal line expands to fill the screen, then
-      // fades from white to transparent — classic cathode-ray pickup.
+      // The first ~18% of the timeline is a chromatic convergence
+      // stutter — the electron guns fire out of phase (red, green,
+      // blue) before locking to white. The line then expands full
+      // height, holds, and fades through a warm amber afterglow
+      // (phosphor cooling) back to transparent.
       css.keyframes('crt-on', {
         '0%': Styles(
           opacity: 1,
           raw: {
-            'background': '#ffffff',
+            'background': '#ff3838',
             'clip-path': 'inset(50% 0 50% 0)',
           },
         ),
-        '15%': Styles(
+        '5%': Styles(
+          opacity: 1,
+          raw: {
+            'background': '#ff3838',
+            'clip-path': 'inset(49% 0 49% 0)',
+          },
+        ),
+        '10%': Styles(
+          opacity: 1,
+          raw: {
+            'background': '#38ff6a',
+            'clip-path': 'inset(49% 0 49% 0)',
+          },
+        ),
+        '14%': Styles(
+          opacity: 1,
+          raw: {
+            'background': '#3860ff',
+            'clip-path': 'inset(48% 0 48% 0)',
+          },
+        ),
+        '18%': Styles(
           opacity: 1,
           raw: {
             'background': '#ffffff',
-            'clip-path': 'inset(48% 0 48% 0)',
+            'clip-path': 'inset(47% 0 47% 0)',
           },
         ),
         '40%': Styles(
@@ -341,10 +320,19 @@ void main() {
             'clip-path': 'inset(0% 0 0% 0)',
           },
         ),
-        '65%': Styles(
-          opacity: 0.7,
+        '62%': Styles(
+          opacity: 0.8,
           raw: {
-            'background': '#ffffff',
+            'background':
+                'linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,210,130,0.85) 50%, rgba(255,255,255,0.95) 100%)',
+            'clip-path': 'inset(0% 0 0% 0)',
+          },
+        ),
+        '82%': Styles(
+          opacity: 0.35,
+          raw: {
+            'background':
+                'radial-gradient(ellipse at center, rgba(255,200,110,0.55) 0%, rgba(60,30,5,0.3) 75%, transparent 100%)',
             'clip-path': 'inset(0% 0 0% 0)',
           },
         ),
