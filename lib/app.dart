@@ -5,6 +5,7 @@ import 'package:jaspr/jaspr.dart';
 import 'package:universal_web/js_interop.dart';
 import 'package:universal_web/web.dart' as web;
 
+import 'components/phosphor_mask.dart';
 import 'components/radio_audio.dart';
 import 'components/radio_dial.dart';
 import 'components/scanlines.dart';
@@ -220,7 +221,19 @@ class AppState extends State<App> {
     // nothing animates or allocates behind the overlay.
     final contentOpacity = _isPowered ? distanceOpacity : 0.0;
 
-    final idleHint = _lang == Lang.es ? 'sintoniza' : 'tune in';
+    // Idle readout copy. The receiver is "searching" when between
+    // stations; the dash pattern and band range both key off the
+    // active band so AM and FM show different ranges/units.
+    final bandLabel = _band == Band.fm ? 'FM' : 'AM';
+    final unitLabel = _band == Band.fm ? 'MHZ' : 'KHZ';
+    final minLabel = _band == Band.fm
+        ? cfg.minFreq.toStringAsFixed(1)
+        : cfg.minFreq.toInt().toString();
+    final maxLabel = _band == Band.fm
+        ? cfg.maxFreq.toStringAsFixed(1)
+        : cfg.maxFreq.toInt().toString();
+    final idleTop = _lang == Lang.es ? 'SIN PORTADORA' : 'NO CARRIER';
+    final idleSub = _lang == Lang.es ? 'BARRIENDO BANDA' : 'SCANNING BAND';
 
     final rootClass =
         'signal-app ${_isPowered ? 'powered-on' : 'powered-off'}';
@@ -248,10 +261,15 @@ class AppState extends State<App> {
       // transitions.
       div(classes: crtClass, []),
 
-      // Effect overlays (order = paint order).
+      // Effect overlays (order = paint order; z-index is the real
+      // stacking order — noise → vignette → phosphor → scanlines).
       StaticNoise(noiseLevel: _noiseLevel, isPowered: _isPowered),
-      const Scanlines(),
       const Vignette(),
+      PhosphorMask(
+        intensity: (1.0 - _signalStrength).clamp(0.0, 1.0),
+        isPowered: _isPowered,
+      ),
+      const Scanlines(),
 
       // Signal-strength meter (top-left).
       SignalBars(
@@ -269,31 +287,69 @@ class AppState extends State<App> {
         [text(_lang == Lang.es ? 'ES' : 'EN')],
       ),
 
-      // Centered idle content (jitters subtly while between stations).
+      // Idle readout — what a real receiver shows when the dial is
+      // parked on dead air. The old "rafahcf / tune in" hero is gone;
+      // the personal identity lives inside the WHO station panel
+      // instead. Keeping the idle state as a proper no-carrier
+      // display makes the whole piece feel like hardware.
       div(
-        classes: 'content',
+        classes: 'carrier-monitor',
         styles: Styles(
           opacity: contentOpacity,
           raw: {
             'transition': 'opacity 0.4s ease',
-            // Jitter only kicks in when noise is meaningfully present.
-            // When tuned in (noiseLevel ≤ 0.3) the animation is removed
-            // entirely so the title sits perfectly still.
+            // Only add the horizontal content-jitter when there's real
+            // noise present — a calm, locked-in dial keeps the frame
+            // perfectly still.
             'animation': (_isPowered && _noiseLevel > 0.3)
                 ? 'content-jitter 0.22s steps(2, end) infinite'
                 : 'none',
           },
         ),
         [
-          div(classes: 'title-wrapper', [
-            h1(classes: 'title', [text('rafahcf')]),
-            h1(
-              classes: 'title title-glitch',
-              attributes: {'aria-hidden': 'true'},
-              [text('rafahcf')],
-            ),
+          // Large dash array — the "missing call-sign" glyph. Five
+          // en-dashes with thin-space separators drift slightly so
+          // the readout feels alive rather than printed.
+          div(
+            classes: 'carrier-dashes',
+            attributes: {'aria-hidden': 'true'},
+            [
+              for (var i = 0; i < 5; i++)
+                span(
+                  classes: 'carrier-dash',
+                  styles: Styles(raw: {
+                    'animation-delay': '${(i * 0.18).toStringAsFixed(2)}s',
+                  }),
+                  [text('–')],
+                ),
+            ],
+          ),
+          // Primary state line — tracked uppercase, station-style
+          // teletype aesthetic.
+          div(classes: 'carrier-state', [
+            span(classes: 'carrier-dot', []),
+            span(classes: 'carrier-state-text', [text(idleTop)]),
+            span(classes: 'carrier-dot', []),
           ]),
-          p(classes: 'subtitle', [text(idleHint)]),
+          // Band + range. The tick-bracket on either side is just
+          // text ("[") but the centered ribbon below carries the
+          // live search sweep.
+          div(classes: 'carrier-band', [
+            span(classes: 'carrier-band-band', [text(bandLabel)]),
+            span(classes: 'carrier-band-sep', [text('·')]),
+            span(classes: 'carrier-band-range',
+                [text('$minLabel – $maxLabel')]),
+            span(classes: 'carrier-band-sep', [text('·')]),
+            span(classes: 'carrier-band-unit', [text(unitLabel)]),
+          ]),
+          // Sweep ribbon — a thin horizontal bar under the range
+          // with a single brighter tracer that runs left→right.
+          div(classes: 'carrier-sweep', [
+            div(classes: 'carrier-sweep-track', []),
+            div(classes: 'carrier-sweep-head', []),
+          ]),
+          // Sub-caption — small, tracked, breathing opacity.
+          div(classes: 'carrier-sub', [text(idleSub)]),
         ],
       ),
 
@@ -427,74 +483,230 @@ class AppState extends State<App> {
         raw: {'border-color': 'rgba(255,255,255,0.32)'},
       ),
     ]),
-    // Centered content — shifted up to avoid dial overlap
-    css('.content').styles(
-      position: Position.absolute(top: Unit.expression('calc(50% - 100px)'), left: 50.percent),
+    // ── idle "carrier monitor" readout ──
+    // Sits in the same vertical slot as the old hero title, but
+    // structured as a receiver's between-stations display. The five
+    // layers — dashes, CARRIER state line, band/range, sweep ribbon,
+    // sub-caption — all share a single vertical flow so the block
+    // reads top-down like a real monitoring panel.
+    css('.carrier-monitor').styles(
+      position: Position.absolute(
+        top: Unit.expression('calc(50% - 100px)'),
+        left: 50.percent,
+      ),
       transform: Transform.translate(x: (-50).percent, y: (-50).percent),
       textAlign: TextAlign.center,
       zIndex: ZIndex(30),
       pointerEvents: PointerEvents.none,
-    ),
-    css('.title-wrapper').styles(
-      position: Position.relative(),
-      display: Display.inlineBlock,
-    ),
-    css('.title', [
-      css('&').styles(
-        fontFamily: const FontFamily.list([FontFamilies.monospace]),
-        fontSize: 4.rem,
-        fontWeight: FontWeight.w300,
-        letterSpacing: 0.3.em,
-        textTransform: TextTransform.lowerCase,
-        color: const Color('#c8c8cc'),
-        raw: {
-          'animation': 'glitch 4s infinite',
-          // Constant subtle chromatic fringe beneath the animated
-          // spikes — keeps the glitch ever-present without being loud.
-          'text-shadow':
-              '1px 0 0 rgba(255,64,64,0.28), -1px 0 0 rgba(64,220,255,0.28)',
-        },
-      ),
-    ]),
-    css('.title-glitch').styles(
-      position: Position.absolute(top: Unit.zero, left: Unit.zero),
       width: 100.percent,
-      opacity: 0.8,
-      color: const Color('#c8c8cc'),
+      maxWidth: 480.px,
+      display: Display.flex,
+      flexDirection: FlexDirection.column,
+      alignItems: AlignItems.center,
+      gap: Gap(row: 18.px),
+    ),
+
+    // ── dash array ──
+    // Row of five en-dashes. Each dash drifts its opacity on its own
+    // delay so the array reads as animated silence rather than a
+    // frozen placeholder. The row itself drifts horizontally a few
+    // pixels via `dash-drift` — a slow, unconscious wobble.
+    css('.carrier-dashes').styles(
+      display: Display.flex,
+      flexDirection: FlexDirection.row,
+      alignItems: AlignItems.center,
+      justifyContent: JustifyContent.center,
+      gap: Gap(column: 18.px),
       raw: {
-        'animation': 'glitch-alt 4s infinite 200ms',
-        // Slight vertical offset so the two layers are always just
-        // barely misaligned — the eye reads it as a broken signal.
-        'transform': 'translate(0, 1px)',
+        'animation': 'dash-drift 6s ease-in-out infinite',
+        'color': '#b0b0ba',
+        // Constant chromatic fringe on the dashes themselves —
+        // mirrors the CRT edge fringe, reads as an unconverged
+        // signal.
+        'text-shadow':
+            '1px 0 0 rgba(255,60,90,0.28), -1px 0 0 rgba(60,200,255,0.28)',
       },
     ),
-    css('.subtitle').styles(
-      fontSize: 0.9.rem,
-      fontWeight: FontWeight.w300,
+    css('.carrier-dash').styles(
+      fontFamily: const FontFamily.list([
+        FontFamily('Orbitron'),
+        FontFamilies.monospace,
+      ]),
+      fontSize: 3.rem,
+      fontWeight: FontWeight.w700,
+      raw: {
+        'line-height': '1',
+        'animation': 'carrier-breathe 2.4s ease-in-out infinite',
+      },
+    ),
+
+    // ── state line: • NO CARRIER • ──
+    // Tracked uppercase teletype. The bookend dots are tiny filled
+    // circles that pulse amber — the hardware's "signal present"
+    // tell-tales, here unlit-grey because nothing is locked.
+    css('.carrier-state').styles(
+      display: Display.flex,
+      flexDirection: FlexDirection.row,
+      alignItems: AlignItems.center,
+      justifyContent: JustifyContent.center,
+      gap: Gap(column: 14.px),
+    ),
+    css('.carrier-dot').styles(
+      width: 5.px,
+      height: 5.px,
+      radius: BorderRadius.all(Radius.circular(2.5.px)),
+      backgroundColor: const Color('#4a3a22'),
+      raw: {
+        'box-shadow': 'inset 0 1px 1px rgba(0,0,0,0.6), '
+            '0 0 3px rgba(232,160,53,0.25)',
+      },
+    ),
+    css('.carrier-state-text').styles(
+      fontFamily: const FontFamily.list([
+        FontFamily('IBM Plex Mono'),
+        FontFamilies.monospace,
+      ]),
+      fontSize: Unit.pixels(13),
+      fontWeight: FontWeight.w500,
       letterSpacing: 0.5.em,
-      textTransform: TextTransform.lowerCase,
-      color: const Color('#555560'),
+      textTransform: TextTransform.upperCase,
+      color: const Color('#d4d4dc'),
       raw: {
-        'animation': 'pulse 4s ease-in-out infinite',
-        'margin-top': '1.5rem',
+        'text-shadow': '0 0 6px rgba(212,212,220,0.35), '
+            '0 0 14px rgba(212,212,220,0.12)',
+        'animation': 'carrier-breathe 3.2s ease-in-out infinite',
       },
     ),
+
+    // ── band / range line ──
+    // `FM · 87.5 – 108.0 · MHZ` — the same layout AM and FM share,
+    // just different values. The band marker on the left is the
+    // brightest element (identifies which side of the dial the
+    // user is on); the range itself is a calmer mid-grey; the
+    // unit is the dimmest, like a legend.
+    css('.carrier-band').styles(
+      display: Display.flex,
+      flexDirection: FlexDirection.row,
+      alignItems: AlignItems.baseline,
+      justifyContent: JustifyContent.center,
+      gap: Gap(column: 10.px),
+      fontFamily: const FontFamily.list([
+        FontFamily('IBM Plex Mono'),
+        FontFamilies.monospace,
+      ]),
+      fontSize: Unit.pixels(11),
+      letterSpacing: 0.25.em,
+      textTransform: TextTransform.upperCase,
+    ),
+    css('.carrier-band-band').styles(
+      fontWeight: FontWeight.w600,
+      color: const Color('#E8A035'),
+      raw: {
+        'text-shadow':
+            '0 0 4px rgba(232,160,53,0.6), 0 0 10px rgba(232,160,53,0.25)',
+      },
+    ),
+    css('.carrier-band-range').styles(
+      fontWeight: FontWeight.w500,
+      color: const Color('#a6a6b0'),
+      raw: {'letter-spacing': '0.15em'},
+    ),
+    css('.carrier-band-sep').styles(
+      color: const Color('#44444a'),
+      raw: {'font-weight': '700', 'transform': 'translateY(-1px)'},
+    ),
+    css('.carrier-band-unit').styles(
+      fontWeight: FontWeight.w500,
+      color: const Color('#66666f'),
+    ),
+
+    // ── sweep ribbon ──
+    // A 200 px-wide horizontal strip with a thin baseline. A
+    // 20 px-wide "tracer" blob travels left→right on a 3.6 s
+    // loop, suggesting the receiver is sweeping the band.
+    css('.carrier-sweep').styles(
+      position: Position.relative(),
+      width: 220.px,
+      height: 8.px,
+      raw: {'margin-top': '-6px'},
+    ),
+    css('.carrier-sweep-track').styles(
+      position: Position.absolute(
+        top: Unit.expression('calc(50% - 0.5px)'),
+        left: Unit.zero,
+        right: Unit.zero,
+      ),
+      height: 1.px,
+      raw: {
+        'background':
+            'linear-gradient(90deg, transparent 0%, rgba(180,180,195,0.25) 15%, rgba(180,180,195,0.35) 50%, rgba(180,180,195,0.25) 85%, transparent 100%)',
+      },
+    ),
+    css('.carrier-sweep-head').styles(
+      position: Position.absolute(top: Unit.zero),
+      width: 24.px,
+      height: 8.px,
+      raw: {
+        'background':
+            'radial-gradient(ellipse at center, rgba(232,160,53,0.9) 0%, rgba(232,160,53,0.5) 40%, transparent 75%)',
+        'box-shadow':
+            '0 0 6px rgba(232,160,53,0.7), 0 0 14px rgba(232,160,53,0.3)',
+        'animation': 'carrier-sweep 3.6s ease-in-out infinite',
+        'transform': 'translateX(-50%)',
+      },
+    ),
+
+    // ── sub-caption ──
+    // Whispered second line. Dim, small, heavily tracked — the
+    // kind of runtime-status text you'd find printed just above
+    // a signal-presence indicator on a rack-mounted receiver.
+    css('.carrier-sub').styles(
+      fontFamily: const FontFamily.list([
+        FontFamily('IBM Plex Mono'),
+        FontFamilies.monospace,
+      ]),
+      fontSize: Unit.pixels(9),
+      fontWeight: FontWeight.w500,
+      letterSpacing: 0.55.em,
+      textTransform: TextTransform.upperCase,
+      color: const Color('#5a5a62'),
+      raw: {
+        'animation': 'carrier-breathe 4s ease-in-out infinite',
+        'text-indent': '0.55em', // compensate trailing letter-spacing
+      },
+    ),
+
     css.media(MediaQuery.screen(maxWidth: 600.px), [
-      css('.title').styles(fontSize: 2.2.rem, letterSpacing: 0.15.em),
-      css('.subtitle').styles(fontSize: 0.7.rem, letterSpacing: 0.3.em),
       // Compact lang toggle so it doesn't crowd the top edge.
       css('.lang-toggle').styles(
         fontSize: Unit.pixels(10),
         padding: Padding.symmetric(horizontal: 8.px, vertical: 4.px),
         position: Position.fixed(top: 10.px, right: 10.px),
       ),
-      // Idle content sits a touch higher so it can't overlap the
+      // Idle readout sits a touch higher so it can't overlap the
       // mobile radio panel (height 180 px).
-      css('.content').styles(
+      css('.carrier-monitor').styles(
         position: Position.absolute(
           top: Unit.expression('calc(50% - 90px)'),
           left: 50.percent,
         ),
+        gap: Gap(row: 12.px),
+      ),
+      css('.carrier-dashes').styles(gap: Gap(column: 12.px)),
+      css('.carrier-dash').styles(fontSize: 1.9.rem),
+      css('.carrier-state-text').styles(
+        fontSize: Unit.pixels(10),
+        letterSpacing: 0.35.em,
+      ),
+      css('.carrier-band').styles(
+        fontSize: Unit.pixels(9),
+        letterSpacing: 0.18.em,
+        gap: Gap(column: 6.px),
+      ),
+      css('.carrier-sweep').styles(width: 180.px),
+      css('.carrier-sub').styles(
+        fontSize: Unit.pixels(8),
+        letterSpacing: 0.35.em,
       ),
     ]),
   ];

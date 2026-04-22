@@ -414,7 +414,15 @@ class RadioDialState extends State<RadioDial> {
         // `.indicator-row` so they share the same baseline as the
         // FM/AM/ST/MONO pills.
         div(classes: 'panel-header', [
-          span(classes: 'brand', [text('RADIO')]),
+          // Hardware model-plate. Two-line etched wordmark: the top
+          // line is the model designation (brighter, tracked), the
+          // bottom is the spec caption (dim microtype). Reads as a
+          // real piece of 90s receiver signage rather than a
+          // placeholder "RADIO" label.
+          div(classes: 'brand-plate', [
+            span(classes: 'brand', [text('RCHF · 2600')]),
+            span(classes: 'brand-sub', [text('AM/FM STEREO RECEIVER')]),
+          ]),
           div(classes: 'indicator-row', [
             div(
               classes: 'power-rocker${powered ? ' power-on' : ''}',
@@ -843,15 +851,57 @@ class RadioDialState extends State<RadioDial> {
     css('.indicator-row').styles(raw: {
       'transition': 'opacity 0.6s ease',
     }),
-    css('.brand').styles(
-      fontFamily: const FontFamily.list([FontFamilies.monospace]),
-      fontSize: Unit.pixels(9),
-      fontWeight: FontWeight.bold,
-      letterSpacing: 0.35.em,
-      color: const Color('#0a0a10'),
+    // ── hardware model-plate ──
+    // Two stacked etched labels. The plate uses a tiny outer stroke
+    // (inset gradient border) so it reads as a separate metal tag
+    // riveted to the faceplate, not just loose text. The top line
+    // is the brighter model designation; the bottom line is the
+    // spec microtype — half the size, half the brightness.
+    css('.brand-plate').styles(
+      display: Display.flex,
+      flexDirection: FlexDirection.column,
+      alignItems: AlignItems.start,
       raw: {
+        'gap': '1px',
+        'padding': '3px 8px 2px',
+        'border-radius': '2px',
+        'background': 'linear-gradient(180deg, #0b0b12 0%, #07070c 100%)',
+        'border': '1px solid rgba(255,255,255,0.05)',
+        'box-shadow': 'inset 0 1px 0 rgba(255,255,255,0.05), '
+            'inset 0 -1px 0 rgba(0,0,0,0.6), '
+            '0 1px 0 rgba(255,255,255,0.04)',
+      },
+    ),
+    css('.brand').styles(
+      fontFamily: const FontFamily.list([
+        FontFamily('Orbitron'),
+        FontFamilies.monospace,
+      ]),
+      fontSize: Unit.pixels(10),
+      fontWeight: FontWeight.w700,
+      letterSpacing: 0.28.em,
+      color: const Color('#9a9aa8'),
+      raw: {
+        // Two-stroke etched feel: a bright highlight above (light
+        // catching the raised edge of the pressed-in chrome) and a
+        // dark drop below (shadow in the recess).
         'text-shadow':
-            '0 1px 0 rgba(255,255,255,0.07), 0 -1px 0 rgba(0,0,0,0.6)',
+            '0 1px 0 rgba(255,255,255,0.12), 0 -1px 0 rgba(0,0,0,0.75)',
+      },
+    ),
+    css('.brand-sub').styles(
+      fontFamily: const FontFamily.list([
+        FontFamily('IBM Plex Mono'),
+        FontFamilies.monospace,
+      ]),
+      fontSize: Unit.pixels(6),
+      fontWeight: FontWeight.w500,
+      letterSpacing: 0.45.em,
+      color: const Color('#4a4a55'),
+      raw: {
+        'text-transform': 'uppercase',
+        'text-shadow':
+            '0 1px 0 rgba(255,255,255,0.04), 0 -1px 0 rgba(0,0,0,0.5)',
       },
     ),
     css('.indicator-row').styles(
@@ -1398,7 +1448,7 @@ class RadioDialState extends State<RadioDial> {
         height: 180.px,
         padding: Padding.symmetric(horizontal: 12.px, vertical: 8.px),
       ),
-      css('.brand').styles(display: Display.none),
+      css('.brand-plate').styles(display: Display.none),
       css('.panel-header').styles(
         raw: {'margin-bottom': '6px', 'justify-content': 'flex-end'},
       ),
