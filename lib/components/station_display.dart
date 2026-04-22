@@ -330,14 +330,18 @@ class StationDisplay extends StatelessComponent {
     required String subtitle,
     required String body,
     String? href,
+    String? websiteHref,
   }) {
     return div(classes: 'am-shell', [
       div(classes: 'panel-label am-label', [text(_stationLabel(s, lang))]),
       h2(classes: 'am-title', [text(title)]),
       div(classes: 'am-subtitle', [text(subtitle)]),
       p(classes: 'am-body', [text(body)]),
-      if (href != null)
-        div(classes: 'pill-row', [_pill('SoundCloud', href: href)]),
+      if (href != null || websiteHref != null)
+        div(classes: 'pill-row', [
+          if (websiteHref != null) _pill('Web', href: websiteHref),
+          if (href != null) _pill('SoundCloud', href: href),
+        ]),
     ]);
   }
 
@@ -361,6 +365,7 @@ class StationDisplay extends StatelessComponent {
             ? 'Canciones originales'
             : 'Original music tracks',
         href: 'https://soundcloud.com/awiredspine',
+        websiteHref: 'https://awiredspine.com',
       );
 
   Component _nftPanel(Station s, Lang lang) => _amPanel(
