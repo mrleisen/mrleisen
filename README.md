@@ -21,7 +21,7 @@
 
 <p align="center">
   <a href="https://dart.dev"><img src="https://img.shields.io/badge/Dart-3.10+-0175C2?style=for-the-badge&logo=dart&logoColor=white" alt="Dart"/></a>
-  <a href="https://docs.jaspr.site"><img src="https://img.shields.io/badge/Jaspr-0.22-02569B?style=for-the-badge&logoColor=white" alt="Jaspr"/></a>
+  <a href="https://docs.jaspr.site"><img src="https://img.shields.io/badge/Jaspr-0.23-02569B?style=for-the-badge&logoColor=white" alt="Jaspr"/></a>
   <img src="https://img.shields.io/badge/Web_Audio_API-Enabled-FF6B00?style=for-the-badge&logoColor=white" alt="Web Audio API"/>
   <img src="https://img.shields.io/badge/Deploy-GitHub_Pages-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub Pages"/>
 </p>
@@ -60,7 +60,8 @@ It's a small demonstration of what I build: procedural audio, CSS-only visuals, 
 ### Audio
 - Procedural synthesis via Web Audio API
 - `dart:js_interop` for native browser calls
-- White-noise static, detuned carriers
+- Sparse-noise static + heterodyne whistle
+- Mobile-safe unlock on power-switch gesture
 - No prerecorded audio assets
 
 </td>
@@ -69,18 +70,18 @@ It's a small demonstration of what I build: procedural audio, CSS-only visuals, 
 <td width="50%">
 
 ### Visual
-- Pure CSS analog static and CRT scanlines
-- LCD aging and dial illumination effects
+- Pure CSS static, scanlines, vignette, phosphor mask
+- CRT power-on/off animation (expanding scanline)
+- LCD scramble and signal-scan sweep
 - No canvas, no WebGL, no images
-- Responsive across desktop and mobile
 
 </td>
 <td width="50%">
 
 ### Interaction
-- Pointer capture with momentum
-- Touch gestures and mouse wheel
-- Keyboard navigation support
+- Hardware-style rocker power switch
+- FM / AM band toggle
+- Pointer, touch, and wheel tuning
 - Fine-grain frequency locking
 
 </td>
@@ -114,11 +115,17 @@ It's a small demonstration of what I build: procedural audio, CSS-only visuals, 
 ## Signals
 
 <p align="center">
-  <code>87.5 &nbsp;·&nbsp; 91.3 &nbsp;·&nbsp; 95.7 &nbsp;·&nbsp; 99.1 &nbsp;·&nbsp; 103.5</code>
+  <strong>FM</strong> — featured long-form content<br>
+  <code>89.5 &nbsp;·&nbsp; 93.6 &nbsp;·&nbsp; 97.7 &nbsp;·&nbsp; 101.8 &nbsp;·&nbsp; 105.9</code>
 </p>
 
 <p align="center">
-  <sub>Five frequencies. Each one carries a different signal.<br>Tune in to find them.</sub>
+  <strong>AM</strong> — idea-stage project cards<br>
+  <code>640 &nbsp;·&nbsp; 960 &nbsp;·&nbsp; 1280 &nbsp;·&nbsp; 1600</code>
+</p>
+
+<p align="center">
+  <sub>Nine stations across two bands. Each one carries a different signal.<br>Flip the power switch and tune in.</sub>
 </p>
 
 ---
@@ -142,9 +149,16 @@ dart run jaspr serve
 
 # Build static output
 dart run jaspr build
+
+# Regenerate the OG image
+dart run tool/generate_og_image.dart
+
+# Lint and format
+dart analyze
+dart format --line-length 120 .
 ```
 
-The build output is written to `build/jaspr/` and is deployed automatically via GitHub Pages.
+The build output is written to `build/jaspr/` and is deployed automatically on push to `main` via `.github/workflows/deploy.yml` (GitHub Pages).
 
 ---
 
@@ -153,20 +167,23 @@ The build output is written to `build/jaspr/` and is deployed automatically via 
 ```
 radio/
 ├── lib/
-│   ├── app.dart               # Root component
+│   ├── app.dart               # Root client island, single source of truth
 │   ├── main.client.dart       # Client-side hydration entry
-│   ├── main.server.dart       # Server-side rendering entry
+│   ├── main.server.dart       # SSR entry — document, head, global keyframes
 │   ├── components/            # Jaspr components
-│   │   ├── radio_audio.dart       # Web Audio synthesis
-│   │   ├── radio_dial.dart        # Tuning dial and pointer capture
-│   │   ├── station_display.dart   # LCD frequency readout
-│   │   ├── signal_bars.dart       # Reception indicator
+│   │   ├── radio_audio.dart       # Web Audio graph and mobile-safe unlock
+│   │   ├── radio_dial.dart        # Tuning dial, pointer capture, LCD scramble
+│   │   ├── station_display.dart   # Active-station content panels
+│   │   ├── signal_bars.dart       # Reception bars with power-on scan sweep
 │   │   ├── static_noise.dart      # CSS static layer
 │   │   ├── scanlines.dart         # CRT scanline overlay
+│   │   ├── phosphor_mask.dart     # RGB phosphor subpixel mask
 │   │   └── vignette.dart          # Ambient illumination
 │   └── models/
-│       └── station.dart       # Station data model
-├── web/                       # Static assets (favicon, manifest, icons)
+│       └── station.dart       # Stations, bands, proximity math
+├── tool/
+│   └── generate_og_image.dart # Regenerates web/og-image.png
+├── web/                       # Static assets (favicon, manifest, icons, OG)
 ├── .github/
 │   ├── assets/                # Banner and branding
 │   └── workflows/             # GitHub Pages deployment
