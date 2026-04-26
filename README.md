@@ -23,6 +23,7 @@
   <a href="https://dart.dev"><img src="https://img.shields.io/badge/Dart-3.10+-0175C2?style=for-the-badge&logo=dart&logoColor=white" alt="Dart"/></a>
   <a href="https://docs.jaspr.site"><img src="https://img.shields.io/badge/Jaspr-0.23-02569B?style=for-the-badge&logoColor=white" alt="Jaspr"/></a>
   <img src="https://img.shields.io/badge/Web_Audio_API-Enabled-FF6B00?style=for-the-badge&logoColor=white" alt="Web Audio API"/>
+  <img src="https://img.shields.io/badge/Runtime_deps-zero-F2EFE6?style=for-the-badge&labelColor=000" alt="No runtime deps"/>
   <img src="https://img.shields.io/badge/Deploy-GitHub_Pages-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub Pages"/>
 </p>
 
@@ -158,7 +159,7 @@ dart analyze
 dart format --line-length 120 .
 ```
 
-The build output is written to `build/jaspr/` and is deployed automatically on push to `main` via `.github/workflows/deploy.yml` (GitHub Pages).
+The build output is written to `build/jaspr/` and is deployed automatically on push to `main` via `.github/workflows/deploy.yml` (GitHub Pages). The workflow copies `CNAME` (→ `rafahcf.com`) into the build output before publishing.
 
 ---
 
