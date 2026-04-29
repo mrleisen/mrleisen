@@ -5,6 +5,8 @@
 // Generated with jaspr_builder
 
 import 'package:jaspr/server.dart';
+import 'package:radio/components/collected_stations.dart'
+    as _collected_stations;
 import 'package:radio/components/phosphor_mask.dart' as _phosphor_mask;
 import 'package:radio/components/radio_dial.dart' as _radio_dial;
 import 'package:radio/components/scanlines.dart' as _scanlines;
@@ -35,6 +37,7 @@ ServerOptions get defaultServerOptions => ServerOptions(
   clients: {_app.App: ClientTarget<_app.App>('app')},
   styles: () => [
     ..._app.AppState.styles,
+    ..._collected_stations.CollectedStationsState.styles,
     ..._phosphor_mask.PhosphorMask.styles,
     ..._radio_dial.RadioDialState.styles,
     ..._scanlines.Scanlines.styles,

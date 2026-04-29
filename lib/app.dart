@@ -71,6 +71,17 @@ class AppState extends State<App> {
   static const Duration _crtOnDuration = Duration(milliseconds: 800);
   static const Duration _crtOffDuration = Duration(milliseconds: 500);
 
+  // Stations the user has explicitly saved via the MEM button, in
+  // discovery order. Insertion order is preserved by `LinkedHashSet`
+  // (the default `Set<>` factory in Dart), so the rack stays in
+  // chronological save order without a second list. Keys are
+  // `"<band>:<frequency>"` so FM 96.5 and AM 96.5 wouldn't collide.
+  // Persisted to `localStorage` under [_storageKey] so the rack
+  // survives page reloads.
+  final Set<String> _collectedKeys = <String>{};
+
+  static const String _storageKey = 'rchf:collected_stations';
+
   // Window-level event listeners (stored for cleanup).
   JSFunction? _keyDownListener;
   JSFunction? _wheelListener;
@@ -81,6 +92,8 @@ class AppState extends State<App> {
     _recalc();
 
     if (kIsWeb) {
+      _loadCollectedFromStorage();
+
       _keyDownListener = _onKeyDown.toJS;
       web.document.addEventListener('keydown', _keyDownListener);
 
@@ -91,6 +104,39 @@ class AppState extends State<App> {
         _wheelListener,
         web.AddEventListenerOptions(passive: false),
       );
+    }
+  }
+
+  /// Hydrates `_collectedKeys` from `localStorage`. Unknown keys (e.g.
+  /// from a future build with a different station list) are dropped
+  /// on read so a stale entry can't render a phantom pill.
+  void _loadCollectedFromStorage() {
+    try {
+      final raw = web.window.localStorage.getItem(_storageKey);
+      if (raw == null || raw.isEmpty) return;
+      final valid = {
+        for (final s in stations) _stationKey(s),
+      };
+      final loaded = raw.split(',').where(valid.contains);
+      if (loaded.isEmpty) return;
+      setState(() {
+        _collectedKeys.addAll(loaded);
+      });
+    } catch (_) {
+      // localStorage can throw (privacy mode, quota, etc.). A failed
+      // read just means we start with an empty rack — not worth
+      // surfacing.
+    }
+  }
+
+  void _persistCollected() {
+    if (!kIsWeb) return;
+    try {
+      web.window.localStorage
+          .setItem(_storageKey, _collectedKeys.join(','));
+    } catch (_) {
+      // Same rationale as the read path — silent failure is the
+      // right call for a cosmetic persistence feature.
     }
   }
 
@@ -185,6 +231,74 @@ class AppState extends State<App> {
     _activeStation = getActiveStation(_frequency, _band);
     _nearestStation = getNearestStation(_frequency, _band);
     _noiseLevel = noiseFromSignal(_signalStrength);
+  }
+
+  /// Adds the currently-locked station to the collected set. No-op
+  /// when not locked or already saved. Auto-collection on lock was
+  /// rejected as a design — sweeping the dial would silently scoop
+  /// every station, robbing the act of "finding" anything; the user
+  /// has to press the MEM button to commit a station to the rack.
+  void _saveCurrentStation() {
+    if (!_isPowered) return;
+    final s = _activeStation;
+    if (s == null) return;
+    final key = _stationKey(s);
+    if (_collectedKeys.contains(key)) return;
+    setState(() => _collectedKeys.add(key));
+    _persistCollected();
+  }
+
+  /// Removes a station from the collected rack — the press-and-hold
+  /// gesture in [CollectedStations] commits this. Persists immediately
+  /// so the deletion survives a refresh, mirroring the save path.
+  void _deleteStation(Station s) {
+    final key = _stationKey(s);
+    if (!_collectedKeys.contains(key)) return;
+    setState(() => _collectedKeys.remove(key));
+    _persistCollected();
+  }
+
+  /// True when the dial is locked onto a station that has not yet
+  /// been saved — the only state in which the MEM button is armed.
+  bool get _canSaveCurrent {
+    final s = _activeStation;
+    return _isPowered && s != null &&
+        !_collectedKeys.contains(_stationKey(s));
+  }
+
+  String _stationKey(Station s) => '${s.band.name}:${s.frequency}';
+
+  /// Stations the user has discovered, in the order they first locked
+  /// onto each one. Built fresh every render — cheap given there are
+  /// only a handful of stations total.
+  List<Station> get _collectedStations => [
+        for (final s in stations)
+          if (_collectedKeys.contains(_stationKey(s))) s,
+      ];
+
+  /// Tap-to-recall: jump straight to a previously-found station,
+  /// switching bands if necessary. Mirrors what `_tune` + `_toggleBand`
+  /// do, but in a single setState so the audio engine sees the new
+  /// (band, frequency) pair atomically rather than via two intermediate
+  /// states.
+  void _recallStation(Station s) {
+    if (!_isPowered) return;
+    if (_band == s.band && _frequency == s.frequency) {
+      // Already locked on — still mark as tuning so the audio engine
+      // gives a brief acknowledgement burst.
+      _markTuning();
+      return;
+    }
+    setState(() {
+      _band = s.band;
+      if (s.band == Band.fm) {
+        _fmFreq = s.frequency;
+      } else {
+        _amFreq = s.frequency;
+      }
+      _recalc();
+    });
+    _markTuning();
   }
 
   void _toggleBand() {
@@ -362,7 +476,9 @@ class AppState extends State<App> {
         isPowered: _isPowered,
       ),
 
-      // Radio dial
+      // Radio dial. The collected-stations row is rendered inside
+      // the faceplate (between header and main row), so its data is
+      // threaded through here rather than mounted as a sibling.
       RadioDial(
         frequency: _frequency,
         band: _band,
@@ -374,6 +490,11 @@ class AppState extends State<App> {
         onVolumeChanged: _setVolume,
         isPowered: _isPowered,
         onPowerToggle: _togglePower,
+        collectedStations: _collectedStations,
+        onRecallStation: _recallStation,
+        onDeleteStation: _deleteStation,
+        canSaveCurrent: _canSaveCurrent,
+        onSaveStation: _saveCurrentStation,
       ),
     ]);
   }

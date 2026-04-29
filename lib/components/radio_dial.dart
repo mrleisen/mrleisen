@@ -7,6 +7,7 @@ import 'package:universal_web/js_interop.dart';
 import 'package:universal_web/web.dart' as web;
 
 import '../models/station.dart';
+import 'collected_stations.dart';
 import 'radio_audio.dart' show unlockAudioContext;
 
 /// Re-typed view over `PointerEvent` whose `clientX`/`clientY` are
@@ -49,6 +50,11 @@ class RadioDial extends StatefulComponent {
     this.onVolumeChanged,
     this.onPowerToggle,
     this.onBandToggle,
+    this.collectedStations = const [],
+    this.onRecallStation,
+    this.onDeleteStation,
+    this.canSaveCurrent = false,
+    this.onSaveStation,
     super.key,
   });
 
@@ -79,6 +85,28 @@ class RadioDial extends StatefulComponent {
   /// Fires when the user flips the FM/AM band rocker. No-op when the
   /// radio is powered off.
   final VoidCallback? onBandToggle;
+
+  /// Stations the user has locked onto at least once this session.
+  /// Rendered as a row of LCD-styled pills between the header and the
+  /// main row, so they read as a built-in preset rack on the faceplate.
+  final List<Station> collectedStations;
+
+  /// Tap handler for a pill in [collectedStations]. Receives the
+  /// station to jump to; parent handles band switching + tuning.
+  final void Function(Station)? onRecallStation;
+
+  /// Press-and-hold handler — fires when the user holds a pill long
+  /// enough to wipe it from the rack. Same hardware metaphor as
+  /// holding a preset button on a 90s car stereo.
+  final void Function(Station)? onDeleteStation;
+
+  /// True when the dial is locked onto a station that hasn't been
+  /// saved yet — drives the MEM button's armed/disabled visual state.
+  final bool canSaveCurrent;
+
+  /// Fires when the user presses MEM. Parent commits the current
+  /// active station into its collected set.
+  final VoidCallback? onSaveStation;
 
   @override
   State<RadioDial> createState() => RadioDialState();
@@ -113,6 +141,14 @@ class RadioDialState extends State<RadioDial> {
   int _lcdTapNonce = 0;
   Timer? _lcdTapTimer;
   static const Duration _lcdTapDuration = Duration(milliseconds: 850);
+
+  // --- MEM button flash ---
+  // Brief amber pulse on press, just to confirm the save happened
+  // (the new pill in the collected row is the real confirmation;
+  // this is tactile feedback on the button itself).
+  bool _memFlash = false;
+  Timer? _memFlashTimer;
+  static const Duration _memFlashDuration = Duration(milliseconds: 550);
 
   // --- LCD digit scramble ---
   // While [_scrambleValue] is non-null it replaces the live frequency
@@ -343,6 +379,17 @@ class RadioDialState extends State<RadioDial> {
     component.onBandToggle?.call();
   }
 
+  void _onMemTap(web.Event event) {
+    if (!component.canSaveCurrent) return;
+    event.preventDefault();
+    component.onSaveStation?.call();
+    _memFlashTimer?.cancel();
+    setState(() => _memFlash = true);
+    _memFlashTimer = Timer(_memFlashDuration, () {
+      if (mounted) setState(() => _memFlash = false);
+    });
+  }
+
   @override
   void didUpdateComponent(RadioDial oldComponent) {
     super.didUpdateComponent(oldComponent);
@@ -381,6 +428,7 @@ class RadioDialState extends State<RadioDial> {
     _lcdTapTimer?.cancel();
     _scrambleTimer?.cancel();
     _scramblePowerOnTimer?.cancel();
+    _memFlashTimer?.cancel();
     super.dispose();
   }
 
@@ -450,12 +498,24 @@ class RadioDialState extends State<RadioDial> {
                 span(classes: 'rocker-half rocker-am', [text('AM')]),
               ],
             ),
+            _memButton(),
             _indicator('FM', active: powered && isFm),
             _indicator('AM', active: powered && !isFm),
             _indicator('ST', active: powered && tuned),
             _indicator('MONO'),
           ]),
         ]),
+
+        // Collected-stations row — preset rack between the header and
+        // the dial. Hidden when empty / powered off so the panel layout
+        // is unaffected before the user discovers anything.
+        CollectedStations(
+          stations: component.collectedStations,
+          activeStation: component.activeStation,
+          isPowered: component.isPowered,
+          onRecall: component.onRecallStation ?? (_) {},
+          onDelete: component.onDeleteStation,
+        ),
 
         // Main row: volume knob + LCD + dial window + tuning knob.
         div(classes: 'panel-main', [
@@ -595,6 +655,29 @@ class RadioDialState extends State<RadioDial> {
     );
   }
 
+  /// MEM button — saves the currently-locked station to the rack.
+  /// Disabled (dim, no pointer) when the dial isn't on a station OR
+  /// when the active station is already saved. Briefly flashes amber
+  /// after a successful press.
+  Component _memButton() {
+    final armed = component.canSaveCurrent;
+    final classes = StringBuffer('ind ind-mem');
+    if (armed) classes.write(' ind-mem-armed');
+    if (_memFlash) classes.write(' ind-mem-flash');
+    return span(
+      classes: classes.toString(),
+      events: armed ? {'click': _onMemTap} : const {},
+      attributes: {
+        'role': 'button',
+        'aria-label':
+            armed ? 'Save current station' : 'No station available to save',
+        'aria-disabled': armed ? 'false' : 'true',
+        if (armed) 'tabindex': '0',
+      },
+      [text('MEM')],
+    );
+  }
+
   // --- strip tick / marker generation ---
 
   List<Component> _buildStripChildren() {
@@ -653,13 +736,17 @@ class RadioDialState extends State<RadioDial> {
   @css
   static List<StyleRule> get styles => [
     // ── faceplate ──
+    // `min-height` (not `height`) so the optional preset rack pushes
+    // the panel taller only when the user has discovered a station.
+    // Empty / powered-off → row collapses to zero, panel matches the
+    // pre-feature 210 px exactly.
     css('.radio-panel').styles(
       position: Position.fixed(
         bottom: Unit.zero,
         left: Unit.zero,
         right: Unit.zero,
       ),
-      height: 210.px,
+      minHeight: 210.px,
       zIndex: ZIndex(50),
       display: Display.flex,
       flexDirection: FlexDirection.column,
@@ -935,6 +1022,45 @@ class RadioDialState extends State<RadioDial> {
           'border': '1px solid #2a1a08',
         },
       ),
+    ]),
+    // ── MEM button ──
+    // Lives in the indicator row next to the FM/AM/ST/MONO pills,
+    // but is interactive: armed (lit + clickable) only when the dial
+    // is locked on a station that hasn't been saved yet. The base
+    // `.ind` style already gives the disabled-dim look — these rules
+    // layer the armed/hover/flash states on top.
+    css('.ind-mem', [
+      css('&').styles(raw: {
+        'cursor': 'default',
+        'transition':
+            'background 0.18s ease, color 0.18s ease, '
+                'border-color 0.18s ease, text-shadow 0.18s ease, '
+                'box-shadow 0.18s ease',
+      }),
+      css('&.ind-mem-armed').styles(
+        color: const Color(_lcdAmber),
+        raw: {
+          'cursor': 'pointer',
+          'background':
+              'linear-gradient(to bottom, #100904, #050202)',
+          'border': '1px solid #2a1a08',
+          'text-shadow':
+              '0 0 4px rgba(255,177,58,0.85), 0 0 8px rgba(255,177,58,0.4)',
+        },
+      ),
+      css('&.ind-mem-armed:hover').styles(raw: {
+        'background': 'linear-gradient(to bottom, #1a1006, #0a0504)',
+        'border-color': '#3a2410',
+        'box-shadow':
+            'inset 0 1px 1px rgba(0,0,0,0.6), '
+                '0 0 6px rgba(232,160,53,0.35)',
+      }),
+      css('&.ind-mem-armed:active').styles(raw: {
+        'transform': 'translateY(1px)',
+      }),
+      css('&.ind-mem-flash').styles(raw: {
+        'animation': 'mem-flash 0.55s ease-out',
+      }),
     ]),
 
     // ── main row ──
@@ -1445,7 +1571,7 @@ class RadioDialState extends State<RadioDial> {
     // centred in their cells.
     css.media(MediaQuery.screen(maxWidth: 600.px), [
       css('.radio-panel').styles(
-        height: 180.px,
+        minHeight: 180.px,
         padding: Padding.symmetric(horizontal: 12.px, vertical: 8.px),
       ),
       css('.brand-plate').styles(display: Display.none),
