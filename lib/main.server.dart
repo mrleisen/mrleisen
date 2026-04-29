@@ -234,6 +234,32 @@ void main() {
         '87%':  Styles(raw: {'opacity': '1'}),
         '100%': Styles(raw: {'opacity': '1'}),
       }),
+      // Keyframe: mem-flash
+      // One-shot pulse on the MEM button after a successful save —
+      // amber bloom that fades back to the armed/disabled style. Pure
+      // box-shadow ramp so the underlying background stays steady.
+      css.keyframes('mem-flash', {
+        '0%':   Styles(raw: {
+          'box-shadow':
+              '0 0 0 0 rgba(232,160,53,0.0), '
+                  'inset 0 1px 1px rgba(0,0,0,0.6)',
+        }),
+        '20%':  Styles(raw: {
+          'box-shadow':
+              '0 0 8px 2px rgba(232,160,53,0.65), '
+                  'inset 0 1px 1px rgba(0,0,0,0.6)',
+        }),
+        '60%':  Styles(raw: {
+          'box-shadow':
+              '0 0 14px 4px rgba(232,160,53,0.35), '
+                  'inset 0 1px 1px rgba(0,0,0,0.6)',
+        }),
+        '100%': Styles(raw: {
+          'box-shadow':
+              '0 0 0 0 rgba(232,160,53,0.0), '
+                  'inset 0 1px 1px rgba(0,0,0,0.6)',
+        }),
+      }),
       // Keyframe: signal-scan
       // Per-bar pulse used for the "searching for signal" animation on
       // the signal-strength meter. Each bar gets a staggered delay so
