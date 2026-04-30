@@ -425,7 +425,7 @@ void main() {
       meta(
         name: 'description',
         content:
-            'Software engineer with 8+ years of experience. I build things — like this. An interactive radio-frequency experience, built entirely in Dart using the Jaspr framework. No JavaScript. No external libraries.',
+            'Software engineer with 10+ years of experience. I build things — like this. An interactive radio-frequency experience, built entirely in Dart using the Jaspr framework. No JavaScript. No external libraries.',
       ),
       // Open Graph / Facebook / LinkedIn
       meta(attributes: {'property': 'og:type', 'content': 'website'}),
@@ -437,7 +437,7 @@ void main() {
       meta(attributes: {
         'property': 'og:description',
         'content':
-            'Software engineer with 8+ years of experience. I build things — like this. An interactive radio-frequency experience, built entirely in Dart using the Jaspr framework. No JavaScript. No external libraries.',
+            'Software engineer with 10+ years of experience. I build things — like this. An interactive radio-frequency experience, built entirely in Dart using the Jaspr framework. No JavaScript. No external libraries.',
       }),
       meta(attributes: {
         'property': 'og:image',
@@ -450,7 +450,7 @@ void main() {
       meta(
         name: 'twitter:description',
         content:
-            'Software engineer with 8+ years of experience. I build things — like this. An interactive radio-frequency experience, built entirely in Dart using the Jaspr framework. No JavaScript. No external libraries.',
+            'Software engineer with 10+ years of experience. I build things — like this. An interactive radio-frequency experience, built entirely in Dart using the Jaspr framework. No JavaScript. No external libraries.',
       ),
       meta(name: 'twitter:image', content: 'https://rafahcf.com/og-image.png'),
     ],
