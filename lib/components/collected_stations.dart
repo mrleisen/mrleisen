@@ -275,37 +275,40 @@ class CollectedStationsState extends State<CollectedStations> {
     ]),
 
     // ── band label ──
-    // Tracked uppercase microtype, same recipe as `.brand-sub` /
-    // `.lcd-fm`. FM is the brighter amber (matches the active-band
-    // tinting in the carrier readout), AM is dim grey since it isn't
-    // the "primary" band visually.
+    // Styled as a small chip pill — same visual language as the
+    // FM/AM/ST/MONO indicators above the dial. Defaults to the dim
+    // off-state; `.collected-row-active` swaps in the lit amber look
+    // so the user can read the current band straight off the rack.
     css('.collected-row-label').styles(
-      fontFamily: const FontFamily.list([
-        FontFamily('IBM Plex Mono'),
-        FontFamilies.monospace,
-      ]),
+      fontFamily: const FontFamily.list([FontFamilies.monospace]),
       fontSize: Unit.pixels(8),
-      fontWeight: FontWeight.w700,
-      letterSpacing: 0.25.em,
+      fontWeight: FontWeight.bold,
+      letterSpacing: 0.15.em,
+      padding: Padding.symmetric(horizontal: 5.px, vertical: 2.px),
       color: const Color(_lcdAmberDim),
+      radius: BorderRadius.all(Radius.circular(2.px)),
       raw: {
-        'flex': '0 0 22px',
+        'flex': '0 0 auto',
         'text-transform': 'uppercase',
-        'text-align': 'right',
+        'text-align': 'center',
         'user-select': 'none',
         '-webkit-user-select': 'none',
+        'background': 'linear-gradient(to bottom, #0a0a10, #050508)',
+        'border': '1px solid #1c1c26',
+        'box-shadow': 'inset 0 1px 1px rgba(0,0,0,0.6)',
         'text-shadow': '0 1px 0 rgba(0,0,0,0.55)',
+        'transition':
+            'background 0.25s ease, color 0.25s ease, '
+                'border-color 0.25s ease, text-shadow 0.25s ease',
       },
     ),
-    // The active band's row label lights up amber to match the LCD
-    // and the FM/AM indicator pills above; the inactive band stays in
-    // the dim default colour set on `.collected-row-label`.
     css('.collected-row-active .collected-row-label').styles(
       color: const Color(_lcdAmber),
       raw: {
+        'background': 'linear-gradient(to bottom, #100904, #050202)',
+        'border': '1px solid #2a1a08',
         'text-shadow':
-            '0 0 3px rgba(232,160,53,0.45), 0 1px 0 rgba(0,0,0,0.55)',
-        'transition': 'color 0.25s ease, text-shadow 0.25s ease',
+            '0 0 4px rgba(255,177,58,0.85), 0 0 8px rgba(255,177,58,0.4)',
       },
     ),
 
@@ -475,8 +478,8 @@ class CollectedStationsState extends State<CollectedStations> {
       css('.collected-row-pills').styles(gap: Gap(column: 4.px)),
       css('.collected-row-label').styles(
         fontSize: Unit.pixels(7),
-        letterSpacing: 0.18.em,
-        raw: {'flex': '0 0 18px'},
+        letterSpacing: 0.12.em,
+        padding: Padding.symmetric(horizontal: 4.px, vertical: 1.px),
       ),
       css('.collected-pill').styles(
         padding: Padding.symmetric(horizontal: 5.px, vertical: 1.px),
