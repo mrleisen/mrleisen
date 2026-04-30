@@ -374,12 +374,6 @@ class RadioDialState extends State<RadioDial> {
     component.onPowerToggle?.call();
   }
 
-  void _onBandSelect(Band band, web.Event event) {
-    if (!component.isPowered) return;
-    if (component.band == band) return;
-    event.preventDefault();
-    component.onBandSelect?.call(band);
-  }
 
   void _onMemTap(web.Event event) {
     if (!component.canSaveCurrent) return;
@@ -488,8 +482,8 @@ class RadioDialState extends State<RadioDial> {
               ],
             ),
             _memButton(),
-            _bandIndicator(Band.fm, active: powered && isFm, powered: powered),
-            _bandIndicator(Band.am, active: powered && !isFm, powered: powered),
+            _indicator('FM', active: powered && isFm),
+            _indicator('AM', active: powered && !isFm),
             _indicator('ST', active: powered && tuned),
             _indicator('MONO'),
           ]),
@@ -505,6 +499,7 @@ class RadioDialState extends State<RadioDial> {
           isPowered: component.isPowered,
           onRecall: component.onRecallStation ?? (_) {},
           onDelete: component.onDeleteStation,
+          onBandSelect: component.onBandSelect,
         ),
 
         // Main row: volume knob + LCD + dial window + tuning knob.
@@ -642,28 +637,6 @@ class RadioDialState extends State<RadioDial> {
     return span(
       classes: active ? 'ind ind-on' : 'ind',
       [text(label)],
-    );
-  }
-
-  /// FM/AM pill that doubles as a band selector. Visually identical to
-  /// `_indicator` (same `.ind` chip), but with click + keyboard
-  /// handlers so tapping a band switches to it. Replaces the old
-  /// FM/AM rocker switch — fewer hardware controls, more "the LCD
-  /// readout itself is the UI".
-  Component _bandIndicator(Band band, {required bool active, required bool powered}) {
-    final classes = StringBuffer('ind ind-band');
-    if (active) classes.write(' ind-on');
-    if (powered && !active) classes.write(' ind-band-clickable');
-    return span(
-      classes: classes.toString(),
-      events: powered ? {'click': (e) => _onBandSelect(band, e)} : const {},
-      attributes: {
-        'role': 'button',
-        'aria-label': 'Switch to ${band.name.toUpperCase()}',
-        'aria-pressed': active ? 'true' : 'false',
-        if (powered && !active) 'tabindex': '0',
-      },
-      [text(band.name.toUpperCase())],
     );
   }
 
@@ -1029,34 +1002,6 @@ class RadioDialState extends State<RadioDial> {
           'border': '1px solid #2a1a08',
         },
       ),
-    ]),
-    // ── band-selector pills (FM/AM) ──
-    // The FM/AM pills replace the old band rocker switch — tap the
-    // inactive band's pill to switch. Active band uses the standard
-    // lit `.ind-on` look; the inactive (clickable) band gets a
-    // pointer cursor + a brief amber-tinted hover preview so the user
-    // can tell it's a control before they click.
-    css('.ind-band', [
-      css('&').styles(raw: {
-        'transition':
-            'background 0.2s ease, color 0.2s ease, '
-                'border-color 0.2s ease, text-shadow 0.2s ease',
-      }),
-      css('&.ind-band-clickable').styles(raw: {'cursor': 'pointer'}),
-      css('&.ind-band-clickable:hover').styles(
-        color: const Color('#a87a30'),
-        raw: {
-          'background':
-              'linear-gradient(to bottom, #0d0a06, #060403)',
-          'border': '1px solid #241a0d',
-          'text-shadow':
-              '0 0 3px rgba(232,160,53,0.5), 0 1px 0 rgba(0,0,0,0.55)',
-        },
-      ),
-      css('&.ind-band-clickable:focus-visible').styles(raw: {
-        'outline': '1px solid rgba(232,160,53,0.7)',
-        'outline-offset': '1px',
-      }),
     ]),
     // ── MEM button ──
     // Lives in the indicator row next to the FM/AM/ST/MONO pills,
@@ -1613,11 +1558,12 @@ class RadioDialState extends State<RadioDial> {
       css('.panel-header').styles(
         raw: {'margin-bottom': '6px', 'justify-content': 'flex-end'},
       ),
-      // Hide the purely decorative ST / MONO pills on mobile — the
-      // FM/AM pills stay visible since they're now the band selector,
-      // and MEM stays so the user can still save presets. Target by
-      // negation: anything `.ind` that isn't the band selector or MEM.
-      css('.indicator-row .ind:not(.ind-band):not(.ind-mem)')
+      // Hide the purely decorative ST / MONO pills on mobile — keep
+      // FM/AM (band readout) and MEM (preset save). Targets the last
+      // two `.ind` pills in the row, since ST/MONO are always at the
+      // tail end of the indicator row.
+      css('.indicator-row .ind:nth-last-child(1), '
+              '.indicator-row .ind:nth-last-child(2)')
           .styles(display: Display.none),
       css('.indicator-row').styles(gap: Gap(column: 4.px)),
       css('.ind').styles(
