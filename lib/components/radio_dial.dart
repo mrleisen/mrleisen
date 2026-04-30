@@ -484,8 +484,6 @@ class RadioDialState extends State<RadioDial> {
             _memButton(),
             _indicator('FM', active: powered && isFm),
             _indicator('AM', active: powered && !isFm),
-            _indicator('ST', active: powered && tuned),
-            _indicator('MONO'),
           ]),
         ]),
 
@@ -1558,13 +1556,6 @@ class RadioDialState extends State<RadioDial> {
       css('.panel-header').styles(
         raw: {'margin-bottom': '6px', 'justify-content': 'flex-end'},
       ),
-      // Hide the purely decorative ST / MONO pills on mobile — keep
-      // FM/AM (band readout) and MEM (preset save). Targets the last
-      // two `.ind` pills in the row, since ST/MONO are always at the
-      // tail end of the indicator row.
-      css('.indicator-row .ind:nth-last-child(1), '
-              '.indicator-row .ind:nth-last-child(2)')
-          .styles(display: Display.none),
       css('.indicator-row').styles(gap: Gap(column: 4.px)),
       css('.ind').styles(
         fontSize: Unit.pixels(7),
