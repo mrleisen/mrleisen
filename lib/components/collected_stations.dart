@@ -24,6 +24,7 @@ class CollectedStations extends StatefulComponent {
   const CollectedStations({
     required this.stations,
     required this.activeStation,
+    required this.activeBand,
     required this.isPowered,
     required this.onRecall,
     this.onDelete,
@@ -36,6 +37,11 @@ class CollectedStations extends StatefulComponent {
   /// The station currently locked onto, if any. The matching pill in
   /// the row gets the brighter "lit" treatment.
   final Station? activeStation;
+
+  /// The band the dial is currently tuned to. Drives which row's
+  /// label lights up amber — the inactive band's row stays dim, the
+  /// active band's row matches the LCD/FM-AM indicator colour.
+  final Band activeBand;
 
   /// Whole row fades out when the radio is off — collected stations
   /// don't make sense as a backlit readout when the panel is dark.
@@ -132,7 +138,10 @@ class CollectedStationsState extends State<CollectedStations> {
   }
 
   Component _buildBandRow(Band band, List<Station> bandStations) {
-    return div(classes: 'collected-row collected-row-${band.name}', [
+    final isActiveBand = component.activeBand == band;
+    final rowClasses = StringBuffer('collected-row collected-row-${band.name}');
+    if (isActiveBand) rowClasses.write(' collected-row-active');
+    return div(classes: rowClasses.toString(), [
       span(
         classes: 'collected-row-label',
         attributes: {'aria-hidden': 'true'},
@@ -288,15 +297,16 @@ class CollectedStationsState extends State<CollectedStations> {
         'text-shadow': '0 1px 0 rgba(0,0,0,0.55)',
       },
     ),
-    css('.collected-row-fm .collected-row-label').styles(
+    // The active band's row label lights up amber to match the LCD
+    // and the FM/AM indicator pills above; the inactive band stays in
+    // the dim default colour set on `.collected-row-label`.
+    css('.collected-row-active .collected-row-label').styles(
       color: const Color(_lcdAmber),
       raw: {
         'text-shadow':
             '0 0 3px rgba(232,160,53,0.45), 0 1px 0 rgba(0,0,0,0.55)',
+        'transition': 'color 0.25s ease, text-shadow 0.25s ease',
       },
-    ),
-    css('.collected-row-am .collected-row-label').styles(
-      color: const Color('#7a7a86'),
     ),
 
     // ── pill ──

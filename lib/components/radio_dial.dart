@@ -512,6 +512,7 @@ class RadioDialState extends State<RadioDial> {
         CollectedStations(
           stations: component.collectedStations,
           activeStation: component.activeStation,
+          activeBand: component.band,
           isPowered: component.isPowered,
           onRecall: component.onRecallStation ?? (_) {},
           onDelete: component.onDeleteStation,
