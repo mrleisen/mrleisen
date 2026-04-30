@@ -45,6 +45,11 @@ class AppState extends State<App> {
   Timer? _tuningIdleTimer;
   static const Duration _tuningIdleDelay = Duration(milliseconds: 400);
 
+  // Drives the animated sweep when the user taps a saved preset. Held
+  // on state so a second tap can cancel the in-flight tween.
+  Timer? _recallAnimTimer;
+  static const Duration _recallAnimDuration = Duration(milliseconds: 700);
+
   // Active UI language. Defaults to English.
   Lang _lang = Lang.en;
 
@@ -143,6 +148,7 @@ class AppState extends State<App> {
   @override
   void dispose() {
     _tuningIdleTimer?.cancel();
+    _recallAnimTimer?.cancel();
     _crtTimer?.cancel();
     if (kIsWeb) {
       web.document.removeEventListener('keydown', _keyDownListener);
@@ -276,29 +282,57 @@ class AppState extends State<App> {
           if (_collectedKeys.contains(_stationKey(s))) s,
       ];
 
-  /// Tap-to-recall: jump straight to a previously-found station,
-  /// switching bands if necessary. Mirrors what `_tune` + `_toggleBand`
-  /// do, but in a single setState so the audio engine sees the new
-  /// (band, frequency) pair atomically rather than via two intermediate
-  /// states.
+  /// Tap-to-recall: sweep the dial from the current frequency to a
+  /// previously-found station. Switches bands first if needed, then
+  /// tweens the active frequency over [_recallAnimDuration] with an
+  /// ease-out cubic so the dial decelerates into the target. Each tick
+  /// goes through `_tune`, so the audio engine reacts as the sweep
+  /// passes adjacent stations — same heterodyne whistle and crossfade
+  /// the user gets when sweeping by hand.
   void _recallStation(Station s) {
     if (!_isPowered) return;
-    if (_band == s.band && _frequency == s.frequency) {
-      // Already locked on — still mark as tuning so the audio engine
-      // gives a brief acknowledgement burst.
+
+    // Cancel any in-flight recall sweep so a fresh tap immediately
+    // retargets instead of fighting the previous animation.
+    _recallAnimTimer?.cancel();
+    _recallAnimTimer = null;
+
+    // Band switch happens up front so the sweep starts from whatever
+    // frequency was last parked in the target band, not the current one.
+    if (_band != s.band) {
+      setState(() {
+        _band = s.band;
+        _recalc();
+      });
+    }
+
+    if (_frequency == s.frequency) {
       _markTuning();
       return;
     }
-    setState(() {
-      _band = s.band;
-      if (s.band == Band.fm) {
-        _fmFreq = s.frequency;
+
+    final startFreq = _frequency;
+    final targetFreq = s.frequency;
+    final startMs = DateTime.now().millisecondsSinceEpoch;
+    final totalMs = _recallAnimDuration.inMilliseconds;
+
+    _recallAnimTimer =
+        Timer.periodic(const Duration(milliseconds: 16), (timer) {
+      final elapsed = DateTime.now().millisecondsSinceEpoch - startMs;
+      final t = (elapsed / totalMs).clamp(0.0, 1.0);
+      // Ease-out cubic: 1 - (1 - t)^3
+      final inv = 1.0 - t;
+      final eased = 1.0 - inv * inv * inv;
+      final freq = startFreq + (targetFreq - startFreq) * eased;
+
+      if (t >= 1.0) {
+        timer.cancel();
+        _recallAnimTimer = null;
+        _tune(targetFreq); // snap to clean clamped/rounded target
       } else {
-        _amFreq = s.frequency;
+        _tune(freq);
       }
-      _recalc();
     });
-    _markTuning();
   }
 
   void _toggleBand() {
