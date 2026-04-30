@@ -84,6 +84,8 @@ It's a small demonstration of what I build: procedural audio, CSS-only visuals, 
 - FM / AM band toggle
 - Pointer, touch, and wheel tuning
 - Fine-grain frequency locking
+- MEM presets — save while locked, tap to recall, hold to clear
+- Discovered stations persist to `localStorage`
 
 </td>
 </tr>
@@ -129,6 +131,10 @@ It's a small demonstration of what I build: procedural audio, CSS-only visuals, 
   <sub>Nine stations across two bands. Each one carries a different signal.<br>Flip the power switch and tune in.</sub>
 </p>
 
+<p align="center">
+  <sub>Lock on, hit <strong>MEM</strong> to save it to the rack. Tap a preset to recall, press and hold to wipe it.</sub>
+</p>
+
 ---
 
 ## Build
@@ -172,14 +178,15 @@ radio/
 │   ├── main.client.dart       # Client-side hydration entry
 │   ├── main.server.dart       # SSR entry — document, head, global keyframes
 │   ├── components/            # Jaspr components
-│   │   ├── radio_audio.dart       # Web Audio graph and mobile-safe unlock
-│   │   ├── radio_dial.dart        # Tuning dial, pointer capture, LCD scramble
-│   │   ├── station_display.dart   # Active-station content panels
-│   │   ├── signal_bars.dart       # Reception bars with power-on scan sweep
-│   │   ├── static_noise.dart      # CSS static layer
-│   │   ├── scanlines.dart         # CRT scanline overlay
-│   │   ├── phosphor_mask.dart     # RGB phosphor subpixel mask
-│   │   └── vignette.dart          # Ambient illumination
+│   │   ├── radio_audio.dart        # Web Audio graph and mobile-safe unlock
+│   │   ├── radio_dial.dart         # Tuning dial, pointer capture, LCD scramble, MEM button
+│   │   ├── station_display.dart    # Active-station content panels
+│   │   ├── signal_bars.dart        # Reception bars with power-on scan sweep
+│   │   ├── collected_stations.dart # Preset rack: tap-to-recall, hold-to-delete
+│   │   ├── static_noise.dart       # CSS static layer
+│   │   ├── scanlines.dart          # CRT scanline overlay
+│   │   ├── phosphor_mask.dart      # RGB phosphor subpixel mask
+│   │   └── vignette.dart           # Ambient illumination
 │   └── models/
 │       └── station.dart       # Stations, bands, proximity math
 ├── tool/
