@@ -482,8 +482,8 @@ class RadioDialState extends State<RadioDial> {
               ],
             ),
             _memButton(),
-            _indicator('FM', active: powered && isFm),
-            _indicator('AM', active: powered && !isFm),
+            _bandPill(Band.fm, active: powered && isFm, powered: powered),
+            _bandPill(Band.am, active: powered && !isFm, powered: powered),
           ]),
         ]),
 
@@ -497,7 +497,6 @@ class RadioDialState extends State<RadioDial> {
           isPowered: component.isPowered,
           onRecall: component.onRecallStation ?? (_) {},
           onDelete: component.onDeleteStation,
-          onBandSelect: component.onBandSelect,
         ),
 
         // Main row: volume knob + LCD + dial window + tuning knob.
@@ -631,10 +630,44 @@ class RadioDialState extends State<RadioDial> {
     );
   }
 
-  Component _indicator(String label, {bool active = false}) {
+  /// FM/AM indicator pill that doubles as the band selector. Same
+  /// `.ind` chip styling as the other pills; the inactive band's
+  /// pill is wired to switch bands when tapped, the active band stays
+  /// inert (already on it). Replaces the old FM/AM rocker switch by
+  /// upgrading the readout chips into the band selector itself.
+  Component _bandPill(
+    Band band, {
+    required bool active,
+    required bool powered,
+  }) {
+    final clickable = powered && !active;
+    final classes = StringBuffer('ind ind-band');
+    if (active) classes.write(' ind-on');
+    if (clickable) classes.write(' ind-band-clickable');
     return span(
-      classes: active ? 'ind ind-on' : 'ind',
-      [text(label)],
+      classes: classes.toString(),
+      events: clickable
+          ? {
+              'click': (web.Event e) {
+                e.preventDefault();
+                component.onBandSelect?.call(band);
+              },
+              'keydown': (web.Event e) {
+                final ke = e as web.KeyboardEvent;
+                if (ke.key == 'Enter' || ke.key == ' ') {
+                  ke.preventDefault();
+                  component.onBandSelect?.call(band);
+                }
+              },
+            }
+          : const {},
+      attributes: {
+        'role': 'button',
+        'aria-label': 'Switch to ${band.name.toUpperCase()} band',
+        'aria-pressed': active ? 'true' : 'false',
+        if (clickable) 'tabindex': '0',
+      },
+      [text(band.name.toUpperCase())],
     );
   }
 
@@ -1000,6 +1033,33 @@ class RadioDialState extends State<RadioDial> {
           'border': '1px solid #2a1a08',
         },
       ),
+    ]),
+    // ── band-selector pill (FM/AM) ──
+    // Same chip as `.ind`, but the inactive band's pill carries
+    // `.ind-band-clickable` and acts as a button. Pointer cursor +
+    // soft amber-tinted hover preview signal it's interactive before
+    // the user clicks.
+    css('.ind-band', [
+      css('&').styles(raw: {
+        'transition':
+            'background 0.2s ease, color 0.2s ease, '
+                'border-color 0.2s ease, text-shadow 0.2s ease',
+      }),
+      css('&.ind-band-clickable').styles(raw: {'cursor': 'pointer'}),
+      css('&.ind-band-clickable:hover').styles(
+        color: const Color('#a87a30'),
+        raw: {
+          'background':
+              'linear-gradient(to bottom, #0d0a06, #060403)',
+          'border': '1px solid #241a0d',
+          'text-shadow':
+              '0 0 3px rgba(232,160,53,0.5), 0 1px 0 rgba(0,0,0,0.55)',
+        },
+      ),
+      css('&.ind-band-clickable:focus-visible').styles(raw: {
+        'outline': '1px solid rgba(232,160,53,0.7)',
+        'outline-offset': '1px',
+      }),
     ]),
     // ── MEM button ──
     // Lives in the indicator row next to the FM/AM/ST/MONO pills,

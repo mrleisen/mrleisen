@@ -28,7 +28,6 @@ class CollectedStations extends StatefulComponent {
     required this.isPowered,
     required this.onRecall,
     this.onDelete,
-    this.onBandSelect,
     super.key,
   });
 
@@ -57,12 +56,6 @@ class CollectedStations extends StatefulComponent {
   /// button until it confirms. Parent removes the station from its
   /// collected set + persists.
   final void Function(Station)? onDelete;
-
-  /// Fired when the user taps a band label chip (the FM/AM chip on
-  /// the left of each row) to switch bands. Replaces the standalone
-  /// FM/AM rocker switch — the row labels themselves are now the
-  /// band selector.
-  final void Function(Band)? onBandSelect;
 
   @override
   State<CollectedStations> createState() => CollectedStationsState();
@@ -132,17 +125,14 @@ class CollectedStationsState extends State<CollectedStations> {
     final amStations = [
       for (final s in component.stations) if (s.band == Band.am) s,
     ];
-    // Both rows always render while the radio is on so the FM/AM
-    // chips are always present as the band selector — even before the
-    // user has saved any presets in a given band.
-    final visible = component.isPowered;
+    final visible = component.isPowered && component.stations.isNotEmpty;
     return div(
       classes:
           'collected-rack${visible ? '' : ' collected-rack-hidden'}',
       attributes: {'aria-label': 'Collected stations'},
       [
-        _buildBandRow(Band.fm, fmStations),
-        _buildBandRow(Band.am, amStations),
+        if (fmStations.isNotEmpty) _buildBandRow(Band.fm, fmStations),
+        if (amStations.isNotEmpty) _buildBandRow(Band.am, amStations),
       ],
     );
   }
@@ -151,34 +141,10 @@ class CollectedStationsState extends State<CollectedStations> {
     final isActiveBand = component.activeBand == band;
     final rowClasses = StringBuffer('collected-row collected-row-${band.name}');
     if (isActiveBand) rowClasses.write(' collected-row-active');
-    final canSwitch =
-        component.isPowered && component.onBandSelect != null && !isActiveBand;
-    final labelClasses = StringBuffer('collected-row-label');
-    if (canSwitch) labelClasses.write(' collected-row-label-clickable');
     return div(classes: rowClasses.toString(), [
       span(
-        classes: labelClasses.toString(),
-        events: canSwitch
-            ? {
-                'click': (web.Event e) {
-                  e.preventDefault();
-                  component.onBandSelect?.call(band);
-                },
-                'keydown': (web.Event e) {
-                  final ke = e as web.KeyboardEvent;
-                  if (ke.key == 'Enter' || ke.key == ' ') {
-                    ke.preventDefault();
-                    component.onBandSelect?.call(band);
-                  }
-                },
-              }
-            : const {},
-        attributes: {
-          'role': 'button',
-          'aria-label': 'Switch to ${band.name.toUpperCase()} band',
-          'aria-pressed': isActiveBand ? 'true' : 'false',
-          if (canSwitch) 'tabindex': '0',
-        },
+        classes: 'collected-row-label',
+        attributes: {'aria-hidden': 'true'},
         [text(band.name.toUpperCase())],
       ),
       div(
@@ -345,27 +311,6 @@ class CollectedStationsState extends State<CollectedStations> {
             '0 0 4px rgba(255,177,58,0.85), 0 0 8px rgba(255,177,58,0.4)',
       },
     ),
-    // Clickable (inactive band) label — same dim chrome as the
-    // resting state, plus a pointer cursor and a soft amber-tinted
-    // hover preview so the user can tell it's a control before they
-    // click. Active band's chip is intentionally NOT clickable; tap a
-    // dim chip to switch.
-    css('.collected-row-label-clickable', [
-      css('&').styles(raw: {'cursor': 'pointer'}),
-      css('&:hover').styles(
-        color: const Color('#a87a30'),
-        raw: {
-          'background': 'linear-gradient(to bottom, #0d0a06, #060403)',
-          'border': '1px solid #241a0d',
-          'text-shadow':
-              '0 0 3px rgba(232,160,53,0.5), 0 1px 0 rgba(0,0,0,0.55)',
-        },
-      ),
-      css('&:focus-visible').styles(raw: {
-        'outline': '1px solid rgba(232,160,53,0.7)',
-        'outline-offset': '1px',
-      }),
-    ]),
 
     // ── pill ──
     // Styled as a dark inset preset button (same language as the
