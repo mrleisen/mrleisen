@@ -335,10 +335,17 @@ class AppState extends State<App> {
     });
   }
 
-  void _toggleBand() {
+  /// Switches the active band to [band]. No-op when the radio is off
+  /// or already on that band. Cancels any in-flight recall sweep so a
+  /// preset animation doesn't keep tweening into a band the user just
+  /// left.
+  void _selectBand(Band band) {
     if (!_isPowered) return;
+    if (_band == band) return;
+    _recallAnimTimer?.cancel();
+    _recallAnimTimer = null;
     setState(() {
-      _band = _band == Band.fm ? Band.am : Band.fm;
+      _band = band;
       _recalc();
     });
     // Mark as tuning so the audio engine produces a short static burst
@@ -517,7 +524,7 @@ class AppState extends State<App> {
         frequency: _frequency,
         band: _band,
         onFrequencyChanged: _tune,
-        onBandToggle: _toggleBand,
+        onBandSelect: _selectBand,
         signalStrength: _signalStrength,
         activeStation: _activeStation,
         volume: _volume,

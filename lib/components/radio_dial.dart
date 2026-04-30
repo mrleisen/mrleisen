@@ -49,7 +49,7 @@ class RadioDial extends StatefulComponent {
     this.volume = 0.0,
     this.onVolumeChanged,
     this.onPowerToggle,
-    this.onBandToggle,
+    this.onBandSelect,
     this.collectedStations = const [],
     this.onRecallStation,
     this.onDeleteStation,
@@ -82,9 +82,10 @@ class RadioDial extends StatefulComponent {
   /// policy.
   final VoidCallback? onPowerToggle;
 
-  /// Fires when the user flips the FM/AM band rocker. No-op when the
-  /// radio is powered off.
-  final VoidCallback? onBandToggle;
+  /// Fires when the user taps an FM/AM indicator pill to switch
+  /// bands. No-op when the radio is powered off or the requested
+  /// band is already active.
+  final void Function(Band)? onBandSelect;
 
   /// Stations the user has locked onto at least once this session.
   /// Rendered as a row of LCD-styled pills between the header and the
@@ -373,10 +374,11 @@ class RadioDialState extends State<RadioDial> {
     component.onPowerToggle?.call();
   }
 
-  void _onBandTap(web.Event event) {
+  void _onBandSelect(Band band, web.Event event) {
     if (!component.isPowered) return;
+    if (component.band == band) return;
     event.preventDefault();
-    component.onBandToggle?.call();
+    component.onBandSelect?.call(band);
   }
 
   void _onMemTap(web.Event event) {
@@ -485,22 +487,9 @@ class RadioDialState extends State<RadioDial> {
                 span(classes: 'rocker-half rocker-off', [text('OFF')]),
               ],
             ),
-            div(
-              classes: 'band-rocker band-${band.name}',
-              events: {'click': _onBandTap},
-              attributes: {
-                'role': 'switch',
-                'aria-label': 'Band',
-                'aria-checked': isFm ? 'false' : 'true',
-              },
-              [
-                span(classes: 'rocker-half rocker-fm', [text('FM')]),
-                span(classes: 'rocker-half rocker-am', [text('AM')]),
-              ],
-            ),
             _memButton(),
-            _indicator('FM', active: powered && isFm),
-            _indicator('AM', active: powered && !isFm),
+            _bandIndicator(Band.fm, active: powered && isFm, powered: powered),
+            _bandIndicator(Band.am, active: powered && !isFm, powered: powered),
             _indicator('ST', active: powered && tuned),
             _indicator('MONO'),
           ]),
@@ -656,6 +645,28 @@ class RadioDialState extends State<RadioDial> {
     );
   }
 
+  /// FM/AM pill that doubles as a band selector. Visually identical to
+  /// `_indicator` (same `.ind` chip), but with click + keyboard
+  /// handlers so tapping a band switches to it. Replaces the old
+  /// FM/AM rocker switch — fewer hardware controls, more "the LCD
+  /// readout itself is the UI".
+  Component _bandIndicator(Band band, {required bool active, required bool powered}) {
+    final classes = StringBuffer('ind ind-band');
+    if (active) classes.write(' ind-on');
+    if (powered && !active) classes.write(' ind-band-clickable');
+    return span(
+      classes: classes.toString(),
+      events: powered ? {'click': (e) => _onBandSelect(band, e)} : const {},
+      attributes: {
+        'role': 'button',
+        'aria-label': 'Switch to ${band.name.toUpperCase()}',
+        'aria-pressed': active ? 'true' : 'false',
+        if (powered && !active) 'tabindex': '0',
+      },
+      [text(band.name.toUpperCase())],
+    );
+  }
+
   /// MEM button — saves the currently-locked station to the rack.
   /// Disabled (dim, no pointer) when the dial isn't on a station OR
   /// when the active station is already saved. Briefly flashes amber
@@ -787,17 +798,15 @@ class RadioDialState extends State<RadioDial> {
       gap: Gap(column: 10.px),
       raw: {'margin-bottom': '10px'},
     ),
-    // ── rocker switches (power + band) ──
+    // ── power rocker ──
     // Two-half molded-plastic rocker: the lit side reads as "pressed
     // down" (inset shadow, amber glyph), the other side as "raised"
     // (subtle highlight, grey). A faint divider separates the halves.
     // Deliberately not an iOS pill — this is the chunky rocker you'd
-    // find on a 90s amp or power strip.
-    //
-    // Shared shell for both rockers. The `pointer-events: auto`
-    // override is applied ONLY to `.power-rocker` below so the band
-    // rocker auto-locks with the rest of the panel when powered off.
-    css('.power-rocker, .band-rocker', [
+    // find on a 90s amp or power strip. Sole physical control left on
+    // the faceplate now that band switching moved into the FM/AM
+    // indicator pills.
+    css('.power-rocker', [
       css('&').styles(
         position: Position.relative(),
         width: 52.px,
@@ -855,15 +864,12 @@ class RadioDialState extends State<RadioDial> {
     }),
     // Visually separate the rockers from each other and from the
     // FM/AM/ST/MONO pills in the indicator row.
-    css('.indicator-row .power-rocker, .indicator-row .band-rocker')
-        .styles(raw: {'margin-right': '4px'}),
-    // Pressed (lit) half styling — a single rule reused across both
-    // rockers via compound selectors.
+    css('.indicator-row .power-rocker').styles(raw: {'margin-right': '4px'}),
+    // Pressed (lit) half styling — applied to the active half of the
+    // power rocker.
     css(
       '.power-rocker:not(.power-on) .rocker-off, '
-          '.power-rocker.power-on .rocker-on, '
-          '.band-rocker.band-fm .rocker-fm, '
-          '.band-rocker.band-am .rocker-am',
+          '.power-rocker.power-on .rocker-on',
     ).styles(raw: {
       'background':
           'linear-gradient(to bottom, #0d0d0d 0%, #050505 100%)',
@@ -1023,6 +1029,34 @@ class RadioDialState extends State<RadioDial> {
           'border': '1px solid #2a1a08',
         },
       ),
+    ]),
+    // ── band-selector pills (FM/AM) ──
+    // The FM/AM pills replace the old band rocker switch — tap the
+    // inactive band's pill to switch. Active band uses the standard
+    // lit `.ind-on` look; the inactive (clickable) band gets a
+    // pointer cursor + a brief amber-tinted hover preview so the user
+    // can tell it's a control before they click.
+    css('.ind-band', [
+      css('&').styles(raw: {
+        'transition':
+            'background 0.2s ease, color 0.2s ease, '
+                'border-color 0.2s ease, text-shadow 0.2s ease',
+      }),
+      css('&.ind-band-clickable').styles(raw: {'cursor': 'pointer'}),
+      css('&.ind-band-clickable:hover').styles(
+        color: const Color('#a87a30'),
+        raw: {
+          'background':
+              'linear-gradient(to bottom, #0d0a06, #060403)',
+          'border': '1px solid #241a0d',
+          'text-shadow':
+              '0 0 3px rgba(232,160,53,0.5), 0 1px 0 rgba(0,0,0,0.55)',
+        },
+      ),
+      css('&.ind-band-clickable:focus-visible').styles(raw: {
+        'outline': '1px solid rgba(232,160,53,0.7)',
+        'outline-offset': '1px',
+      }),
     ]),
     // ── MEM button ──
     // Lives in the indicator row next to the FM/AM/ST/MONO pills,
@@ -1580,11 +1614,10 @@ class RadioDialState extends State<RadioDial> {
         raw: {'margin-bottom': '6px', 'justify-content': 'flex-end'},
       ),
       // Hide the purely decorative ST / MONO pills on mobile — the
-      // FM/AM pills stay visible so the active band is always readable.
-      // Target by nth-of-type(span): rockers are divs, pills are spans,
-      // and the pills are the 1st–4th span children (FM, AM, ST, MONO).
-      css('.indicator-row .ind:nth-of-type(3), '
-              '.indicator-row .ind:nth-of-type(4)')
+      // FM/AM pills stay visible since they're now the band selector,
+      // and MEM stays so the user can still save presets. Target by
+      // negation: anything `.ind` that isn't the band selector or MEM.
+      css('.indicator-row .ind:not(.ind-band):not(.ind-mem)')
           .styles(display: Display.none),
       css('.indicator-row').styles(gap: Gap(column: 4.px)),
       css('.ind').styles(
