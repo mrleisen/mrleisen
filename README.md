@@ -1,13 +1,13 @@
 <p align="center">
   <a href="https://rafahcf.com">
-    <img src=".github/assets/banner.svg" alt="Rafael Camargo — rafahcf.com" width="800">
+    <img src=".github/assets/banner.svg" alt="Rafael Camargo - rafahcf.com" width="800">
   </a>
 </p>
 
 <h1 align="center">Rafael Camargo</h1>
 
 <p align="center">
-  <strong>Software engineer with 10+ years of experience. I build things — like this.</strong><br>
+  <strong>Software engineer with 10+ years of experience. I build things - like this.</strong><br>
   <sub>Built entirely in Dart.</sub>
 </p>
 
@@ -84,7 +84,7 @@ It's a small demonstration of what I build: procedural audio, CSS-only visuals, 
 - FM / AM band toggle
 - Pointer, touch, and wheel tuning
 - Fine-grain frequency locking
-- MEM presets — save while locked, tap to recall, hold to clear
+- MEM presets - save while locked, tap to recall, hold to clear
 - Discovered stations persist to `localStorage`
 
 </td>
@@ -118,12 +118,12 @@ It's a small demonstration of what I build: procedural audio, CSS-only visuals, 
 ## Signals
 
 <p align="center">
-  <strong>FM</strong> — featured long-form content<br>
+  <strong>FM</strong> - featured long-form content<br>
   <code>89.5 &nbsp;·&nbsp; 93.6 &nbsp;·&nbsp; 97.7 &nbsp;·&nbsp; 101.8 &nbsp;·&nbsp; 105.9</code>
 </p>
 
 <p align="center">
-  <strong>AM</strong> — idea-stage project cards<br>
+  <strong>AM</strong> - idea-stage project cards<br>
   <code>640 &nbsp;·&nbsp; 960 &nbsp;·&nbsp; 1280 &nbsp;·&nbsp; 1600</code>
 </p>
 
@@ -176,7 +176,7 @@ radio/
 ├── lib/
 │   ├── app.dart               # Root client island, single source of truth
 │   ├── main.client.dart       # Client-side hydration entry
-│   ├── main.server.dart       # SSR entry — document, head, global keyframes
+│   ├── main.server.dart       # SSR entry - document, head, global keyframes
 │   ├── components/            # Jaspr components
 │   │   ├── radio_audio.dart        # Web Audio graph and mobile-safe unlock
 │   │   ├── radio_dial.dart         # Tuning dial, pointer capture, LCD scramble, MEM button

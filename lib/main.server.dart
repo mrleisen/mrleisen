@@ -42,7 +42,7 @@ void main() {
         '87%':  Styles(transform: Transform.translate(x: (-3).px, y: (-4).px)),
         '100%': Styles(transform: Transform.translate(x: 1.px,    y: 0.px)),
       }),
-      // Keyframe: coarse-pattern translation — slower & opposite tendency.
+      // Keyframe: coarse-pattern translation - slower & opposite tendency.
       css.keyframes('tv-coarse-shift', {
         '0%':   Styles(transform: Transform.translate(x: 0.px,    y: 0.px)),
         '16%':  Styles(transform: Transform.translate(x: 5.px,    y: (-4).px)),
@@ -118,7 +118,7 @@ void main() {
         '100%':  Styles(raw: {'opacity': '1', 'transform': 'translateX(0)'}),
       }),
       // Keyframe: one-shot tap glitch. Fires on user click/tap on the
-      // LCD — 5 rapid flickers + 2 dim moments across 0.8 s, like
+      // LCD - 5 rapid flickers + 2 dim moments across 0.8 s, like
       // physically tapping a loose connection. Runs even when
       // `.lcd-locked` is present (a tap is physical, not a signal
       // issue), via an inline `animation` override on the element.
@@ -184,7 +184,7 @@ void main() {
         }),
         '100%': Styles(raw: {'transform': 'translateX(0)'}),
       }),
-      // Horizontal "tear" — chops the content into brief horizontal
+      // Horizontal "tear" - chops the content into brief horizontal
       // bands. At distortion=0 every clip resolves to `inset(0)` and
       // nothing is cut.
       css.keyframes('content-tear', {
@@ -235,7 +235,7 @@ void main() {
         '100%': Styles(raw: {'opacity': '1'}),
       }),
       // Keyframe: mem-flash
-      // One-shot pulse on the MEM button after a successful save —
+      // One-shot pulse on the MEM button after a successful save -
       // amber bloom that fades back to the armed/disabled style. Pure
       // box-shadow ramp so the underlying background stays steady.
       css.keyframes('mem-flash', {
@@ -270,7 +270,7 @@ void main() {
         '100%': Styles(opacity: 0.2),
       }),
       // Keyframe: carrier-sweep
-      // Drives the idle-state band ribbon — a thin tracer moves across
+      // Drives the idle-state band ribbon - a thin tracer moves across
       // the range marker suggesting automated search. 100% offscreen
       // right loops back to -10% for the next pass.
       css.keyframes('carrier-sweep', {
@@ -281,8 +281,8 @@ void main() {
       }),
       // Keyframe: carrier-breathe
       // Slow ±opacity wobble on the CARRIER ABSENT label so the idle
-      // state doesn't sit completely static. The amplitude is modest —
-      // 0.55↔0.85 — so it reads as a receiver hum, not a blink.
+      // state doesn't sit completely static. The amplitude is modest -
+      // 0.55↔0.85 - so it reads as a receiver hum, not a blink.
       css.keyframes('carrier-breathe', {
         '0%, 100%': Styles(opacity: 0.55),
         '50%':      Styles(opacity: 0.85),
@@ -299,7 +299,7 @@ void main() {
       }),
       // Keyframe: CRT turn-on
       // The first ~18% of the timeline is a chromatic convergence
-      // stutter — the electron guns fire out of phase (red, green,
+      // stutter - the electron guns fire out of phase (red, green,
       // blue) before locking to white. The line then expands full
       // height, holds, and fades through a warm amber afterglow
       // (phosphor cooling) back to transparent.
@@ -417,27 +417,27 @@ void main() {
       // SVG favicon (modern browsers) + .ico fallback for legacy clients.
       link(rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg'),
       link(rel: 'icon', type: 'image/x-icon', href: '/favicon.ico'),
-      // Orbitron — geometric/digital display face used for the LCD.
+      // Orbitron - geometric/digital display face used for the LCD.
       // Self-hosted: no runtime dependency on Google Fonts.
       link(rel: 'stylesheet', href: 'fonts.css'),
       // Primary meta tags
-      meta(name: 'title', content: 'Rafael Camargo — Software Engineer'),
+      meta(name: 'title', content: 'Rafael Camargo - Software Engineer'),
       meta(
         name: 'description',
         content:
-            'Software engineer with 10+ years of experience. I build things — like this. An interactive radio-frequency experience, built entirely in Dart using the Jaspr framework. No JavaScript. No external libraries.',
+            'Software engineer with 10+ years of experience. I build things - like this. An interactive radio-frequency experience, built entirely in Dart using the Jaspr framework. No JavaScript. No external libraries.',
       ),
       // Open Graph / Facebook / LinkedIn
       meta(attributes: {'property': 'og:type', 'content': 'website'}),
       meta(attributes: {'property': 'og:url', 'content': 'https://rafahcf.com/'}),
       meta(attributes: {
         'property': 'og:title',
-        'content': 'Rafael Camargo — Software Engineer',
+        'content': 'Rafael Camargo - Software Engineer',
       }),
       meta(attributes: {
         'property': 'og:description',
         'content':
-            'Software engineer with 10+ years of experience. I build things — like this. An interactive radio-frequency experience, built entirely in Dart using the Jaspr framework. No JavaScript. No external libraries.',
+            'Software engineer with 10+ years of experience. I build things - like this. An interactive radio-frequency experience, built entirely in Dart using the Jaspr framework. No JavaScript. No external libraries.',
       }),
       meta(attributes: {
         'property': 'og:image',
@@ -446,11 +446,11 @@ void main() {
       // Twitter
       meta(name: 'twitter:card', content: 'summary_large_image'),
       meta(name: 'twitter:url', content: 'https://rafahcf.com/'),
-      meta(name: 'twitter:title', content: 'Rafael Camargo — Software Engineer'),
+      meta(name: 'twitter:title', content: 'Rafael Camargo - Software Engineer'),
       meta(
         name: 'twitter:description',
         content:
-            'Software engineer with 10+ years of experience. I build things — like this. An interactive radio-frequency experience, built entirely in Dart using the Jaspr framework. No JavaScript. No external libraries.',
+            'Software engineer with 10+ years of experience. I build things - like this. An interactive radio-frequency experience, built entirely in Dart using the Jaspr framework. No JavaScript. No external libraries.',
       ),
       meta(name: 'twitter:image', content: 'https://rafahcf.com/og-image.png'),
     ],

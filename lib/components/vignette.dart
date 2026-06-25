@@ -2,7 +2,7 @@ import 'package:jaspr/dom.dart';
 import 'package:jaspr/jaspr.dart';
 
 /// Fixed full-screen radial-gradient vignette. Lighter at centre,
-/// darker at the edges — gives the CRT / TV-screen feeling without
+/// darker at the edges - gives the CRT / TV-screen feeling without
 /// affecting layout or input. Sits above the content but below the
 /// signal-bars / language toggle.
 class Vignette extends StatelessComponent {

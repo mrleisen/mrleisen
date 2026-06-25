@@ -28,7 +28,7 @@ extension type _DoublePointer._(JSObject _) implements JSObject {
 double _clientX(web.PointerEvent pe) => _DoublePointer(pe).clientX;
 double _clientY(web.PointerEvent pe) => _DoublePointer(pe).clientY;
 
-// Amber-LED palette — warm Pioneer/Kenwood segment colour. Matches the
+// Amber-LED palette - warm Pioneer/Kenwood segment colour. Matches the
 // text-shadow values below; change both together or the glow goes off.
 const String _lcdAmber = '#E8A035';
 const String _lcdAmberDim = '#6d4a0e';
@@ -77,7 +77,7 @@ class RadioDial extends StatefulComponent {
   final bool isPowered;
 
   /// Fires when the user taps the power toggle. Runs inside the raw
-  /// user gesture — on the first power-on, [unlockAudioContext] is
+  /// user gesture - on the first power-on, [unlockAudioContext] is
   /// called synchronously just before this to satisfy mobile autoplay
   /// policy.
   final VoidCallback? onPowerToggle;
@@ -96,13 +96,13 @@ class RadioDial extends StatefulComponent {
   /// station to jump to; parent handles band switching + tuning.
   final void Function(Station)? onRecallStation;
 
-  /// Press-and-hold handler — fires when the user holds a pill long
+  /// Press-and-hold handler - fires when the user holds a pill long
   /// enough to wipe it from the rack. Same hardware metaphor as
   /// holding a preset button on a 90s car stereo.
   final void Function(Station)? onDeleteStation;
 
   /// True when the dial is locked onto a station that hasn't been
-  /// saved yet — drives the MEM button's armed/disabled visual state.
+  /// saved yet - drives the MEM button's armed/disabled visual state.
   final bool canSaveCurrent;
 
   /// Fires when the user presses MEM. Parent commits the current
@@ -133,7 +133,7 @@ class RadioDialState extends State<RadioDial> {
 
   // --- LCD tap glitch ---
   // Incrementing counter used to force the tap animation to restart on
-  // consecutive taps — the value is embedded in the inline `animation`
+  // consecutive taps - the value is embedded in the inline `animation`
   // shorthand (via a varying `animation-delay`), which makes the
   // browser treat each tap as a fresh animation run. `_lcdTapTimer`
   // clears the counter back to 0 once the animation finishes, which
@@ -315,7 +315,7 @@ class RadioDialState extends State<RadioDial> {
   /// Kicks off the digit scramble: ~9 random FM readouts at 60 ms
   /// intervals, then clears [_scrambleValue] so the live frequency
   /// text returns. Safe to call while a previous scramble is still
-  /// running — the in-flight timer is cancelled and restarted.
+  /// running - the in-flight timer is cancelled and restarted.
   void _startScramble() {
     _scrambleTimer?.cancel();
     _scrambleCount = 0;
@@ -360,12 +360,12 @@ class RadioDialState extends State<RadioDial> {
   void _onPowerTap(web.Event event) {
     event.preventDefault();
     // Only unlock AudioContext on the first power-on. Subsequent
-    // toggles just flip state — the context stays alive across off/on
+    // toggles just flip state - the context stays alive across off/on
     // cycles so re-creating it would leak graphs (and unlockAudioContext
     // itself guards against that, but skipping the call is clearer).
     //
     // AudioContext creation MUST be synchronous inside this gesture
-    // handler — deferring it until onPowerToggle propagates through
+    // handler - deferring it until onPowerToggle propagates through
     // Jaspr loses user-gesture attribution on mobile and resume() never
     // transitions the context to 'running'.
     if (!component.isPowered) {
@@ -401,7 +401,7 @@ class RadioDialState extends State<RadioDial> {
         _startScramble();
       });
     } else if (!isPowered && wasPowered) {
-      // Cancel any in-flight scramble — it shouldn't outlive the
+      // Cancel any in-flight scramble - it shouldn't outlive the
       // powered state it started in.
       _scramblePowerOnTimer?.cancel();
       _scrambleTimer?.cancel();
@@ -487,7 +487,7 @@ class RadioDialState extends State<RadioDial> {
           ]),
         ]),
 
-        // Collected-stations row — preset rack between the header and
+        // Collected-stations row - preset rack between the header and
         // the dial. Hidden when empty / powered off so the panel layout
         // is unaffected before the user discovers anything.
         CollectedStations(
@@ -501,7 +501,7 @@ class RadioDialState extends State<RadioDial> {
 
         // Main row: volume knob + LCD + dial window + tuning knob.
         div(classes: 'panel-main', [
-          // Volume knob (small, doubles as power switch — volume 0
+          // Volume knob (small, doubles as power switch - volume 0
           // is "off"). Drag up to raise, down to lower. Embedded LED
           // turns green once any audio is audible.
           div(classes: 'vol-knob-wrap', [
@@ -599,7 +599,7 @@ class RadioDialState extends State<RadioDial> {
           ]),
 
           // Tuning knob (ribbed metallic). Drag up/down to tune. The
-          // embedded LED mirrors the LCD's "ST" badge — it lights
+          // embedded LED mirrors the LCD's "ST" badge - it lights
           // green whenever a station is actively locked.
           div(
             classes: 'knob',
@@ -671,7 +671,7 @@ class RadioDialState extends State<RadioDial> {
     );
   }
 
-  /// MEM button — saves the currently-locked station to the rack.
+  /// MEM button - saves the currently-locked station to the rack.
   /// Disabled (dim, no pointer) when the dial isn't on a station OR
   /// when the active station is already saved. Briefly flashes amber
   /// after a successful press.
@@ -702,7 +702,7 @@ class RadioDialState extends State<RadioDial> {
 
     // Unified step-based iteration. Majors land at whole frequency
     // boundaries (FM: integer MHz, AM: multiples of 100 kHz), not at
-    // fixed strides from minFreq — minFreq itself rarely falls on one.
+    // fixed strides from minFreq - minFreq itself rarely falls on one.
     // FM thins minors to every 2nd step; AM draws every step.
     final totalSteps = ((cfg.maxFreq - cfg.minFreq) / cfg.step).round();
     final majorStep = cfg.step * 10;
@@ -740,7 +740,7 @@ class RadioDialState extends State<RadioDial> {
       }
     }
 
-    // No station markers — every station is undiscovered. The dial
+    // No station markers - every station is undiscovered. The dial
     // shows only tick marks and frequency numbers; the user has to
     // sweep the band, watch the noise clear up, and listen for
     // signals, like on a real radio.
@@ -806,7 +806,7 @@ class RadioDialState extends State<RadioDial> {
     // Two-half molded-plastic rocker: the lit side reads as "pressed
     // down" (inset shadow, amber glyph), the other side as "raised"
     // (subtle highlight, grey). A faint divider separates the halves.
-    // Deliberately not an iOS pill — this is the chunky rocker you'd
+    // Deliberately not an iOS pill - this is the chunky rocker you'd
     // find on a 90s amp or power strip. Sole physical control left on
     // the faceplate now that band switching moved into the FM/AM
     // indicator pills.
@@ -836,7 +836,7 @@ class RadioDialState extends State<RadioDial> {
       ),
     ]),
     // Power rocker stays interactive even when the panel is dimmed
-    // (powered off) — it's the only way back on.
+    // (powered off) - it's the only way back on.
     css('.power-rocker').styles(raw: {'pointer-events': 'auto'}),
     css('.rocker-half', [
       css('&').styles(
@@ -869,7 +869,7 @@ class RadioDialState extends State<RadioDial> {
     // Visually separate the rockers from each other and from the
     // FM/AM/ST/MONO pills in the indicator row.
     css('.indicator-row .power-rocker').styles(raw: {'margin-right': '4px'}),
-    // Pressed (lit) half styling — applied to the active half of the
+    // Pressed (lit) half styling - applied to the active half of the
     // power rocker.
     css(
       '.power-rocker:not(.power-on) .rocker-off, '
@@ -930,7 +930,7 @@ class RadioDialState extends State<RadioDial> {
     }),
     // Base transitions so on→off AND off→on both animate. Must be
     // written AFTER the base element rules to merge transitions with
-    // their original declarations (CSS `transition` is not additive —
+    // their original declarations (CSS `transition` is not additive -
     // the last declaration wins wholesale, so we repeat existing
     // animated properties here where needed).
     css('.lcd-value').styles(raw: {
@@ -954,7 +954,7 @@ class RadioDialState extends State<RadioDial> {
     // (inset gradient border) so it reads as a separate metal tag
     // riveted to the faceplate, not just loose text. The top line
     // is the brighter model designation; the bottom line is the
-    // spec microtype — half the size, half the brightness.
+    // spec microtype - half the size, half the brightness.
     css('.brand-plate').styles(
       display: Display.flex,
       flexDirection: FlexDirection.column,
@@ -1065,7 +1065,7 @@ class RadioDialState extends State<RadioDial> {
     // Lives in the indicator row next to the FM/AM/ST/MONO pills,
     // but is interactive: armed (lit + clickable) only when the dial
     // is locked on a station that hasn't been saved yet. The base
-    // `.ind` style already gives the disabled-dim look — these rules
+    // `.ind` style already gives the disabled-dim look - these rules
     // layer the armed/hover/flash states on top.
     css('.ind-mem', [
       css('&').styles(raw: {
@@ -1126,7 +1126,7 @@ class RadioDialState extends State<RadioDial> {
         'flex': '1',
       },
     ),
-    // Fixed grid placements — the same media-query breakpoints just
+    // Fixed grid placements - the same media-query breakpoints just
     // change the grid *template*, never the per-item `grid-area`.
     css('.lcd').styles(raw: {'grid-area': 'lcd'}),
     css('.dial-frame').styles(raw: {'grid-area': 'dial'}),
@@ -1137,7 +1137,7 @@ class RadioDialState extends State<RadioDial> {
     // The layered backgrounds, top to bottom, are:
     //   1. A tight diagonal noise pattern (micro-scratches on the
     //      plastic lens, low opacity).
-    //   2. A dark radial patch in the upper-right corner — the one
+    //   2. A dark radial patch in the upper-right corner - the one
     //      zone where the backlight has faded more than the rest.
     //   3. An off-centre main amber gradient, muted and
     //      desaturated, like a 90s LCD that's been running for 20
@@ -1167,13 +1167,13 @@ class RadioDialState extends State<RadioDial> {
                   'radial-gradient(circle at 82% 18%, '
                   'rgba(0,0,0,0.28) 0%, '
                   'transparent 48%),'
-                  // 3) Main backlight — off-centre, muted amber.
+                  // 3) Main backlight - off-centre, muted amber.
                   'radial-gradient(ellipse at 42% 55%, '
                   '#A67820 0%, '
                   '#8B6418 55%, '
                   '#6E4C10 100%)',
           'border': '1px solid #000',
-          // Bevel preserved; outer bleed dialed back ~60% — old
+          // Bevel preserved; outer bleed dialed back ~60% - old
           // backlight barely leaks light anymore.
           'box-shadow':
               'inset 0 2px 4px rgba(0,0,0,0.5), '
@@ -1183,13 +1183,13 @@ class RadioDialState extends State<RadioDial> {
                   '0 0 18px rgba(166,120,32,0.1), '
                   '0 1px 0 rgba(255,255,255,0.04)',
           'transition': 'box-shadow 0.3s ease, background 0.3s ease',
-          // Rare worn-LCD glitches — step-end so value changes jump
+          // Rare worn-LCD glitches - step-end so value changes jump
           // rather than interpolate (reads like a fault, not a tween).
           // Disabled by `.lcd-locked` below.
           'animation': 'lcd-glitch 25s step-end infinite',
         },
       ),
-      // "Glass" overlay — yellowed with age, diffused reflection.
+      // "Glass" overlay - yellowed with age, diffused reflection.
       // Warm faded highlight up top, brownish mid-cast from oxidised
       // plastic, darker lower edge.
       css('&::after').styles(
@@ -1210,7 +1210,7 @@ class RadioDialState extends State<RadioDial> {
       ),
     ]),
 
-    // Locked state — the backlight comes up a bit (like the amplifier
+    // Locked state - the backlight comes up a bit (like the amplifier
     // drawing slightly more current once a carrier is found), but it
     // never approaches "brand new" brightness.
     css('.lcd-locked').styles(
@@ -1235,12 +1235,12 @@ class RadioDialState extends State<RadioDial> {
                 '0 0 12px rgba(198,140,48,0.32), '
                 '0 0 22px rgba(166,120,32,0.14), '
                 '0 1px 0 rgba(255,255,255,0.04)',
-        // A locked station is the "clean signal" moment — no glitches.
+        // A locked station is the "clean signal" moment - no glitches.
         'animation': 'none',
       },
     ),
 
-    // "Off" ghost segments — slightly more visible than before
+    // "Off" ghost segments - slightly more visible than before
     // (polariser degradation leaking more light through unused
     // segments).
     css('.lcd-ghost').styles(
@@ -1262,7 +1262,7 @@ class RadioDialState extends State<RadioDial> {
       },
     ),
 
-    // Live digits — dark segments, no longer pure black. A faded
+    // Live digits - dark segments, no longer pure black. A faded
     // brown-black reads as aged LCD ink rather than crisp new print.
     css('.lcd-value').styles(
       position: Position.relative(),
@@ -1284,7 +1284,7 @@ class RadioDialState extends State<RadioDial> {
       raw: {'text-shadow': '0 1px 0 rgba(0,0,0,0.18)'},
     ),
 
-    // Right-side badges — aged ink dark, ST still flips to a tiny
+    // Right-side badges - aged ink dark, ST still flips to a tiny
     // green LED on lock (with a softer glow to match the tired
     // panel).
     css('.lcd-badges').styles(
@@ -1381,7 +1381,7 @@ class RadioDialState extends State<RadioDial> {
       position: Position.absolute(top: Unit.zero, left: 50.percent),
       height: 100.percent,
       // The strip and its children (ticks, labels, markers) MUST NOT
-      // capture pointer events — every press should land on `.dial-window`
+      // capture pointer events - every press should land on `.dial-window`
       // so its handler / pointer capture session stays attached to the
       // same DOM node across re-renders.
       pointerEvents: PointerEvents.none,
@@ -1486,7 +1486,7 @@ class RadioDialState extends State<RadioDial> {
 
     // ── volume knob (smaller sibling of the tuning knob) ──
     // Geometry mirrors `.knob` at 36 px (52% of the tuner's 68 px).
-    // The LED inside doubles as the power indicator — amber at
+    // The LED inside doubles as the power indicator - amber at
     // volume 0, green for any non-zero volume.
     css('.vol-knob-wrap').styles(
       display: Display.flex,
@@ -1671,7 +1671,7 @@ class RadioDialState extends State<RadioDial> {
         raw: {'transform-origin': '50% 14px'},
       ),
     ]),
-    // ≤380 px: very narrow phones — just tighten the LCD + pill type.
+    // ≤380 px: very narrow phones - just tighten the LCD + pill type.
     // Knob sizes already shrunk in the ≤600 block.
     css.media(MediaQuery.screen(maxWidth: 380.px), [
       css('.lcd').styles(height: 30.px),

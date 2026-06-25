@@ -58,7 +58,7 @@ class StationDisplay extends StatelessComponent {
   Component build(BuildContext context) {
     final visible = _pickVisible();
     return div(classes: 'station-display', [
-      // Only render panels for stations on the active band — switching
+      // Only render panels for stations on the active band - switching
       // bands mounts a fresh set of panels, keeping the visibility
       // transition logic per-panel simple.
       for (final s in stationsFor(band))
@@ -100,7 +100,7 @@ class StationDisplay extends StatelessComponent {
     }
 
     // Only attach the heavy glitch animations when there's actually
-    // distortion to render — keeps the idle (clean-lock) panel free of
+    // distortion to render - keeps the idle (clean-lock) panel free of
     // running animations.
     final animated = isVisible && distortion > 0.02;
     // Faster animation periods when distortion is high → more chaotic.
@@ -112,8 +112,8 @@ class StationDisplay extends StatelessComponent {
     // properties so labels / titles / pills / cards can all glow with
     // it without each needing an inline style.
     final sc = station.color;
-    final scGlow = '${sc}55'; // ~33% alpha — primary glow
-    final scGlowDim = '${sc}26'; // ~15% alpha — soft halo
+    final scGlow = '${sc}55'; // ~33% alpha - primary glow
+    final scGlowDim = '${sc}26'; // ~15% alpha - soft halo
 
     return div(
       classes: 'station-panel station-${station.callSign.toLowerCase()} '
@@ -184,8 +184,8 @@ class StationDisplay extends StatelessComponent {
     return div([]);
   }
 
-  /// Uniform station label ("FM 95.7 — decoded transmission" /
-  /// "AM 620 — decoded transmission") derived from the station's band
+  /// Uniform station label ("FM 95.7 - decoded transmission" /
+  /// "AM 620 - decoded transmission") derived from the station's band
   /// and frequency. Keeps per-panel boilerplate minimal and ensures
   /// labels update automatically if a station moves on the band plan.
   String _stationLabel(Station s, Lang lang) {
@@ -197,7 +197,7 @@ class StationDisplay extends StatelessComponent {
     final suffix = lang == Lang.es
         ? 'transmisión decodificada'
         : 'decoded transmission';
-    return '$bandStr $freq $unit — $suffix';
+    return '$bandStr $freq $unit - $suffix';
   }
 
   Component _aboutPanel(Station s, Lang lang) {
@@ -280,8 +280,8 @@ class StationDisplay extends StatelessComponent {
 
   Component _itnwPanel(Station s, Lang lang) {
     final subtitle = lang == Lang.es
-        ? 'Canal de YouTube — audio inmersivo'
-        : 'YouTube channel — immersive audio';
+        ? 'Canal de YouTube - audio inmersivo'
+        : 'YouTube channel - immersive audio';
     final body = lang == Lang.es
         ? 'Exploraciones sonoras inmersivas de realidades imaginadas. '
             'Paisajes en capas, texturas narrativas y experimentos sonoros.'
@@ -306,9 +306,9 @@ class StationDisplay extends StatelessComponent {
         ? 'Universo narrativo en expansión'
         : 'An expanding narrative universe';
     final body = lang == Lang.es
-        ? 'Un personaje y su universo. Cómics, juegos, apps — '
+        ? 'Un personaje y su universo. Cómics, juegos, apps - '
             'creciendo desde 2017.'
-        : 'A character and a universe of their own. Comics, games, apps — '
+        : 'A character and a universe of their own. Comics, games, apps - '
             'growing since 2017.';
     return _panelShell(
       color: s.color,
@@ -327,7 +327,7 @@ class StationDisplay extends StatelessComponent {
   // ── AM idea-stage panels (lo-fi shell) ──
 
   /// Minimal AM panel: label, small title, subtitle, one-line
-  /// description, optional link pill. No grids, no cards — the layout
+  /// description, optional link pill. No grids, no cards - the layout
   /// is intentionally bare to match the "unfinished idea" vibe.
   Component _amPanel({
     required Station s,
@@ -432,9 +432,9 @@ class StationDisplay extends StatelessComponent {
         title: 'Conspiranoico',
         subtitle: lang == Lang.es ? 'Lugar curioso' : 'A curious place',
         body: lang == Lang.es
-            ? 'Un lugar para todas las teorías conspirativas — no para '
+            ? 'Un lugar para todas las teorías conspirativas - no para '
                 'creerlas, sino para conocerlas. Pura curiosidad.'
-            : 'A place for every conspiracy theory — not to believe them, '
+            : 'A place for every conspiracy theory - not to believe them, '
                 'but to be aware of them. Pure curiosity.',
       );
 
@@ -448,7 +448,7 @@ class StationDisplay extends StatelessComponent {
   }) {
     // `color` kept in the signature for future use, but the actual
     // value propagates through the subtree as the `--sc` custom
-    // property set on `.station-panel` — CSS picks it up.
+    // property set on `.station-panel` - CSS picks it up.
     return div(classes: 'panel-shell', [
       div(classes: 'panel-label', [text(label)]),
       h2(classes: 'panel-title', [text(title)]),
@@ -476,7 +476,7 @@ class StationDisplay extends StatelessComponent {
 
   @css
   static List<StyleRule> get styles => [
-    // Container — sits in the same vertical band as the idle hero text.
+    // Container - sits in the same vertical band as the idle hero text.
     css('.station-display').styles(
       position: Position.absolute(
         top: Unit.expression('calc(50% - 100px)'),
@@ -524,7 +524,7 @@ class StationDisplay extends StatelessComponent {
       padding: Padding.symmetric(horizontal: 24.px),
     ),
 
-    // Label — reads like a small secondary LED readout above the title.
+    // Label - reads like a small secondary LED readout above the title.
     css('.panel-label').styles(
       fontFamily: const FontFamily.list([
         FontFamily('IBM Plex Mono'),
@@ -542,7 +542,7 @@ class StationDisplay extends StatelessComponent {
       },
     ),
 
-    // Title — dim illuminated text on a dark panel, in the station
+    // Title - dim illuminated text on a dark panel, in the station
     // colour. Chromatic glitch split still scales with --distortion.
     css('.panel-title').styles(
       fontFamily: const FontFamily.list([
@@ -565,7 +565,7 @@ class StationDisplay extends StatelessComponent {
       },
     ),
 
-    // Subtitle — small uppercase descriptor sitting under the title.
+    // Subtitle - small uppercase descriptor sitting under the title.
     // Uses the same letterspaced mono treatment as .panel-label but a
     // touch less dim so it reads as a caption rather than metadata.
     css('.panel-subtitle').styles(
@@ -586,7 +586,7 @@ class StationDisplay extends StatelessComponent {
       },
     ),
 
-    // Body — dim printed-on-dark-plastic feel, warm amber/green tint.
+    // Body - dim printed-on-dark-plastic feel, warm amber/green tint.
     css('.panel-body').styles(
       fontFamily: const FontFamily.list([
         FontFamily('IBM Plex Mono'),
@@ -618,7 +618,7 @@ class StationDisplay extends StatelessComponent {
       },
     ),
 
-    // Pill links — subtle bordered, hover lifts opacity.
+    // Pill links - subtle bordered, hover lifts opacity.
     css('.pill-row').styles(
       display: Display.flex,
       flexDirection: FlexDirection.row,
@@ -664,7 +664,7 @@ class StationDisplay extends StatelessComponent {
               'box-shadow 0.15s ease, color 0.15s ease',
         },
       ),
-      // Tiny LED dot ::before — lit in the station colour with glow.
+      // Tiny LED dot ::before - lit in the station colour with glow.
       css('&::before').styles(
         raw: {
           'content': '""',
@@ -678,7 +678,7 @@ class StationDisplay extends StatelessComponent {
                   '0 0 1px rgba(0,0,0,0.8)',
         },
       ),
-      // Pressed-in state on hover / active — inverts the bevel and
+      // Pressed-in state on hover / active - inverts the bevel and
       // darkens the face slightly.
       css('&:hover').styles(
         raw: {

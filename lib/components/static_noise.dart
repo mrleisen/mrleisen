@@ -10,9 +10,9 @@ import 'package:jaspr/jaspr.dart';
 ///   - 0.0 → essentially invisible
 ///
 /// Layer plan (kept to ≤3 painting layers + a flicker wrapper):
-///   1. `.tv-grain`        — fine repeating-linear-gradient grain
-///   2. `.tv-coarse`       — second gradient at a different angle/scale
-///   3. `.tv-band`         — single horizontal VHS tracking strip
+///   1. `.tv-grain`        - fine repeating-linear-gradient grain
+///   2. `.tv-coarse`       - second gradient at a different angle/scale
+///   3. `.tv-band`         - single horizontal VHS tracking strip
 ///   * Wrapped in `.tv-flicker-host` so a brief opacity dip can run
 ///     without colliding with the per-layer opacity values.
 class StaticNoise extends StatelessComponent {
@@ -31,7 +31,7 @@ class StaticNoise extends StatelessComponent {
   /// the CRT-off overlay.
   final bool isPowered;
 
-  // Layer opacities derived from noiseLevel — zeroed when powered off.
+  // Layer opacities derived from noiseLevel - zeroed when powered off.
   double get _grainOpacity =>
       isPowered ? (0.04 + noiseLevel * 0.85).clamp(0.0, 0.95) : 0.0;
   double get _coarseOpacity =>
@@ -42,7 +42,7 @@ class StaticNoise extends StatelessComponent {
       : (noiseLevel < 0.35
           ? 0.0
           : ((noiseLevel - 0.35) * 1.4).clamp(0.0, 0.85));
-  // Flicker amplitude — full strength when noisy, off when locked.
+  // Flicker amplitude - full strength when noisy, off when locked.
   double get _flickerStrength =>
       isPowered ? noiseLevel.clamp(0.0, 1.0) : 0.0;
 
@@ -62,7 +62,7 @@ class StaticNoise extends StatelessComponent {
         },
       ),
       [
-        // Layer 1 — fine snow grain.
+        // Layer 1 - fine snow grain.
         div(
           classes: 'tv-grain',
           styles: Styles(
@@ -74,7 +74,7 @@ class StaticNoise extends StatelessComponent {
           ),
           [],
         ),
-        // Layer 2 — coarser cross-pattern at a different angle.
+        // Layer 2 - coarser cross-pattern at a different angle.
         div(
           classes: 'tv-coarse',
           styles: Styles(
@@ -86,7 +86,7 @@ class StaticNoise extends StatelessComponent {
           ),
           [],
         ),
-        // Layer 3 — VHS tracking band.
+        // Layer 3 - VHS tracking band.
         div(
           classes: 'tv-band',
           styles: Styles(
@@ -106,7 +106,7 @@ class StaticNoise extends StatelessComponent {
 
   @css
   static List<StyleRule> get styles => [
-    // Flicker wrapper — fixed full-screen, holds the overall flicker animation.
+    // Flicker wrapper - fixed full-screen, holds the overall flicker animation.
     css('.tv-flicker-host').styles(
       position: Position.fixed(top: Unit.zero, left: Unit.zero),
       width: 100.percent,

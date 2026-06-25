@@ -12,7 +12,7 @@ import '../models/station.dart';
 /// (full signal) all five bars glow.
 ///
 /// When the radio powers on, the meter first runs a brief "searching
-/// for signal" sweep — each bar pulses amber with a staggered delay,
+/// for signal" sweep - each bar pulses amber with a staggered delay,
 /// giving a Knight Rider-style scanner. After [_scanDuration] the
 /// animation hands off to the normal signal-strength display.
 class SignalBars extends StatefulComponent {
@@ -62,7 +62,7 @@ class SignalBars extends StatefulComponent {
         'transition': 'opacity 0.3s ease',
       },
     ),
-    // Powered-off — the whole meter fades out so the dim bars don't
+    // Powered-off - the whole meter fades out so the dim bars don't
     // leak through the black CRT overlay during initial load.
     css('.signal-bars.signal-bars-off').styles(
       opacity: 0,
@@ -76,7 +76,7 @@ class SignalBars extends StatefulComponent {
             'background 0.25s ease, box-shadow 0.25s ease, opacity 0.25s ease',
       },
     ),
-    // Scanning state — amber pulse with staggered per-bar delay
+    // Scanning state - amber pulse with staggered per-bar delay
     // applied inline in [_SignalBarsState].
     css('.signal-bar.signal-scanning').styles(
       raw: {
