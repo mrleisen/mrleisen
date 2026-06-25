@@ -351,10 +351,10 @@ class StationDisplay extends StatelessComponent {
 
   Component _bblPanel(Station s, Lang lang) {
     final subtitle =
-        lang == Lang.es ? 'Gestor de loterías' : 'Lottery manager';
+        lang == Lang.es ? 'Copiloto de lotería' : 'Lottery copilot';
     final body = lang == Lang.es
-        ? 'Gestor de tiquetes de lotería para MiLoto'
-        : 'Lottery ticket manager for MiLoto';
+        ? 'Tu copiloto de lotería para Baloto, MiLoto y ColorLoto'
+        : 'Your lottery copilot for Baloto, MiLoto and ColorLoto';
     return _panelShell(
       color: s.color,
       label: _stationLabel(s, lang),
