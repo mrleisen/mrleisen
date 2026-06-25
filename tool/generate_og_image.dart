@@ -1,4 +1,4 @@
-/// Generates `web/og-image.png` — a 1200x630 social preview card.
+/// Generates `web/og-image.png` - a 1200x630 social preview card.
 ///
 /// LinkedIn, Facebook and some other platforms don't reliably render SVG
 /// og:images, so this produces a rasterized PNG alongside the SVG.
@@ -179,7 +179,7 @@ void main() {
 
   // ─ Tagline ───────────────────────────────────────────────────────────
   final medium = arial24;
-  const tagline = 'RAFAEL CAMARGO  —  SOFTWARE ENGINEER';
+  const tagline = 'RAFAEL CAMARGO  -  SOFTWARE ENGINEER';
   final taglineWidth = tagline.length * 13;
   drawString(
     img,
