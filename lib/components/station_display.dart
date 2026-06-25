@@ -178,6 +178,8 @@ class StationDisplay extends StatelessComponent {
         return _numeloroPanel(s, lang);
       case 'AYU':
         return _ayuwokiPanel(s, lang);
+      case 'CSP':
+        return _conspiranoicoPanel(s, lang);
     }
     return div([]);
   }
@@ -422,6 +424,18 @@ class StationDisplay extends StatelessComponent {
         body: lang == Lang.es
             ? 'Un homenaje al meme de internet'
             : 'A tribute to the internet meme',
+      );
+
+  Component _conspiranoicoPanel(Station s, Lang lang) => _amPanel(
+        s: s,
+        lang: lang,
+        title: 'Conspiranoico',
+        subtitle: lang == Lang.es ? 'Lugar curioso' : 'A curious place',
+        body: lang == Lang.es
+            ? 'Un lugar para todas las teorías conspirativas — no para '
+                'creerlas, sino para conocerlas. Pura curiosidad.'
+            : 'A place for every conspiracy theory — not to believe them, '
+                'but to be aware of them. Pure curiosity.',
       );
 
   // ── shared building blocks ──
