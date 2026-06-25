@@ -80,12 +80,12 @@ class Station {
 const stations = <Station>[
   // ── FM: featured content. ──
   Station(band: Band.fm, frequency: 89.5, callSign: 'ITNW', color: '#4EBFB0'),
+  Station(band: Band.fm, frequency: 91.6, callSign: 'BBL', color: '#D4A843'),
   Station(band: Band.fm, frequency: 93.6, callSign: 'NET', color: '#B085E0'),
   Station(band: Band.fm, frequency: 97.7, callSign: 'WHO', color: '#5BA4D9'),
   Station(band: Band.fm, frequency: 101.8, callSign: 'UIS', color: '#E8944A'),
   Station(band: Band.fm, frequency: 105.9, callSign: 'TRP', color: '#E86A8A'),
   // ── AM: idea-stage projects, one per station. ──
-  Station(band: Band.am, frequency: 640.0, callSign: 'BBL', color: '#D4A843'),
   Station(band: Band.am, frequency: 960.0, callSign: 'AWS', color: '#E05050'),
   Station(band: Band.am, frequency: 1280.0, callSign: 'NFT', color: '#8BBF55'),
   Station(band: Band.am, frequency: 1600.0, callSign: 'PNK', color: '#D05A8C'),

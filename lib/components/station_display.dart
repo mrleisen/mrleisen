@@ -345,15 +345,25 @@ class StationDisplay extends StatelessComponent {
     ]);
   }
 
-  Component _bblPanel(Station s, Lang lang) => _amPanel(
-        s: s,
-        lang: lang,
-        title: 'Boom Boom Lottery',
-        subtitle: lang == Lang.es ? 'Gestor de loterías' : 'Lottery manager',
-        body: lang == Lang.es
-            ? 'Gestor de tiquetes de lotería para MiLoto'
-            : 'Lottery ticket manager for MiLoto',
-      );
+  Component _bblPanel(Station s, Lang lang) {
+    final subtitle =
+        lang == Lang.es ? 'Gestor de loterías' : 'Lottery manager';
+    final body = lang == Lang.es
+        ? 'Gestor de tiquetes de lotería para MiLoto'
+        : 'Lottery ticket manager for MiLoto';
+    return _panelShell(
+      color: s.color,
+      label: _stationLabel(s, lang),
+      title: 'Boom Boom Lottery',
+      children: [
+        div(classes: 'panel-subtitle', [text(subtitle)]),
+        p(classes: 'panel-body', [text(body)]),
+        div(classes: 'pill-row', [
+          _pill('Web', href: 'https://boomboomlotter.com'),
+        ]),
+      ],
+    );
+  }
 
   Component _awsPanel(Station s, Lang lang) => _amPanel(
         s: s,
