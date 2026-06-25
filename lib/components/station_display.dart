@@ -174,6 +174,10 @@ class StationDisplay extends StatelessComponent {
         return _nftPanel(s, lang);
       case 'PNK':
         return _pnkPanel(s, lang);
+      case 'NUM':
+        return _numeloroPanel(s, lang);
+      case 'AYU':
+        return _ayuwokiPanel(s, lang);
     }
     return div([]);
   }
@@ -396,6 +400,28 @@ class StationDisplay extends StatelessComponent {
         body: lang == Lang.es
             ? 'Un intento de crear un LLM punk'
             : 'An attempt to create a punk LLM',
+      );
+
+  Component _numeloroPanel(Station s, Lang lang) => _amPanel(
+        s: s,
+        lang: lang,
+        title: 'Numeloro',
+        subtitle: lang == Lang.es ? 'Patio de números' : 'Number playground',
+        body: lang == Lang.es
+            ? 'Un patio donde los números salen a pasear y a charlar '
+                'como loros en el numeloro'
+            : 'A playground where numbers hang out and chat away '
+                'like parrots on the numeloro',
+      );
+
+  Component _ayuwokiPanel(Station s, Lang lang) => _amPanel(
+        s: s,
+        lang: lang,
+        title: 'Ayuwoki',
+        subtitle: lang == Lang.es ? 'Homenaje' : 'Tribute',
+        body: lang == Lang.es
+            ? 'Un homenaje al meme de internet'
+            : 'A tribute to the internet meme',
       );
 
   // ── shared building blocks ──
