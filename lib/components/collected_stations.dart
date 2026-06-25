@@ -6,7 +6,7 @@ import 'package:universal_web/web.dart' as web;
 
 import '../models/station.dart';
 
-// Amber-LED palette — kept in sync with radio_dial.dart so the row
+// Amber-LED palette - kept in sync with radio_dial.dart so the row
 // reads as the same hardware family as the LCD readout.
 const String _lcdAmber = '#E8A035';
 const String _lcdAmberDim = '#6d4a0e';
@@ -39,11 +39,11 @@ class CollectedStations extends StatefulComponent {
   final Station? activeStation;
 
   /// The band the dial is currently tuned to. Drives which row's
-  /// label lights up amber — the inactive band's row stays dim, the
+  /// label lights up amber - the inactive band's row stays dim, the
   /// active band's row matches the LCD/FM-AM indicator colour.
   final Band activeBand;
 
-  /// Whole row fades out when the radio is off — collected stations
+  /// Whole row fades out when the radio is off - collected stations
   /// don't make sense as a backlit readout when the panel is dark.
   final bool isPowered;
 
@@ -52,7 +52,7 @@ class CollectedStations extends StatefulComponent {
   final void Function(Station) onRecall;
 
   /// Fired when the user press-and-holds a pill long enough to clear
-  /// it. Mirrors the way old car-stereo presets were wiped — hold the
+  /// it. Mirrors the way old car-stereo presets were wiped - hold the
   /// button until it confirms. Parent removes the station from its
   /// collected set + persists.
   final void Function(Station)? onDelete;
@@ -68,7 +68,7 @@ class CollectedStationsState extends State<CollectedStations> {
   Timer? _holdTimer;
 
   /// How long the user must hold a pill to confirm a delete. ~900 ms
-  /// is the sweet spot — short enough not to feel tedious, long
+  /// is the sweet spot - short enough not to feel tedious, long
   /// enough that an accidental brush against the screen recalls the
   /// station rather than clearing it.
   static const Duration _holdDuration = Duration(milliseconds: 900);
@@ -96,7 +96,7 @@ class CollectedStationsState extends State<CollectedStations> {
   }
 
   /// Releases the hold without committing a delete. Returns true when
-  /// the release happened before the long-press timer fired — the
+  /// the release happened before the long-press timer fired - the
   /// caller treats that case as a tap (recall).
   bool _releaseHold(Station s) {
     final key = _stationKey(s);
@@ -183,7 +183,7 @@ class CollectedStationsState extends State<CollectedStations> {
         },
         'pointerleave': (web.Event _) => _cancelHold(s),
         'pointercancel': (web.Event _) => _cancelHold(s),
-        // Keyboard activation — Enter / Space recalls; long-press
+        // Keyboard activation - Enter / Space recalls; long-press
         // delete is intentionally pointer-only since holding a key is
         // a less natural metaphor than holding a button.
         'keydown': (web.Event e) {
@@ -243,7 +243,7 @@ class CollectedStationsState extends State<CollectedStations> {
     ),
 
     // ── single band row ──
-    // `[FM] [pill][pill][pill]…` — the band label is a fixed-width
+    // `[FM] [pill][pill][pill]…` - the band label is a fixed-width
     // gutter (so both rows' pills line up); pills sit in their own
     // horizontally-scrollable container so overflow scrolls per band
     // rather than stretching the whole rack.
@@ -275,7 +275,7 @@ class CollectedStationsState extends State<CollectedStations> {
     ]),
 
     // ── band label ──
-    // Styled as a small chip pill — same visual language as the
+    // Styled as a small chip pill - same visual language as the
     // FM/AM/ST/MONO indicators above the dial. Defaults to the dim
     // off-state; `.collected-row-active` swaps in the lit amber look
     // so the user can read the current band straight off the rack.
@@ -319,7 +319,7 @@ class CollectedStationsState extends State<CollectedStations> {
     // visually with the actual LCD readout.
     //
     // The `::after` overlay is the press-and-hold delete progress
-    // bar — a red wash that fills left→right while the user is
+    // bar - a red wash that fills left→right while the user is
     // holding the pill. At rest its width is 0 with a fast 0.15 s
     // snap so an early release reads as "cancelled". When the
     // `.collected-pill-holding` class is applied, the width animates
@@ -399,7 +399,7 @@ class CollectedStationsState extends State<CollectedStations> {
     // ── currently-tuned pill ──
     // Mirrors the lit `.ind-on` indicator: warmer dark substrate,
     // amber-tinted border, and (via descendant rules) brighter text
-    // with a soft glow. No big outer halo — the pill stays calm so
+    // with a soft glow. No big outer halo - the pill stays calm so
     // it reads as part of the faceplate, not a separate light source.
     css('.collected-pill-active').styles(raw: {
       'background': 'linear-gradient(to bottom, #100904, #050202)',

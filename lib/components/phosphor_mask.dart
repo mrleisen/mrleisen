@@ -4,10 +4,10 @@ import 'package:jaspr/jaspr.dart';
 /// Aperture-grille phosphor overlay.
 ///
 /// Three layered pure-CSS textures, screen-blended over the CRT:
-///   1. A vertical RGB triad (the aperture grille itself) — subtle
+///   1. A vertical RGB triad (the aperture grille itself) - subtle
 ///      when locked to a station, blooming when the signal is noisy.
-///   2. A thin chromatic fringe at the left + right edges — red on
-///      the left, cyan on the right — simulating convergence drift
+///   2. A thin chromatic fringe at the left + right edges - red on
+///      the left, cyan on the right - simulating convergence drift
 ///      near the tube edges.
 ///   3. A horizontal "carrier trace" line at the very top of the
 ///      viewport with a faint glow, the hardware's equivalent of a
@@ -17,7 +17,7 @@ import 'package:jaspr/jaspr.dart';
 /// 1.0 heavy noise) set on the root element; they dim toward 0 as
 /// a station locks and bloom as the dial drifts into open air.
 ///
-/// Sits at z-index 17 — above the vignette (15) and below the
+/// Sits at z-index 17 - above the vignette (15) and below the
 /// scanlines (20) so the triad reads as a dot-mask UNDER the
 /// horizontal scanline grid.
 class PhosphorMask extends StatelessComponent {
@@ -67,7 +67,7 @@ class PhosphorMask extends StatelessComponent {
         'transition': 'opacity 0.35s ease',
       },
     ),
-    // Hidden when the radio is off — the CRT overlay is already
+    // Hidden when the radio is off - the CRT overlay is already
     // opaque black so the triad would just bloom invisibly against
     // it and waste composite bandwidth.
     css('.phosphor-mask.phosphor-off').styles(opacity: 0),
@@ -81,7 +81,7 @@ class PhosphorMask extends StatelessComponent {
     // imperceptible.
     //
     // The lone `transparent 3px → 4px` gap per cycle adds a black
-    // stripe that keeps the triad from washing out — without it the
+    // stripe that keeps the triad from washing out - without it the
     // whole image reads greenish.
     css('.phosphor-triad').styles(
       position: Position.absolute(
@@ -105,7 +105,7 @@ class PhosphorMask extends StatelessComponent {
 
     // ── chromatic edge fringe ──
     // Two thin vertical gradients hugging the left + right edges
-    // of the viewport. Red bias on the left, cyan on the right —
+    // of the viewport. Red bias on the left, cyan on the right -
     // the classic CRT convergence failure on the outer raster.
     // Width breathes with --mask-i so a clean signal stays tight,
     // a noisy one widens into visible colour bloom.
@@ -131,7 +131,7 @@ class PhosphorMask extends StatelessComponent {
     // ── top-edge carrier trace ──
     // A single 1px horizontal line at y=0 with a soft amber glow.
     // Always visible when the radio is on; the glow intensifies
-    // with noise — the receiver is "seeing" the carrier band even
+    // with noise - the receiver is "seeing" the carrier band even
     // when no station is present.
     css('.phosphor-carrier').styles(
       position: Position.absolute(top: Unit.zero, left: Unit.zero),

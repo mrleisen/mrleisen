@@ -8,7 +8,7 @@ import 'package:universal_web/web.dart' as web;
 
 import '../models/station.dart';
 
-/// `window.__radioAudioCtx` — the AudioContext created synchronously
+/// `window.__radioAudioCtx` - the AudioContext created synchronously
 /// inside the power-button's click/touchend handler. Mobile browsers
 /// (iOS Safari, Android Chrome) only accept `resume()` as a user-
 /// initiated unlock when it's called in the direct DOM-handler
@@ -24,7 +24,7 @@ external set _jsRadioCtx(JSAny? value);
 
 /// Synchronously creates the AudioContext and kicks `resume()`. Must
 /// be called from inside a real user-gesture handler attached to a
-/// UI element (e.g. the power button's click/touchend) — mobile
+/// UI element (e.g. the power button's click/touchend) - mobile
 /// browsers refuse to transition the context to `running` otherwise.
 /// Publishes the context on `window.__radioAudioCtx` so RadioAudio's
 /// [_RadioAudioState._waitForJsContext] can pick it up after power-on
@@ -58,7 +58,7 @@ void unlockAudioContext() {
 /// * Splitting the noise into a high-pass "crisp" path and a low-pass
 ///   "body" path gives the static both bite and weight without
 ///   sounding like wind.
-/// * The whistle frequency is `distanceToStation * 2000` Hz — exactly
+/// * The whistle frequency is `distanceToStation * 2000` Hz - exactly
 ///   on a station the beat is 0 Hz (silence), 1 MHz away it whines at
 ///   2 kHz. That IS the heterodyne effect on a real superhet receiver.
 ///
@@ -90,13 +90,13 @@ class RadioAudio extends StatefulComponent {
   final bool isTuning;
 
   /// Whether the radio is powered on. The audio graph is only built
-  /// once this flips to true — [unlockAudioContext] must have run in
+  /// once this flips to true - [unlockAudioContext] must have run in
   /// the same user gesture that raised the flag.
   final bool isPowered;
 
   /// Master volume [0.0 – 1.0]. Applied as a scalar multiplier to the
   /// final static + whistle gains. `0.0` fades everything to silence
-  /// over `_silenceRamp` without tearing down the audio graph —
+  /// over `_silenceRamp` without tearing down the audio graph -
   /// flipping volume back up restores instantly.
   final double volume;
 
@@ -105,7 +105,7 @@ class RadioAudio extends StatefulComponent {
 }
 
 class _RadioAudioState extends State<RadioAudio> {
-  // Lazily-built nodes — null until the user taps the start overlay.
+  // Lazily-built nodes - null until the user taps the start overlay.
   web.AudioContext? _ctx;
   web.AudioBufferSourceNode? _noiseA;
   web.AudioBufferSourceNode? _noiseB;
@@ -123,7 +123,7 @@ class _RadioAudioState extends State<RadioAudio> {
   // in-flight resume() is still being polled.
   bool _isResuming = false;
 
-  // visibilitychange listener — mobile browsers suspend the
+  // visibilitychange listener - mobile browsers suspend the
   // AudioContext when the tab/app backgrounds; we resume on return.
   JSFunction? _visibilityListener;
 
@@ -137,7 +137,7 @@ class _RadioAudioState extends State<RadioAudio> {
   // BandConfig at runtime (FM: MHz × 2000, AM: kHz × 25) so the beat
   // frequency tops out around 2 kHz for either band regardless of unit.
 
-  /// Whistle peak amplitude (very thin, never loud — top of spec range).
+  /// Whistle peak amplitude (very thin, never loud - top of spec range).
   static const double _whistleCeiling = 0.09;
 
   /// Static peak amplitude when the user is actively tuning. Cap on
@@ -145,7 +145,7 @@ class _RadioAudioState extends State<RadioAudio> {
   static const double _staticCeiling = 0.12;
   /// Idle static volume, expressed as a fraction of [_staticCeiling].
   /// When the user releases the dial the static drops to this level
-  /// instead of going silent — so the radio keeps hissing like a real
+  /// instead of going silent - so the radio keeps hissing like a real
   /// receiver searching for a carrier. Grabbing the dial again lifts
   /// the volume back to the full ceiling.
   static const double _idleStaticFactor = 0.7;
@@ -217,7 +217,7 @@ class _RadioAudioState extends State<RadioAudio> {
   /// Polls `window.__radioAudioCtx` every 50 ms waiting for the tap
   /// overlay to publish a context. Once found, builds the Dart-side
   /// graph, starts the sources, and hands off to [_applyState]. The
-  /// poll limit is deliberately generous — the overlay blocks all
+  /// poll limit is deliberately generous - the overlay blocks all
   /// interaction until the user taps, so a long wait is normal.
   Future<void> _waitForJsContext() async {
     web.AudioContext? ctx;
@@ -247,7 +247,7 @@ class _RadioAudioState extends State<RadioAudio> {
     _playSilentUnlockBuffer(ctx);
     _buildGraph(ctx);
 
-    // Poll for running state before starting sources — up to 30 ×
+    // Poll for running state before starting sources - up to 30 ×
     // 50 ms = 1.5 s.
     for (var i = 0; i < 30; i++) {
       if (!mounted || _ctx == null) return;
@@ -282,7 +282,7 @@ class _RadioAudioState extends State<RadioAudio> {
   }
 
   /// Constructs the noise + whistle graph. Sources are NOT started
-  /// here — see [_waitForJsContext] for the delayed start.
+  /// here - see [_waitForJsContext] for the delayed start.
   void _buildGraph(web.AudioContext ctx) {
     // Two independent sparse-noise buffers. Different seeds + different
     // sparsity densities so the crackles never line up (which would
@@ -317,7 +317,7 @@ class _RadioAudioState extends State<RadioAudio> {
     final lg = ctx.createGain()..gain.value = 0.45;
     _lowGain = lg;
 
-    // Master static gain — modulated by isTuning + noiseLevel.
+    // Master static gain - modulated by isTuning + noiseLevel.
     final staticGain = ctx.createGain()..gain.value = 0;
     _staticGain = staticGain;
 
@@ -389,7 +389,7 @@ class _RadioAudioState extends State<RadioAudio> {
       print('AudioContext resume failed: $e');
     }
 
-    // Poll for running state — up to 10 × 50 ms = 500 ms.
+    // Poll for running state - up to 10 × 50 ms = 500 ms.
     for (var i = 0; i < 10; i++) {
       if (!mounted || _ctx == null) {
         _isResuming = false;
@@ -402,7 +402,7 @@ class _RadioAudioState extends State<RadioAudio> {
     if (!mounted || _ctx == null) return;
     // If the context is still suspended (resume rejected, or the
     // browser is waiting for a fresh user gesture) don't retry in a
-    // tight loop — wait for the next visibility / interaction event.
+    // tight loop - wait for the next visibility / interaction event.
     if (_ctx!.state == 'suspended') return;
     _applyState();
   }
@@ -420,7 +420,7 @@ class _RadioAudioState extends State<RadioAudio> {
 
     // Some browsers (Android Chrome, iOS Safari on return from
     // background) silently re-suspend the context. Hand off to the
-    // async resume path and bail — _resumeAndApply will re-enter this
+    // async resume path and bail - _resumeAndApply will re-enter this
     // method once the context is actually 'running' again. Scheduling
     // ramps against a suspended context reliably produces silence on
     // mobile, which is exactly the bug we're fixing.
@@ -435,7 +435,7 @@ class _RadioAudioState extends State<RadioAudio> {
     final tuning = component.isTuning;
     final volume = component.volume.clamp(0.0, 1.0);
 
-    // Powered off — fade everything to silence. The graph stays wired
+    // Powered off - fade everything to silence. The graph stays wired
     // so power-on restores smoothly without rebuilding nodes.
     if (!component.isPowered) {
       _ramp(_staticGain!.gain, 0, now, _silenceRamp);
@@ -453,7 +453,7 @@ class _RadioAudioState extends State<RadioAudio> {
     }
 
     // ── 1) STATIC gain ──
-    // The radio is "on" whenever we're between stations — static plays
+    // The radio is "on" whenever we're between stations - static plays
     // continuously regardless of interaction, like a real FM receiver
     // that hisses until you land on a carrier.
     //
@@ -461,7 +461,7 @@ class _RadioAudioState extends State<RadioAudio> {
     // grabbing the dial still adds a small perceptible lift.
     double staticTarget;
     if (noise < _silenceThreshold) {
-      // Signal locked — silence.
+      // Signal locked - silence.
       staticTarget = 0;
     } else {
       // Linearise noise into (0..1) above the silence threshold so
@@ -543,7 +543,7 @@ class _RadioAudioState extends State<RadioAudio> {
   }
 
   // ── render ──
-  // Invisible — exists only to participate in the component tree so
+  // Invisible - exists only to participate in the component tree so
   // jaspr preserves its State across rebuilds.
   @override
   Component build(BuildContext context) {

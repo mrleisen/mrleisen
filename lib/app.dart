@@ -39,7 +39,7 @@ class AppState extends State<App> {
   double _noiseLevel = 0.5;
 
   // True while the user is actively interacting with the dial. Drops back
-  // to false ~400ms after the last input — the audio engine uses this to
+  // to false ~400ms after the last input - the audio engine uses this to
   // fade in/out so we don't drone constantly.
   bool _isTuning = false;
   Timer? _tuningIdleTimer;
@@ -58,7 +58,7 @@ class AppState extends State<App> {
   // already on (LED green, gentle static) when the page loads.
   double _volume = 0.36;
 
-  // Radio power state. Starts off — the faceplate is dimmed and the
+  // Radio power state. Starts off - the faceplate is dimmed and the
   // audio graph is gated on this until the user taps the power button.
   // The power-on gesture is where AudioContext gets created.
   bool _isPowered = false;
@@ -129,7 +129,7 @@ class AppState extends State<App> {
       });
     } catch (_) {
       // localStorage can throw (privacy mode, quota, etc.). A failed
-      // read just means we start with an empty rack — not worth
+      // read just means we start with an empty rack - not worth
       // surfacing.
     }
   }
@@ -140,7 +140,7 @@ class AppState extends State<App> {
       web.window.localStorage
           .setItem(_storageKey, _collectedKeys.join(','));
     } catch (_) {
-      // Same rationale as the read path — silent failure is the
+      // Same rationale as the read path - silent failure is the
       // right call for a cosmetic persistence feature.
     }
   }
@@ -202,7 +202,7 @@ class AppState extends State<App> {
     newFreq = newFreq.clamp(cfg.minFreq, cfg.maxFreq);
 
     // Mark the user as actively tuning regardless of whether the value
-    // changed — clicking the dial without moving still counts as
+    // changed - clicking the dial without moving still counts as
     // interaction and should wake the audio engine.
     _markTuning();
 
@@ -241,7 +241,7 @@ class AppState extends State<App> {
 
   /// Adds the currently-locked station to the collected set. No-op
   /// when not locked or already saved. Auto-collection on lock was
-  /// rejected as a design — sweeping the dial would silently scoop
+  /// rejected as a design - sweeping the dial would silently scoop
   /// every station, robbing the act of "finding" anything; the user
   /// has to press the MEM button to commit a station to the rack.
   void _saveCurrentStation() {
@@ -254,7 +254,7 @@ class AppState extends State<App> {
     _persistCollected();
   }
 
-  /// Removes a station from the collected rack — the press-and-hold
+  /// Removes a station from the collected rack - the press-and-hold
   /// gesture in [CollectedStations] commits this. Persists immediately
   /// so the deletion survives a refresh, mirroring the save path.
   void _deleteStation(Station s) {
@@ -265,7 +265,7 @@ class AppState extends State<App> {
   }
 
   /// True when the dial is locked onto a station that has not yet
-  /// been saved — the only state in which the MEM button is armed.
+  /// been saved - the only state in which the MEM button is armed.
   bool get _canSaveCurrent {
     final s = _activeStation;
     return _isPowered && s != null &&
@@ -275,7 +275,7 @@ class AppState extends State<App> {
   String _stationKey(Station s) => '${s.band.name}:${s.frequency}';
 
   /// Stations the user has discovered, in the order they first locked
-  /// onto each one. Built fresh every render — cheap given there are
+  /// onto each one. Built fresh every render - cheap given there are
   /// only a handful of stations total.
   List<Station> get _collectedStations => [
         for (final s in stations)
@@ -287,7 +287,7 @@ class AppState extends State<App> {
   /// tweens the active frequency over [_recallAnimDuration] with an
   /// ease-out cubic so the dial decelerates into the target. Each tick
   /// goes through `_tune`, so the audio engine reacts as the sweep
-  /// passes adjacent stations — same heterodyne whistle and crossfade
+  /// passes adjacent stations - same heterodyne whistle and crossfade
   /// the user gets when sweeping by hand.
   void _recallStation(Station s) {
     if (!_isPowered) return;
@@ -371,7 +371,7 @@ class AppState extends State<App> {
         ? 1.0
         : ((nearestDist - handoff) / (cfg.tolerance - handoff))
             .clamp(0.0, 1.0);
-    // Power gates every upper layer — when off, the CRT overlay is
+    // Power gates every upper layer - when off, the CRT overlay is
     // opaque black anyway, but we also zero out content opacity so
     // nothing animates or allocates behind the overlay.
     final contentOpacity = _isPowered ? distanceOpacity : 0.0;
@@ -410,14 +410,14 @@ class AppState extends State<App> {
         isPowered: _isPowered,
       ),
 
-      // CRT power-on/off overlay — fills the viewport under all
+      // CRT power-on/off overlay - fills the viewport under all
       // content layers but above the root background. Opaque black
       // when off, transparent when on, plays clip-path flash on
       // transitions.
       div(classes: crtClass, []),
 
       // Effect overlays (order = paint order; z-index is the real
-      // stacking order — noise → vignette → phosphor → scanlines).
+      // stacking order - noise → vignette → phosphor → scanlines).
       StaticNoise(noiseLevel: _noiseLevel, isPowered: _isPowered),
       const Vignette(),
       PhosphorMask(
@@ -442,7 +442,7 @@ class AppState extends State<App> {
         [text(_lang == Lang.es ? 'ES' : 'EN')],
       ),
 
-      // Idle readout — what a real receiver shows when the dial is
+      // Idle readout - what a real receiver shows when the dial is
       // parked on dead air. The old "rafahcf / tune in" hero is gone;
       // the personal identity lives inside the WHO station panel
       // instead. Keeping the idle state as a proper no-carrier
@@ -454,7 +454,7 @@ class AppState extends State<App> {
           raw: {
             'transition': 'opacity 0.4s ease',
             // Only add the horizontal content-jitter when there's real
-            // noise present — a calm, locked-in dial keeps the frame
+            // noise present - a calm, locked-in dial keeps the frame
             // perfectly still.
             'animation': (_isPowered && _noiseLevel > 0.3)
                 ? 'content-jitter 0.22s steps(2, end) infinite'
@@ -462,7 +462,7 @@ class AppState extends State<App> {
           },
         ),
         [
-          // Large dash array — the "missing call-sign" glyph. Five
+          // Large dash array - the "missing call-sign" glyph. Five
           // en-dashes with thin-space separators drift slightly so
           // the readout feels alive rather than printed.
           div(
@@ -479,7 +479,7 @@ class AppState extends State<App> {
                 ),
             ],
           ),
-          // Primary state line — tracked uppercase, station-style
+          // Primary state line - tracked uppercase, station-style
           // teletype aesthetic.
           div(classes: 'carrier-state', [
             span(classes: 'carrier-dot', []),
@@ -497,18 +497,18 @@ class AppState extends State<App> {
             span(classes: 'carrier-band-sep', [text('·')]),
             span(classes: 'carrier-band-unit', [text(unitLabel)]),
           ]),
-          // Sweep ribbon — a thin horizontal bar under the range
+          // Sweep ribbon - a thin horizontal bar under the range
           // with a single brighter tracer that runs left→right.
           div(classes: 'carrier-sweep', [
             div(classes: 'carrier-sweep-track', []),
             div(classes: 'carrier-sweep-head', []),
           ]),
-          // Sub-caption — small, tracked, breathing opacity.
+          // Sub-caption - small, tracked, breathing opacity.
           div(classes: 'carrier-sub', [text(idleSub)]),
         ],
       ),
 
-      // Decoded station content — fades in with distortion across the
+      // Decoded station content - fades in with distortion across the
       // band's tolerance window, then locks cleanly inside its lockRange.
       StationDisplay(
         frequency: _frequency,
@@ -617,7 +617,7 @@ class AppState extends State<App> {
         .styles(raw: {
       'opacity': '0',
     }),
-    // Language toggle pill — fixed top-right.
+    // Language toggle pill - fixed top-right.
     css('.lang-toggle', [
       css('&').styles(
         position: Position.fixed(top: 16.px, right: 16.px),
@@ -648,8 +648,8 @@ class AppState extends State<App> {
     // ── idle "carrier monitor" readout ──
     // Sits in the same vertical slot as the old hero title, but
     // structured as a receiver's between-stations display. The five
-    // layers — dashes, CARRIER state line, band/range, sweep ribbon,
-    // sub-caption — all share a single vertical flow so the block
+    // layers - dashes, CARRIER state line, band/range, sweep ribbon,
+    // sub-caption - all share a single vertical flow so the block
     // reads top-down like a real monitoring panel.
     css('.carrier-monitor').styles(
       position: Position.absolute(
@@ -672,7 +672,7 @@ class AppState extends State<App> {
     // Row of five en-dashes. Each dash drifts its opacity on its own
     // delay so the array reads as animated silence rather than a
     // frozen placeholder. The row itself drifts horizontally a few
-    // pixels via `dash-drift` — a slow, unconscious wobble.
+    // pixels via `dash-drift` - a slow, unconscious wobble.
     css('.carrier-dashes').styles(
       display: Display.flex,
       flexDirection: FlexDirection.row,
@@ -682,7 +682,7 @@ class AppState extends State<App> {
       raw: {
         'animation': 'dash-drift 6s ease-in-out infinite',
         'color': '#b0b0ba',
-        // Constant chromatic fringe on the dashes themselves —
+        // Constant chromatic fringe on the dashes themselves -
         // mirrors the CRT edge fringe, reads as an unconverged
         // signal.
         'text-shadow':
@@ -704,7 +704,7 @@ class AppState extends State<App> {
 
     // ── state line: • NO CARRIER • ──
     // Tracked uppercase teletype. The bookend dots are tiny filled
-    // circles that pulse amber — the hardware's "signal present"
+    // circles that pulse amber - the hardware's "signal present"
     // tell-tales, here unlit-grey because nothing is locked.
     css('.carrier-state').styles(
       display: Display.flex,
@@ -741,7 +741,7 @@ class AppState extends State<App> {
     ),
 
     // ── band / range line ──
-    // `FM · 87.5 – 108.0 · MHZ` — the same layout AM and FM share,
+    // `FM · 87.5 – 108.0 · MHZ` - the same layout AM and FM share,
     // just different values. The band marker on the left is the
     // brightest element (identifies which side of the dial the
     // user is on); the range itself is a calmer mid-grey; the
@@ -819,7 +819,7 @@ class AppState extends State<App> {
     ),
 
     // ── sub-caption ──
-    // Whispered second line. Dim, small, heavily tracked — the
+    // Whispered second line. Dim, small, heavily tracked - the
     // kind of runtime-status text you'd find printed just above
     // a signal-presence indicator on a rack-mounted receiver.
     css('.carrier-sub').styles(

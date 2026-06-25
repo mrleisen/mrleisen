@@ -24,7 +24,7 @@ class BandConfig {
   /// Granularity of a single dial step (0.1 MHz on FM, 10 kHz on AM).
   final double step;
 
-  /// Distance within which a station's signal/content is "in range" —
+  /// Distance within which a station's signal/content is "in range" -
   /// content begins fading in, heterodyne whistle starts, static begins
   /// clearing. Expressed in the band's native unit (MHz / kHz).
   final double tolerance;
