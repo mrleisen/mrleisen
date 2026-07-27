@@ -328,6 +328,44 @@ void main() {
           '0%, 100%': Styles(opacity: 0.85),
           '50%': Styles(opacity: 1),
         }),
+        // Keyframe: power-attract
+        // Slow amber swell on the power rocker while the radio has never
+        // been switched on. Everything on this page lives behind that one
+        // 52x22 control, so if a first-time visitor doesn't find it they
+        // see a black screen and leave. The pulse is deliberately slow
+        // (2.4 s) and warm rather than a blink - it should read as a
+        // standby lamp on the hardware, not as a notification badge.
+        //
+        // Retired for good the first time the radio is powered on, so a
+        // returning visitor never sees it.
+        css.keyframes('power-attract', {
+          '0%, 100%': Styles(
+            raw: {
+              'box-shadow':
+                  'inset 0 1px 3px rgba(0,0,0,0.75), '
+                  '0 1px 0 rgba(255,255,255,0.05), '
+                  '0 0 0 0 rgba(232,160,53,0.0)',
+              'border-color': 'rgba(255,255,255,0.12)',
+            },
+          ),
+          '50%': Styles(
+            raw: {
+              'box-shadow':
+                  'inset 0 1px 3px rgba(0,0,0,0.75), '
+                  '0 1px 0 rgba(255,255,255,0.05), '
+                  '0 0 9px 2px rgba(232,160,53,0.42)',
+              'border-color': 'rgba(232,160,53,0.55)',
+            },
+          ),
+        }),
+        // Keyframe: hint-fade-in
+        // Brings the onboarding microcopy up gently once the receiver is
+        // warm, so it reads as part of the boot sequence rather than as
+        // something that popped in.
+        css.keyframes('hint-fade-in', {
+          '0%': Styles(raw: {'opacity': '0'}),
+          '100%': Styles(raw: {'opacity': '1'}),
+        }),
         // Keyframe: dash-drift
         // Slowly drifts the large dash array horizontally so the block
         // of dashes subtly moves like it's trying to track a phantom
@@ -497,6 +535,20 @@ void main() {
           ),
           // Panels cross-fade instead of tearing into focus.
           css('.panel-fx').styles(raw: {'filter': 'none'}),
+          // The power rocker still has to be findable. With the pulse
+          // gone it holds the lit end of that pulse permanently, so the
+          // cue survives as contrast instead of as movement.
+          css('.power-rocker.power-attract').styles(
+            raw: {
+              'box-shadow':
+                  'inset 0 1px 3px rgba(0,0,0,0.75), '
+                  '0 1px 0 rgba(255,255,255,0.05), '
+                  '0 0 9px 2px rgba(232,160,53,0.42)',
+              'border-color': 'rgba(232,160,53,0.55)',
+            },
+          ),
+          // Hints appear at full strength rather than fading up.
+          css('.power-hint, .tune-hint').styles(raw: {'opacity': '1'}),
           // Grain, scanlines and the phosphor mask stay as static texture:
           // they carry the CRT look but none of them need to move to do it.
           // The noise layer is the one exception - held still it reads as a

@@ -87,6 +87,30 @@ class AppState extends State<App> {
 
   static const String _storageKey = 'rchf:collected_stations';
 
+  // Onboarding cues the visitor has already worked out for themselves.
+  // Holds the literals 'power' and 'tune'; persisted comma-joined under
+  // [_onboardKey], the same shape as the collected-stations rack.
+  //
+  // These are one-way and permanent. A hint that comes back on the
+  // second visit stops being help and starts being nagging, so once a
+  // gesture has been performed the corresponding cue is gone for good.
+  final Set<String> _onboarded = <String>{};
+
+  static const String _onboardKey = 'rchf:onboarded';
+
+  // The tune hint waits for the CRT warm-up to finish before appearing,
+  // so it lands as the last beat of the power-on sequence instead of
+  // fighting the turn-on animation.
+  bool _tuneHintArmed = false;
+  Timer? _tuneHintTimer;
+  static const Duration _tuneHintDelay = Duration(milliseconds: 1200);
+
+  /// The radio has never been switched on: pulse the rocker and label it.
+  bool get _showPowerHint => !_isPowered && !_onboarded.contains('power');
+
+  /// Powered up, warm, and the dial has never been moved.
+  bool get _showTuneHint => _isPowered && _tuneHintArmed && !_onboarded.contains('tune');
+
   // Window-level event listeners (stored for cleanup).
   JSFunction? _keyDownListener;
   JSFunction? _wheelListener;
@@ -98,6 +122,7 @@ class AppState extends State<App> {
 
     if (kIsWeb) {
       _loadCollectedFromStorage();
+      _loadOnboardedFromStorage();
 
       _keyDownListener = _onKeyDown.toJS;
       web.document.addEventListener('keydown', _keyDownListener);
@@ -134,6 +159,36 @@ class AppState extends State<App> {
     }
   }
 
+  /// Reads which onboarding cues this visitor has already cleared.
+  /// Unknown entries are ignored so a future rename can't resurrect a
+  /// hint or suppress one that doesn't exist yet.
+  void _loadOnboardedFromStorage() {
+    try {
+      final raw = web.window.localStorage.getItem(_onboardKey);
+      if (raw == null || raw.isEmpty) return;
+      const known = {'power', 'tune'};
+      final loaded = raw.split(',').where(known.contains);
+      if (loaded.isEmpty) return;
+      setState(() => _onboarded.addAll(loaded));
+    } catch (_) {
+      // Same reasoning as the collected-stations read: a failed load
+      // just means the visitor sees the hints again, which is the safe
+      // direction to fail in.
+    }
+  }
+
+  /// Permanently retires an onboarding cue.
+  void _markOnboarded(String cue) {
+    if (_onboarded.contains(cue)) return;
+    setState(() => _onboarded.add(cue));
+    if (!kIsWeb) return;
+    try {
+      web.window.localStorage.setItem(_onboardKey, _onboarded.join(','));
+    } catch (_) {
+      // Non-fatal: the hint reappears next visit, nothing breaks.
+    }
+  }
+
   void _persistCollected() {
     if (!kIsWeb) return;
     try {
@@ -149,6 +204,7 @@ class AppState extends State<App> {
     _tuningIdleTimer?.cancel();
     _recallAnimTimer?.cancel();
     _crtTimer?.cancel();
+    _tuneHintTimer?.cancel();
     if (kIsWeb) {
       web.document.removeEventListener('keydown', _keyDownListener);
       web.document.removeEventListener('wheel', _wheelListener);
@@ -206,6 +262,13 @@ class AppState extends State<App> {
     _markTuning();
 
     if (newFreq == _frequency) return;
+
+    // The dial actually moved, so the visitor has worked out the core
+    // gesture. Retire the tune hint for good. Guarded on a real change
+    // rather than on `_markTuning`, which also fires for a click that
+    // goes nowhere.
+    _markOnboarded('tune');
+
     setState(() {
       if (_band == Band.fm) {
         _fmFreq = newFreq;
@@ -565,6 +628,9 @@ class AppState extends State<App> {
         onDeleteStation: _deleteStation,
         canSaveCurrent: _canSaveCurrent,
         onSaveStation: _saveCurrentStation,
+        lang: _lang,
+        showPowerHint: _showPowerHint,
+        showTuneHint: _showTuneHint,
       ),
     ]);
   }
@@ -583,16 +649,36 @@ class AppState extends State<App> {
 
   void _togglePower() {
     _crtTimer?.cancel();
+    _tuneHintTimer?.cancel();
     final powering = !_isPowered;
+
+    if (powering) {
+      // They found the switch. That cue has done its job.
+      _markOnboarded('power');
+    }
+
     setState(() {
       _isPowered = powering;
       _crtPhase = powering ? 'turning-on' : 'turning-off';
+      // Any armed tune hint belongs to the session that is ending.
+      if (!powering) _tuneHintArmed = false;
     });
+
     final dur = powering ? _crtOnDuration : _crtOffDuration;
     _crtTimer = Timer(dur, () {
       if (!mounted) return;
       setState(() => _crtPhase = _isPowered ? 'on' : 'off');
     });
+
+    // Hold the tune hint back until the CRT has finished warming up, so
+    // it arrives as the closing beat of the power-on sequence rather
+    // than competing with it.
+    if (powering && !_onboarded.contains('tune')) {
+      _tuneHintTimer = Timer(_tuneHintDelay, () {
+        if (!mounted || !_isPowered) return;
+        setState(() => _tuneHintArmed = true);
+      });
+    }
   }
 
   @css
