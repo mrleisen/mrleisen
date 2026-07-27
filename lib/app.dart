@@ -8,6 +8,7 @@ import 'package:universal_web/web.dart' as web;
 import 'components/case_study.dart';
 import 'components/phosphor_mask.dart';
 import 'components/radio_audio.dart';
+import 'components/rx_chrome.dart';
 import 'components/radio_dial.dart';
 import 'components/scanlines.dart';
 import 'components/signal_bars.dart';
@@ -177,9 +178,23 @@ class AppState extends State<App> {
   /// to exactly where it came from on close.
   String? _dialogTriggerId;
 
+  /// The station whose panel produced the open printout, so the dialog
+  /// can keep reporting on the carrier it came from. The dial stays live
+  /// behind these panels by design, which means the signal that produced
+  /// one can be tuned away while it is still on screen.
+  Station? _dialogStation;
+
   static const String _techTriggerId = 'tech-trigger';
   static const String _caseTriggerId = 'case-trigger';
   static const String _dialogId = 'rx-dialog';
+
+  /// Which station each printout belongs to. Both pills live inside their
+  /// station's panel, so this is the same fact stated where the dialog
+  /// code can reach it.
+  static const Map<String, String> _dialogOwner = {
+    'tech': 'WHO',
+    'case': 'DTU',
+  };
 
   @override
   void initState() {
@@ -703,6 +718,42 @@ class AppState extends State<App> {
     return es ? '$freq. Sin portadora.' : '$freq. No carrier.';
   }
 
+  /// How the station that produced the open printout is currently coming
+  /// in, on exactly the curve the station panels use.
+  ///
+  /// A printout is something the receiver decoded. Leaving one pristine
+  /// while its carrier drifts away is the receiver claiming to still be
+  /// decoding something it lost, which is the one thing this piece cannot
+  /// afford to be caught doing.
+  RxSignalState get _dialogSignalState {
+    final st = _dialogStation;
+    if (st == null) {
+      return const RxSignalState(signal: 1.0, powered: true, frequencyLabel: '');
+    }
+    final label = _spokenFrequency(st.frequency, st.band);
+    double signal;
+    if (!_isPowered || st.band != _band) {
+      // A different band is not a weak signal, it is a different aerial.
+      signal = 0.0;
+    } else {
+      final cfg = configFor(st.band);
+      final d = (_frequency - st.frequency).abs();
+      if (d <= cfg.lockRange) {
+        signal = 1.0;
+      } else if (d >= cfg.tolerance) {
+        signal = 0.0;
+      } else {
+        signal = 1.0 - (d - cfg.lockRange) / (cfg.tolerance - cfg.lockRange);
+      }
+    }
+    return RxSignalState(
+      signal: signal,
+      powered: _isPowered,
+      frequencyLabel: label,
+      onRetune: _isPowered ? () => _recallStation(st) : null,
+    );
+  }
+
   /// The "how this was built" panel, in the receiver's own language.
   ///
   /// Everything stated here is measured from the actual build, not
@@ -769,6 +820,7 @@ class AppState extends State<App> {
               'Jaspr. The server prerenders, the client hydrates, and no '
               'framework ships to the browser.';
 
+    final sig = _dialogSignalState;
     return div(
       classes: 'rx-overlay',
       events: {
@@ -783,7 +835,8 @@ class AppState extends State<App> {
       },
       [
         div(
-          classes: 'rx-panel',
+          classes: 'rx-panel${sig.panelClass}',
+          styles: Styles(raw: {'--distortion': sig.distortion.toStringAsFixed(3)}),
           attributes: {
             'id': _dialogId,
             'role': 'dialog',
@@ -792,26 +845,13 @@ class AppState extends State<App> {
             'tabindex': '-1',
           },
           [
-            div(classes: 'rx-head', [
-              div(classes: 'rx-label', [
-                Component.text(
-                  es ? 'TRANSMISIÓN TÉCNICA' : 'TECHNICAL TRANSMISSION',
-                ),
-              ]),
-              div(
-                classes: 'rx-close',
-                events: {
-                  'click': (_) => _closeDialog(),
-                  'keydown': onActivateKey((_) => _closeDialog()),
-                },
-                attributes: {
-                  'role': 'button',
-                  'tabindex': '0',
-                  'aria-label': es ? 'Cerrar' : 'Close',
-                },
-                [Component.text('×')],
-              ),
-            ]),
+            rxHead(
+              label: es ? 'TRANSMISIÓN TÉCNICA' : 'TECHNICAL TRANSMISSION',
+              lang: _lang,
+              state: sig,
+              onClose: _closeDialog,
+            ),
+            if (sig.lost) rxLostPlate(lang: _lang, state: sig),
             h2(classes: 'rx-title', id: 'tech-title', [
               Component.text(es ? 'Cómo está hecho' : 'How this was built'),
             ]),
@@ -1081,6 +1121,7 @@ class AppState extends State<App> {
             lang: _lang,
             dialogId: _dialogId,
             onClose: _closeDialog,
+            signal: _dialogSignalState,
           ),
 
         // Radio dial. The collected-stations row is rendered inside
@@ -1160,9 +1201,11 @@ class AppState extends State<App> {
   /// asked for it.
   void _openDialogFor(String kind, String triggerId) {
     if (_openDialog != null) return;
+    final owner = _dialogOwner[kind];
     setState(() {
       _openDialog = kind;
       _dialogTriggerId = triggerId;
+      _dialogStation = owner == null ? null : stations.where((s) => s.callSign == owner).firstOrNull;
     });
     if (!kIsWeb) return;
     // Move focus into the dialog once it exists, otherwise a keyboard
@@ -1180,6 +1223,7 @@ class AppState extends State<App> {
     setState(() {
       _openDialog = null;
       _dialogTriggerId = null;
+      _dialogStation = null;
     });
     if (!kIsWeb || trigger == null) return;
     // Hand focus back to the control that opened it. Dropping focus to

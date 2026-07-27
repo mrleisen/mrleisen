@@ -10,6 +10,7 @@ import 'package:radio/components/collected_stations.dart'
     as _collected_stations;
 import 'package:radio/components/phosphor_mask.dart' as _phosphor_mask;
 import 'package:radio/components/radio_dial.dart' as _radio_dial;
+import 'package:radio/components/rx_chrome.dart' as _rx_chrome;
 import 'package:radio/components/scanlines.dart' as _scanlines;
 import 'package:radio/components/signal_bars.dart' as _signal_bars;
 import 'package:radio/components/static_noise.dart' as _static_noise;
@@ -37,6 +38,7 @@ ServerOptions get defaultServerOptions => ServerOptions(
   clientId: 'main.client.dart.js',
   clients: {_app.App: ClientTarget<_app.App>('app')},
   styles: () => [
+    ..._rx_chrome.rxChromeStyles,
     ..._app.AppState.styles,
     ..._case_study.CaseStudyDialog.styles,
     ..._collected_stations.CollectedStationsState.styles,
