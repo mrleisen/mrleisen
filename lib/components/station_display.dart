@@ -116,7 +116,8 @@ class StationDisplay extends StatelessComponent {
     final scGlowDim = '${sc}26'; // ~15% alpha - soft halo
 
     return div(
-      classes: 'station-panel station-${station.callSign.toLowerCase()} '
+      classes:
+          'station-panel station-${station.callSign.toLowerCase()} '
           'band-${station.band.name}'
           '${isVisible ? ' is-visible' : ''}',
       styles: Styles(
@@ -141,8 +142,8 @@ class StationDisplay extends StatelessComponent {
                 ? {
                     'animation':
                         'content-tear ${tearDur}s steps(60, end) infinite, '
-                            'content-jitter-x ${jitterDur}s steps(8, end) infinite, '
-                            'content-flicker ${flickerDur}s steps(8, end) infinite',
+                        'content-jitter-x ${jitterDur}s steps(8, end) infinite, '
+                        'content-flicker ${flickerDur}s steps(8, end) infinite',
                   }
                 : {'animation': 'none'},
           ),
@@ -190,13 +191,9 @@ class StationDisplay extends StatelessComponent {
   /// labels update automatically if a station moves on the band plan.
   String _stationLabel(Station s, Lang lang) {
     final unit = s.band == Band.fm ? 'MHz' : 'kHz';
-    final freq = s.band == Band.fm
-        ? s.frequency.toStringAsFixed(1)
-        : s.frequency.toInt().toString();
+    final freq = s.band == Band.fm ? s.frequency.toStringAsFixed(1) : s.frequency.toInt().toString();
     final bandStr = s.band.name.toUpperCase();
-    final suffix = lang == Lang.es
-        ? 'transmisión decodificada'
-        : 'decoded transmission';
+    final suffix = lang == Lang.es ? 'transmisión decodificada' : 'decoded transmission';
     return '$bandStr $freq $unit - $suffix';
   }
 
@@ -204,16 +201,16 @@ class StationDisplay extends StatelessComponent {
     final title = lang == Lang.es ? 'Bienvenido a mi Radio' : 'Welcome to my Radio';
     final intro = lang == Lang.es
         ? 'Hola, mi nombre es Rafael Camargo. '
-            'Software engineer con 10+ años de experiencia, '
-            'últimamente enfocado en construir experiencias crossplatform.'
+              'Software engineer con 10+ años de experiencia, '
+              'últimamente enfocado en construir experiencias crossplatform.'
         : 'Hi, my name is Rafael Camargo. '
-            'Software engineer with 10+ years of experience, '
-            'lately focused on building cross-platform experiences.';
+              'Software engineer with 10+ years of experience, '
+              'lately focused on building cross-platform experiences.';
     final note = lang == Lang.es
         ? 'Este sitio fue construido completamente en Dart, '
-            'compilado a HTML estático con Jaspr.'
+              'compilado a HTML estático con Jaspr.'
         : 'This site was built entirely in Dart, '
-            'compiled to static HTML with Jaspr.';
+              'compiled to static HTML with Jaspr.';
     return _panelShell(
       color: s.color,
       label: _stationLabel(s, lang),
@@ -234,9 +231,9 @@ class StationDisplay extends StatelessComponent {
   Component _detodouisPanel(Station s, Lang lang) {
     final body = lang == Lang.es
         ? 'La app de la comunidad UIS desde 2015. Puntajes de corte, '
-            'profesores, materias, el Oráculo y más.'
+              'profesores, materias, el Oráculo y más.'
         : 'The UIS community app since 2015. Cut scores, professors, '
-            'subjects, the Oracle and more.';
+              'subjects, the Oracle and more.';
     return _panelShell(
       color: s.color,
       label: _stationLabel(s, lang),
@@ -247,13 +244,11 @@ class StationDisplay extends StatelessComponent {
           _pill('Web', href: 'https://detodouis.com'),
           _pill(
             'App Store',
-            href:
-                'https://apps.apple.com/co/app/detodouis/id1640902049',
+            href: 'https://apps.apple.com/co/app/detodouis/id1640902049',
           ),
           _pill(
             'Google Play',
-            href:
-                'https://play.google.com/store/apps/details?id=com.rafahcf.detodouisapp',
+            href: 'https://play.google.com/store/apps/details?id=com.rafahcf.detodouisapp',
           ),
         ]),
       ],
@@ -279,14 +274,12 @@ class StationDisplay extends StatelessComponent {
   }
 
   Component _itnwPanel(Station s, Lang lang) {
-    final subtitle = lang == Lang.es
-        ? 'Canal de YouTube - audio inmersivo'
-        : 'YouTube channel - immersive audio';
+    final subtitle = lang == Lang.es ? 'Canal de YouTube - audio inmersivo' : 'YouTube channel - immersive audio';
     final body = lang == Lang.es
         ? 'Exploraciones sonoras inmersivas de realidades imaginadas. '
-            'Paisajes en capas, texturas narrativas y experimentos sonoros.'
+              'Paisajes en capas, texturas narrativas y experimentos sonoros.'
         : 'Immersive audio explorations of imagined realities. '
-            'Layered soundscapes, narrative textures, and sonic experiments.';
+              'Layered soundscapes, narrative textures, and sonic experiments.';
     return _panelShell(
       color: s.color,
       label: _stationLabel(s, lang),
@@ -302,14 +295,12 @@ class StationDisplay extends StatelessComponent {
   }
 
   Component _tropPanel(Station s, Lang lang) {
-    final subtitle = lang == Lang.es
-        ? 'Universo narrativo en expansión'
-        : 'An expanding narrative universe';
+    final subtitle = lang == Lang.es ? 'Universo narrativo en expansión' : 'An expanding narrative universe';
     final body = lang == Lang.es
         ? 'Un personaje y su universo. Cómics, juegos, apps - '
-            'creciendo desde 2017.'
+              'creciendo desde 2017.'
         : 'A character and a universe of their own. Comics, games, apps - '
-            'growing since 2017.';
+              'growing since 2017.';
     return _panelShell(
       color: s.color,
       label: _stationLabel(s, lang),
@@ -352,8 +343,7 @@ class StationDisplay extends StatelessComponent {
   }
 
   Component _bblPanel(Station s, Lang lang) {
-    final subtitle =
-        lang == Lang.es ? 'Copiloto de lotería' : 'Lottery copilot';
+    final subtitle = lang == Lang.es ? 'Copiloto de lotería' : 'Lottery copilot';
     final body = lang == Lang.es
         ? 'Tu copiloto de lotería para Baloto, MiLoto y ColorLoto'
         : 'Your lottery copilot for Baloto, MiLoto and ColorLoto';
@@ -372,71 +362,62 @@ class StationDisplay extends StatelessComponent {
   }
 
   Component _awsPanel(Station s, Lang lang) => _amPanel(
-        s: s,
-        lang: lang,
-        title: 'A Wired Spine',
-        subtitle:
-            lang == Lang.es ? 'Experimento musical' : 'Musical experiment',
-        body: lang == Lang.es
-            ? 'Canciones originales'
-            : 'Original music tracks',
-        href: 'https://soundcloud.com/awiredspine',
-        websiteHref: 'https://awiredspine.com',
-      );
+    s: s,
+    lang: lang,
+    title: 'A Wired Spine',
+    subtitle: lang == Lang.es ? 'Experimento musical' : 'Musical experiment',
+    body: lang == Lang.es ? 'Canciones originales' : 'Original music tracks',
+    href: 'https://soundcloud.com/awiredspine',
+    websiteHref: 'https://awiredspine.com',
+  );
 
   Component _nftPanel(Station s, Lang lang) => _amPanel(
-        s: s,
-        lang: lang,
-        title: 'MyNFTGenerator',
-        subtitle: lang == Lang.es ? 'Concepto' : 'Concept',
-        body: lang == Lang.es
-            ? 'Herramienta de generación de NFTs'
-            : 'NFT generation tool',
-      );
+    s: s,
+    lang: lang,
+    title: 'MyNFTGenerator',
+    subtitle: lang == Lang.es ? 'Concepto' : 'Concept',
+    body: lang == Lang.es ? 'Herramienta de generación de NFTs' : 'NFT generation tool',
+  );
 
   Component _pnkPanel(Station s, Lang lang) => _amPanel(
-        s: s,
-        lang: lang,
-        title: 'PunkLLM',
-        subtitle: lang == Lang.es ? 'Experimento' : 'Experiment',
-        body: lang == Lang.es
-            ? 'Un intento de crear un LLM punk'
-            : 'An attempt to create a punk LLM',
-      );
+    s: s,
+    lang: lang,
+    title: 'PunkLLM',
+    subtitle: lang == Lang.es ? 'Experimento' : 'Experiment',
+    body: lang == Lang.es ? 'Un intento de crear un LLM punk' : 'An attempt to create a punk LLM',
+  );
 
   Component _numeloroPanel(Station s, Lang lang) => _amPanel(
-        s: s,
-        lang: lang,
-        title: 'Numeloro',
-        subtitle: lang == Lang.es ? 'Patio de números' : 'Number playground',
-        body: lang == Lang.es
-            ? 'Un patio donde los números salen a pasear y a charlar '
-                'como loros en el numeloro'
-            : 'A playground where numbers hang out and chat away '
-                'like parrots on the numeloro',
-      );
+    s: s,
+    lang: lang,
+    title: 'Numeloro',
+    subtitle: lang == Lang.es ? 'Patio de números' : 'Number playground',
+    body: lang == Lang.es
+        ? 'Un patio donde los números salen a pasear y a charlar '
+              'como loros en el numeloro'
+        : 'A playground where numbers hang out and chat away '
+              'like parrots on the numeloro',
+  );
 
   Component _ayuwokiPanel(Station s, Lang lang) => _amPanel(
-        s: s,
-        lang: lang,
-        title: 'Ayuwoki',
-        subtitle: lang == Lang.es ? 'Homenaje' : 'Tribute',
-        body: lang == Lang.es
-            ? 'Un homenaje al meme de internet'
-            : 'A tribute to the internet meme',
-      );
+    s: s,
+    lang: lang,
+    title: 'Ayuwoki',
+    subtitle: lang == Lang.es ? 'Homenaje' : 'Tribute',
+    body: lang == Lang.es ? 'Un homenaje al meme de internet' : 'A tribute to the internet meme',
+  );
 
   Component _conspiranoicoPanel(Station s, Lang lang) => _amPanel(
-        s: s,
-        lang: lang,
-        title: 'Conspiranoico',
-        subtitle: lang == Lang.es ? 'Lugar curioso' : 'A curious place',
-        body: lang == Lang.es
-            ? 'Un lugar para todas las teorías conspirativas - no para '
-                'creerlas, sino para conocerlas. Pura curiosidad.'
-            : 'A place for every conspiracy theory - not to believe them, '
-                'but to be aware of them. Pure curiosity.',
-      );
+    s: s,
+    lang: lang,
+    title: 'Conspiranoico',
+    subtitle: lang == Lang.es ? 'Lugar curioso' : 'A curious place',
+    body: lang == Lang.es
+        ? 'Un lugar para todas las teorías conspirativas - no para '
+              'creerlas, sino para conocerlas. Pura curiosidad.'
+        : 'A place for every conspiracy theory - not to believe them, '
+              'but to be aware of them. Pure curiosity.',
+  );
 
   // ── shared building blocks ──
 
@@ -499,8 +480,7 @@ class StationDisplay extends StatelessComponent {
       maxWidth: 560.px,
       raw: {
         'transform': 'translate(-50%, -50%)',
-        'transition':
-            'opacity 0.3s ease 0s, transform 0.3s ease 0s, visibility 0s linear 0.3s',
+        'transition': 'opacity 0.3s ease 0s, transform 0.3s ease 0s, visibility 0s linear 0.3s',
         'text-align': 'center',
         'visibility': 'hidden',
       },
@@ -510,8 +490,7 @@ class StationDisplay extends StatelessComponent {
       raw: {
         'visibility': 'visible',
         // Incoming: wait for the outgoing panel to fade, then fade in.
-        'transition':
-            'opacity 0.5s ease 0.25s, transform 0.5s ease 0.25s, visibility 0s linear 0s',
+        'transition': 'opacity 0.5s ease 0.25s, transform 0.5s ease 0.25s, visibility 0s linear 0s',
       },
     ),
 
@@ -537,8 +516,7 @@ class StationDisplay extends StatelessComponent {
       raw: {
         'color': 'var(--sc, #E8A035)',
         'opacity': '0.75',
-        'text-shadow':
-            '0 0 2px var(--sc-glow, rgba(232,160,53,0.35))',
+        'text-shadow': '0 0 2px var(--sc-glow, rgba(232,160,53,0.35))',
       },
     ),
 
@@ -559,9 +537,9 @@ class StationDisplay extends StatelessComponent {
         'line-height': '1.15',
         'text-shadow':
             '0 0 6px var(--sc-glow, rgba(232,160,53,0.3)), '
-                '0 0 16px var(--sc-glow-dim, rgba(232,160,53,0.15)), '
-                'calc(var(--distortion, 0) * 2px) 0 rgba(255,0,0,0.55), '
-                'calc(var(--distortion, 0) * -2px) 0 rgba(0,255,255,0.55)',
+            '0 0 16px var(--sc-glow-dim, rgba(232,160,53,0.15)), '
+            'calc(var(--distortion, 0) * 2px) 0 rgba(255,0,0,0.55), '
+            'calc(var(--distortion, 0) * -2px) 0 rgba(0,255,255,0.55)',
       },
     ),
 
@@ -578,11 +556,9 @@ class StationDisplay extends StatelessComponent {
       letterSpacing: 0.3.em,
       textTransform: TextTransform.upperCase,
       raw: {
-        'color':
-            'color-mix(in srgb, var(--sc, #E8A035) 80%, #cfc9b8)',
+        'color': 'color-mix(in srgb, var(--sc, #E8A035) 80%, #cfc9b8)',
         'opacity': '0.8',
-        'text-shadow':
-            '0 0 3px var(--sc-glow, rgba(232,160,53,0.3))',
+        'text-shadow': '0 0 3px var(--sc-glow, rgba(232,160,53,0.3))',
       },
     ),
 
@@ -603,7 +579,7 @@ class StationDisplay extends StatelessComponent {
         'margin': '0 auto',
         'text-shadow':
             'calc(var(--distortion, 0) * 1.5px) 0 rgba(255,0,0,0.45), '
-                'calc(var(--distortion, 0) * -1.5px) 0 rgba(0,255,255,0.45)',
+            'calc(var(--distortion, 0) * -1.5px) 0 rgba(0,255,255,0.45)',
       },
     ),
 
@@ -652,15 +628,14 @@ class StationDisplay extends StatelessComponent {
           'border-radius': '99px',
           // Raised-plastic faceplate: soft dark gradient body, tiny
           // light highlight up top, dark drop below.
-          'background':
-              'linear-gradient(180deg, #1a1a1f 0%, #111115 100%)',
+          'background': 'linear-gradient(180deg, #1a1a1f 0%, #111115 100%)',
           'box-shadow':
               'inset 0 1px 0 rgba(255,255,255,0.06), '
-                  '0 1px 0 rgba(0,0,0,0.6), '
-                  '0 2px 6px rgba(0,0,0,0.35)',
-          'text-shadow':
-              '0 0 3px var(--sc-glow, rgba(232,160,53,0.3))',
-          'transition': 'border-color 0.15s ease, background 0.15s ease, '
+              '0 1px 0 rgba(0,0,0,0.6), '
+              '0 2px 6px rgba(0,0,0,0.35)',
+          'text-shadow': '0 0 3px var(--sc-glow, rgba(232,160,53,0.3))',
+          'transition':
+              'border-color 0.15s ease, background 0.15s ease, '
               'box-shadow 0.15s ease, color 0.15s ease',
         },
       ),
@@ -675,26 +650,25 @@ class StationDisplay extends StatelessComponent {
           'background': 'var(--sc, #E8A035)',
           'box-shadow':
               '0 0 4px var(--sc, #E8A035), '
-                  '0 0 1px rgba(0,0,0,0.8)',
+              '0 0 1px rgba(0,0,0,0.8)',
         },
       ),
       // Pressed-in state on hover / active - inverts the bevel and
       // darkens the face slightly.
       css('&:hover').styles(
         raw: {
-          'background':
-              'linear-gradient(180deg, #121216 0%, #0d0d10 100%)',
+          'background': 'linear-gradient(180deg, #121216 0%, #0d0d10 100%)',
           'border-color': 'rgba(255,255,255,0.18)',
           'box-shadow':
               'inset 0 1px 3px rgba(0,0,0,0.7), '
-                  'inset 0 -1px 0 rgba(255,255,255,0.04)',
+              'inset 0 -1px 0 rgba(255,255,255,0.04)',
         },
       ),
       css('&:active').styles(
         raw: {
           'box-shadow':
               'inset 0 2px 4px rgba(0,0,0,0.85), '
-                  'inset 0 -1px 0 rgba(255,255,255,0.04)',
+              'inset 0 -1px 0 rgba(255,255,255,0.04)',
         },
       ),
     ]),
@@ -715,8 +689,7 @@ class StationDisplay extends StatelessComponent {
       raw: {
         'margin': '0 auto',
         'border': '1px dashed rgba(255,255,255,0.10)',
-        'border-color':
-            'color-mix(in srgb, var(--sc, #888) 35%, rgba(255,255,255,0.10))',
+        'border-color': 'color-mix(in srgb, var(--sc, #888) 35%, rgba(255,255,255,0.10))',
         'border-radius': '3px',
         'background': 'rgba(10, 10, 14, 0.4)',
         'overflow': 'hidden',
@@ -764,13 +737,11 @@ class StationDisplay extends StatelessComponent {
       fontWeight: FontWeight.w500,
       letterSpacing: 0.02.em,
       raw: {
-        'color':
-            'color-mix(in srgb, var(--sc, #E8A035) 85%, #cfc9b8)',
+        'color': 'color-mix(in srgb, var(--sc, #E8A035) 85%, #cfc9b8)',
         'opacity': '0.9',
         'margin': '0',
         'line-height': '1.2',
-        'text-shadow':
-            '0 0 4px color-mix(in srgb, var(--sc, #E8A035) 40%, transparent)',
+        'text-shadow': '0 0 4px color-mix(in srgb, var(--sc, #E8A035) 40%, transparent)',
       },
     ),
     css('.am-subtitle').styles(
@@ -834,4 +805,3 @@ class StationDisplay extends StatelessComponent {
     ]),
   ];
 }
-

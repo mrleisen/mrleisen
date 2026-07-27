@@ -72,8 +72,7 @@ class SignalBars extends StatefulComponent {
       backgroundColor: const Color('#2a2a32'),
       radius: BorderRadius.all(Radius.circular(1.px)),
       raw: {
-        'transition':
-            'background 0.25s ease, box-shadow 0.25s ease, opacity 0.25s ease',
+        'transition': 'background 0.25s ease, box-shadow 0.25s ease, opacity 0.25s ease',
       },
     ),
     // Scanning state - amber pulse with staggered per-bar delay
@@ -149,8 +148,7 @@ class _SignalBarsState extends State<SignalBars> {
 
     // Pick the colour: prefer the locked-on station, then the nearest,
     // then a neutral dim grey.
-    final color =
-        activeStation?.color ?? nearestStation?.color ?? '#5a5a66';
+    final color = activeStation?.color ?? nearestStation?.color ?? '#5a5a66';
     // How many bars (0..5) are lit.
     final lit = (signalStrength * 5.0).clamp(0.0, 5.0);
 
@@ -192,8 +190,7 @@ class _SignalBarsState extends State<SignalBars> {
       );
     }
 
-    final isBarLit =
-        isPowered && index < lit.ceil() && signalStrength > 0.02;
+    final isBarLit = isPowered && index < lit.ceil() && signalStrength > 0.02;
     return div(
       classes: 'signal-bar${isBarLit ? ' is-lit' : ''}',
       styles: Styles(

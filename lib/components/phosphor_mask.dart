@@ -39,9 +39,11 @@ class PhosphorMask extends StatelessComponent {
   Component build(BuildContext context) {
     return div(
       classes: 'phosphor-mask${isPowered ? '' : ' phosphor-off'}',
-      styles: Styles(raw: {
-        '--mask-i': intensity.toStringAsFixed(3),
-      }),
+      styles: Styles(
+        raw: {
+          '--mask-i': intensity.toStringAsFixed(3),
+        },
+      ),
       [
         div(classes: 'phosphor-triad', []),
         div(classes: 'phosphor-fringe phosphor-fringe-l', []),
@@ -91,7 +93,8 @@ class PhosphorMask extends StatelessComponent {
         bottom: Unit.zero,
       ),
       raw: {
-        'background': 'repeating-linear-gradient(90deg, '
+        'background':
+            'repeating-linear-gradient(90deg, '
             'rgba(255,40,64,0.11) 0px, rgba(255,40,64,0.11) 1px, '
             'rgba(40,255,110,0.09) 1px, rgba(40,255,110,0.09) 2px, '
             'rgba(60,90,255,0.11) 2px, rgba(60,90,255,0.11) 3px, '
@@ -117,16 +120,18 @@ class PhosphorMask extends StatelessComponent {
         'transition': 'opacity 0.25s ease, width 0.25s ease',
       },
     ),
-    css('.phosphor-fringe-l').styles(raw: {
-      'left': '0',
-      'background':
-          'linear-gradient(90deg, rgba(255,40,80,0.55) 0%, transparent 100%)',
-    }),
-    css('.phosphor-fringe-r').styles(raw: {
-      'right': '0',
-      'background':
-          'linear-gradient(-90deg, rgba(40,220,255,0.55) 0%, transparent 100%)',
-    }),
+    css('.phosphor-fringe-l').styles(
+      raw: {
+        'left': '0',
+        'background': 'linear-gradient(90deg, rgba(255,40,80,0.55) 0%, transparent 100%)',
+      },
+    ),
+    css('.phosphor-fringe-r').styles(
+      raw: {
+        'right': '0',
+        'background': 'linear-gradient(-90deg, rgba(40,220,255,0.55) 0%, transparent 100%)',
+      },
+    ),
 
     // ── top-edge carrier trace ──
     // A single 1px horizontal line at y=0 with a soft amber glow.
@@ -142,7 +147,7 @@ class PhosphorMask extends StatelessComponent {
             'linear-gradient(90deg, transparent 0%, rgba(255,180,70,0.35) 15%, rgba(255,210,140,0.55) 50%, rgba(255,180,70,0.35) 85%, transparent 100%)',
         'box-shadow':
             '0 0 calc(4px + var(--mask-i, 0) * 8px) rgba(255,180,70,0.45), '
-                '0 1px calc(8px + var(--mask-i, 0) * 12px) rgba(255,150,50,0.3)',
+            '0 1px calc(8px + var(--mask-i, 0) * 12px) rgba(255,150,50,0.3)',
         'opacity': 'calc(0.5 + var(--mask-i, 0) * 0.4)',
         'transition': 'opacity 0.25s ease, box-shadow 0.25s ease',
       },
@@ -154,16 +159,21 @@ class PhosphorMask extends StatelessComponent {
     // actually visible, and shrink the edge fringes so they don't
     // eat a phone's narrow viewport.
     css.media(MediaQuery.screen(maxWidth: 600.px), [
-      css('.phosphor-triad').styles(raw: {
-        'background': 'repeating-linear-gradient(90deg, '
-            'rgba(255,40,64,0.11) 0px, rgba(255,40,64,0.11) 1px, '
-            'rgba(40,255,110,0.09) 1px, rgba(40,255,110,0.09) 2px, '
-            'rgba(60,90,255,0.11) 2px, rgba(60,90,255,0.11) 3px, '
-            'transparent 3px, transparent 5px)',
-      }),
-      css('.phosphor-fringe').styles(raw: {
-        'width': 'calc(14px + var(--mask-i, 0) * 20px)',
-      }),
+      css('.phosphor-triad').styles(
+        raw: {
+          'background':
+              'repeating-linear-gradient(90deg, '
+              'rgba(255,40,64,0.11) 0px, rgba(255,40,64,0.11) 1px, '
+              'rgba(40,255,110,0.09) 1px, rgba(40,255,110,0.09) 2px, '
+              'rgba(60,90,255,0.11) 2px, rgba(60,90,255,0.11) 3px, '
+              'transparent 3px, transparent 5px)',
+        },
+      ),
+      css('.phosphor-fringe').styles(
+        raw: {
+          'width': 'calc(14px + var(--mask-i, 0) * 20px)',
+        },
+      ),
     ]),
   ];
 }

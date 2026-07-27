@@ -137,8 +137,7 @@ class AppState extends State<App> {
   void _persistCollected() {
     if (!kIsWeb) return;
     try {
-      web.window.localStorage
-          .setItem(_storageKey, _collectedKeys.join(','));
+      web.window.localStorage.setItem(_storageKey, _collectedKeys.join(','));
     } catch (_) {
       // Same rationale as the read path - silent failure is the
       // right call for a cosmetic persistence feature.
@@ -268,8 +267,7 @@ class AppState extends State<App> {
   /// been saved - the only state in which the MEM button is armed.
   bool get _canSaveCurrent {
     final s = _activeStation;
-    return _isPowered && s != null &&
-        !_collectedKeys.contains(_stationKey(s));
+    return _isPowered && s != null && !_collectedKeys.contains(_stationKey(s));
   }
 
   String _stationKey(Station s) => '${s.band.name}:${s.frequency}';
@@ -278,9 +276,9 @@ class AppState extends State<App> {
   /// onto each one. Built fresh every render - cheap given there are
   /// only a handful of stations total.
   List<Station> get _collectedStations => [
-        for (final s in stations)
-          if (_collectedKeys.contains(_stationKey(s))) s,
-      ];
+    for (final s in stations)
+      if (_collectedKeys.contains(_stationKey(s))) s,
+  ];
 
   /// Tap-to-recall: sweep the dial from the current frequency to a
   /// previously-found station. Switches bands first if needed, then
@@ -316,8 +314,7 @@ class AppState extends State<App> {
     final startMs = DateTime.now().millisecondsSinceEpoch;
     final totalMs = _recallAnimDuration.inMilliseconds;
 
-    _recallAnimTimer =
-        Timer.periodic(const Duration(milliseconds: 16), (timer) {
+    _recallAnimTimer = Timer.periodic(const Duration(milliseconds: 16), (timer) {
       final elapsed = DateTime.now().millisecondsSinceEpoch - startMs;
       final t = (elapsed / totalMs).clamp(0.0, 1.0);
       // Ease-out cubic: 1 - (1 - t)^3
@@ -363,14 +360,11 @@ class AppState extends State<App> {
     // the idle text from fighting the distorted station content in the
     // overlap zone.
     final cfg = configFor(_band);
-    final nearestDist = _nearestStation != null
-        ? (_frequency - _nearestStation!.frequency).abs()
-        : double.infinity;
+    final nearestDist = _nearestStation != null ? (_frequency - _nearestStation!.frequency).abs() : double.infinity;
     final handoff = cfg.tolerance * 0.7;
     final distanceOpacity = nearestDist >= cfg.tolerance
         ? 1.0
-        : ((nearestDist - handoff) / (cfg.tolerance - handoff))
-            .clamp(0.0, 1.0);
+        : ((nearestDist - handoff) / (cfg.tolerance - handoff)).clamp(0.0, 1.0);
     // Power gates every upper layer - when off, the CRT overlay is
     // opaque black anyway, but we also zero out content opacity so
     // nothing animates or allocates behind the overlay.
@@ -381,17 +375,12 @@ class AppState extends State<App> {
     // active band so AM and FM show different ranges/units.
     final bandLabel = _band == Band.fm ? 'FM' : 'AM';
     final unitLabel = _band == Band.fm ? 'MHZ' : 'KHZ';
-    final minLabel = _band == Band.fm
-        ? cfg.minFreq.toStringAsFixed(1)
-        : cfg.minFreq.toInt().toString();
-    final maxLabel = _band == Band.fm
-        ? cfg.maxFreq.toStringAsFixed(1)
-        : cfg.maxFreq.toInt().toString();
+    final minLabel = _band == Band.fm ? cfg.minFreq.toStringAsFixed(1) : cfg.minFreq.toInt().toString();
+    final maxLabel = _band == Band.fm ? cfg.maxFreq.toStringAsFixed(1) : cfg.maxFreq.toInt().toString();
     final idleTop = _lang == Lang.es ? 'SIN PORTADORA' : 'NO CARRIER';
     final idleSub = _lang == Lang.es ? 'BARRIENDO BANDA' : 'SCANNING BAND';
 
-    final rootClass =
-        'signal-app ${_isPowered ? 'powered-on' : 'powered-off'}';
+    final rootClass = 'signal-app ${_isPowered ? 'powered-on' : 'powered-off'}';
     final crtClass = switch (_crtPhase) {
       'turning-on' => 'crt-screen crt-animate-on',
       'on' => 'crt-screen crt-on-done',
@@ -456,9 +445,7 @@ class AppState extends State<App> {
             // Only add the horizontal content-jitter when there's real
             // noise present - a calm, locked-in dial keeps the frame
             // perfectly still.
-            'animation': (_isPowered && _noiseLevel > 0.3)
-                ? 'content-jitter 0.22s steps(2, end) infinite'
-                : 'none',
+            'animation': (_isPowered && _noiseLevel > 0.3) ? 'content-jitter 0.22s steps(2, end) infinite' : 'none',
           },
         ),
         [
@@ -472,9 +459,11 @@ class AppState extends State<App> {
               for (var i = 0; i < 5; i++)
                 span(
                   classes: 'carrier-dash',
-                  styles: Styles(raw: {
-                    'animation-delay': '${(i * 0.18).toStringAsFixed(2)}s',
-                  }),
+                  styles: Styles(
+                    raw: {
+                      'animation-delay': '${(i * 0.18).toStringAsFixed(2)}s',
+                    },
+                  ),
                   [Component.text('–')],
                 ),
             ],
@@ -492,8 +481,7 @@ class AppState extends State<App> {
           div(classes: 'carrier-band', [
             span(classes: 'carrier-band-band', [Component.text(bandLabel)]),
             span(classes: 'carrier-band-sep', [Component.text('·')]),
-            span(classes: 'carrier-band-range',
-                [Component.text('$minLabel – $maxLabel')]),
+            span(classes: 'carrier-band-range', [Component.text('$minLabel – $maxLabel')]),
             span(classes: 'carrier-band-sep', [Component.text('·')]),
             span(classes: 'carrier-band-unit', [Component.text(unitLabel)]),
           ]),
@@ -595,12 +583,16 @@ class AppState extends State<App> {
         backgroundColor: const Color('#000000'),
         opacity: 1,
       ),
-      css('&.crt-animate-on').styles(raw: {
-        'animation': 'crt-on 0.8s ease-out forwards',
-      }),
-      css('&.crt-animate-off').styles(raw: {
-        'animation': 'crt-off 0.5s ease-in forwards',
-      }),
+      css('&.crt-animate-on').styles(
+        raw: {
+          'animation': 'crt-on 0.8s ease-out forwards',
+        },
+      ),
+      css('&.crt-animate-off').styles(
+        raw: {
+          'animation': 'crt-off 0.5s ease-in forwards',
+        },
+      ),
       css('&.crt-on-done').styles(
         pointerEvents: PointerEvents.none,
         opacity: 0,
@@ -609,14 +601,19 @@ class AppState extends State<App> {
     ]),
     // Scanlines + vignette opacity gated on the root power class.
     // They have no opacity prop so we drive them purely from CSS.
-    css('.signal-app .scanlines, .signal-app .vignette').styles(raw: {
-      'transition': 'opacity 0.3s ease',
-    }),
-    css('.signal-app.powered-off .scanlines, '
-            '.signal-app.powered-off .vignette')
-        .styles(raw: {
-      'opacity': '0',
-    }),
+    css('.signal-app .scanlines, .signal-app .vignette').styles(
+      raw: {
+        'transition': 'opacity 0.3s ease',
+      },
+    ),
+    css(
+      '.signal-app.powered-off .scanlines, '
+      '.signal-app.powered-off .vignette',
+    ).styles(
+      raw: {
+        'opacity': '0',
+      },
+    ),
     // Language toggle pill - fixed top-right.
     css('.lang-toggle', [
       css('&').styles(
@@ -685,8 +682,7 @@ class AppState extends State<App> {
         // Constant chromatic fringe on the dashes themselves -
         // mirrors the CRT edge fringe, reads as an unconverged
         // signal.
-        'text-shadow':
-            '1px 0 0 rgba(255,60,90,0.28), -1px 0 0 rgba(60,200,255,0.28)',
+        'text-shadow': '1px 0 0 rgba(255,60,90,0.28), -1px 0 0 rgba(60,200,255,0.28)',
       },
     ),
     css('.carrier-dash').styles(
@@ -719,7 +715,8 @@ class AppState extends State<App> {
       radius: BorderRadius.all(Radius.circular(2.5.px)),
       backgroundColor: const Color('#4a3a22'),
       raw: {
-        'box-shadow': 'inset 0 1px 1px rgba(0,0,0,0.6), '
+        'box-shadow':
+            'inset 0 1px 1px rgba(0,0,0,0.6), '
             '0 0 3px rgba(232,160,53,0.25)',
       },
     ),
@@ -734,7 +731,8 @@ class AppState extends State<App> {
       textTransform: TextTransform.upperCase,
       color: const Color('#d4d4dc'),
       raw: {
-        'text-shadow': '0 0 6px rgba(212,212,220,0.35), '
+        'text-shadow':
+            '0 0 6px rgba(212,212,220,0.35), '
             '0 0 14px rgba(212,212,220,0.12)',
         'animation': 'carrier-breathe 3.2s ease-in-out infinite',
       },
@@ -764,8 +762,7 @@ class AppState extends State<App> {
       fontWeight: FontWeight.w600,
       color: const Color('#E8A035'),
       raw: {
-        'text-shadow':
-            '0 0 4px rgba(232,160,53,0.6), 0 0 10px rgba(232,160,53,0.25)',
+        'text-shadow': '0 0 4px rgba(232,160,53,0.6), 0 0 10px rgba(232,160,53,0.25)',
       },
     ),
     css('.carrier-band-range').styles(
@@ -811,8 +808,7 @@ class AppState extends State<App> {
       raw: {
         'background':
             'radial-gradient(ellipse at center, rgba(232,160,53,0.9) 0%, rgba(232,160,53,0.5) 40%, transparent 75%)',
-        'box-shadow':
-            '0 0 6px rgba(232,160,53,0.7), 0 0 14px rgba(232,160,53,0.3)',
+        'box-shadow': '0 0 6px rgba(232,160,53,0.7), 0 0 14px rgba(232,160,53,0.3)',
         'animation': 'carrier-sweep 3.6s ease-in-out infinite',
         'transform': 'translateX(-50%)',
       },
