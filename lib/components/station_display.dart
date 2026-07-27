@@ -234,15 +234,16 @@ class StationDisplay extends StatelessComponent {
         ? 'La app de la comunidad UIS desde 2015. Puntajes de corte, '
               'profesores, materias, el Oráculo y más. Nació de la '
               'necesidad de centralizar información que estaba dispersa '
-              'entre foros, grupos de chat y el boca a boca, y hoy la usan '
-              'tanto aspirantes que aún no entran como estudiantes que ya '
-              'llevan años dentro.'
+              'entre foros, grupos de chat y el boca a boca. La comunidad '
+              'ha aportado más de 5.000 reseñas de profesores y materias, '
+              'que es lo que permite armar horario sin sorpresas.'
         : 'The UIS community app since 2015. Cut scores, professors, '
               'subjects, the Oracle and more. It started because the '
               'information students actually needed was scattered across '
-              'forums, chat groups and word of mouth, and it now serves '
-              'both applicants who have not got in yet and students who '
-              'have been there for years.';
+              'forums, chat groups and word of mouth. The community has '
+              'contributed over 5,000 reviews of professors and subjects, '
+              'which is what makes it possible to build a timetable with '
+              'no surprises.';
     return _panelShell(
       color: s.color,
       label: _stationLabel(s, lang),
@@ -250,8 +251,15 @@ class StationDisplay extends StatelessComponent {
       children: [
         div(classes: 'panel-subtitle', [Component.text(subtitle)]),
         p(classes: 'panel-body', [Component.text(body)]),
+        // Figures as published on the project's own landing
+        // (detodouis.com, `detodouis_web_landing/lib/components/home/
+        // home_hero.dart`). This is the one station with real reach
+        // behind it, and the numbers are the fastest way to say so.
         _transmissionData([
           (_key(lang, 'since'), '2015'),
+          (_key(lang, 'downloads'), '70k+'),
+          (_key(lang, 'registered'), '28k+'),
+          (_key(lang, 'rating'), '4.9 ★'),
           (_key(lang, 'platforms'), 'iOS / Android / Web'),
           (_key(lang, 'stack'), 'Flutter · Laravel · Firebase'),
           (
@@ -633,6 +641,9 @@ class StationDisplay extends StatelessComponent {
       'origin': ('ORIGEN', 'ORIGIN'),
       'episodes': ('EPISODIOS', 'EPISODES'),
       'privacy': ('PRIVACIDAD', 'PRIVACY'),
+      'downloads': ('DESCARGAS', 'DOWNLOADS'),
+      'registered': ('REGISTRADOS', 'REGISTERED'),
+      'rating': ('CALIFICACIÓN', 'RATING'),
     };
     final pair = table[k]!;
     return lang == Lang.es ? pair.$1 : pair.$2;
