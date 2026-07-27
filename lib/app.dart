@@ -14,6 +14,7 @@ import 'components/station_display.dart';
 import 'components/static_noise.dart';
 import 'components/vignette.dart';
 import 'models/station.dart';
+import 'utils/keyboard.dart';
 
 @client
 class App extends StatefulComponent {
@@ -214,15 +215,59 @@ class AppState extends State<App> {
 
   // --- event handlers ---
 
+  /// Document-level shortcuts, so the receiver can be driven from the
+  /// keyboard without first tabbing to a specific control.
+  ///
+  ///   ← / →          tune one step
+  ///   Shift + ← / →  tune ten steps
+  ///   B              swap band
+  ///   M              save the locked station
+  ///   1-9            recall the Nth saved preset
+  ///
+  /// The letter and digit shortcuts do nothing while the radio is off:
+  /// silently changing band or writing a preset behind a dark screen
+  /// would be invisible, and the only meaningful action in that state is
+  /// switching it on - which belongs to the focused power control, not
+  /// to a global key.
   void _onKeyDown(web.Event event) {
     final ke = event as web.KeyboardEvent;
+
+    // Never swallow a browser or OS shortcut. Ctrl+arrow, Cmd+B and
+    // friends belong to the user agent, not to us.
+    if (ke.ctrlKey || ke.metaKey || ke.altKey) return;
+
     final step = configFor(_band).step;
-    if (ke.key == 'ArrowRight') {
+
+    if (ke.key == 'ArrowRight' || ke.key == 'ArrowLeft') {
       ke.preventDefault();
-      _tune(_frequency + step);
-    } else if (ke.key == 'ArrowLeft') {
-      ke.preventDefault();
-      _tune(_frequency - step);
+      // Shift jumps a decade, which makes crossing an empty stretch of
+      // band bearable: AM spans 116 steps end to end.
+      final magnitude = step * (ke.shiftKey ? 10 : 1);
+      _tune(_frequency + (ke.key == 'ArrowRight' ? magnitude : -magnitude));
+      return;
+    }
+
+    if (!_isPowered) return;
+
+    switch (ke.key.toLowerCase()) {
+      case 'b':
+        ke.preventDefault();
+        _selectBand(_band == Band.fm ? Band.am : Band.fm);
+        return;
+      case 'm':
+        ke.preventDefault();
+        _saveCurrentStation();
+        return;
+    }
+
+    // Digit presets are 1-indexed over the rack in discovery order.
+    final digit = int.tryParse(ke.key);
+    if (digit != null && digit >= 1 && digit <= 9) {
+      final rack = _collectedStations;
+      if (digit <= rack.length) {
+        ke.preventDefault();
+        _recallStation(rack[digit - 1]);
+      }
     }
   }
 
@@ -436,6 +481,41 @@ class AppState extends State<App> {
         '- Rafael Camargo';
   }
 
+  /// Frequency formatted for reading aloud: "97.7 MHz" / "1120 kHz".
+  String _spokenFrequency(double freq, Band band) {
+    final unit = band == Band.fm ? 'MHz' : 'kHz';
+    final value = band == Band.fm ? freq.toStringAsFixed(1) : freq.toInt().toString();
+    return '${band.name.toUpperCase()} $value $unit';
+  }
+
+  /// Sentence pushed to the live region on every state change.
+  ///
+  /// Deliberately reports the same three things the visual design does -
+  /// where the dial is, whether anything is locked, and whether a signal
+  /// is nearby - so a screen-reader user is told what a sighted user can
+  /// see, not a different and thinner story.
+  String get _liveStatus {
+    final es = _lang == Lang.es;
+    if (!_isPowered) return es ? 'Radio apagada' : 'Radio off';
+
+    final freq = _spokenFrequency(_frequency, _band);
+    final active = _activeStation;
+    if (active != null) {
+      return es
+          ? '$freq. Sintonizada: ${active.callSign}. Señal completa.'
+          : '$freq. Locked on ${active.callSign}. Full signal.';
+    }
+
+    final near = _nearestStation;
+    if (near != null) {
+      final pct = (_signalStrength * 100).round();
+      return es
+          ? '$freq. Sin sintonizar. ${near.callSign} cerca, señal $pct por ciento.'
+          : '$freq. Not locked. ${near.callSign} nearby, signal $pct percent.';
+    }
+    return es ? '$freq. Sin portadora.' : '$freq. No carrier.';
+  }
+
   // --- build ---
 
   @override
@@ -493,6 +573,46 @@ class AppState extends State<App> {
       // the visual layout rather than styled to look like nothing.
       h1(classes: 'visually-hidden', [Component.text(_pageHeading)]),
 
+      // Live readout of what the receiver is doing.
+      //
+      // Every signal this piece gives about the dial is visual or
+      // audible: the LCD digits, the needle, the signal bars, the static
+      // clearing. None of it reaches a screen reader, which left the
+      // radio impossible to operate without sight - you could move the
+      // dial and get no feedback that anything had changed.
+      //
+      // `polite` rather than `assertive`: tuning fires this constantly
+      // while sweeping, and an assertive region would interrupt itself
+      // into noise. `aria-atomic` so the whole sentence is re-read
+      // rather than just the digits that changed.
+      div(
+        classes: 'visually-hidden',
+        attributes: {
+          'role': 'status',
+          'aria-live': 'polite',
+          'aria-atomic': 'true',
+        },
+        [Component.text(_liveStatus)],
+      ),
+
+      // Keyboard shortcuts, announced when focus lands on the dial via
+      // `aria-describedby`. They exist as document-level handlers, so
+      // without this they would be undiscoverable to exactly the people
+      // who most need them.
+      div(classes: 'visually-hidden', id: 'dial-instructions', [
+        Component.text(
+          _lang == Lang.es
+              ? 'Usa las flechas izquierda y derecha para sintonizar. '
+                    'Mayúsculas con las flechas salta diez pasos. '
+                    'B cambia de banda. M guarda la estación sintonizada. '
+                    'Las teclas 1 a 9 recuperan una emisora guardada.'
+              : 'Use the left and right arrow keys to tune. '
+                    'Hold shift with the arrows to jump ten steps. '
+                    'Press B to switch band. Press M to save the locked '
+                    'station. Press 1 to 9 to recall a saved station.',
+        ),
+      ]),
+
       // Audio engine (renders no visible DOM).
       RadioAudio(
         frequency: _frequency,
@@ -530,8 +650,17 @@ class AppState extends State<App> {
       // Language toggle (top-right).
       div(
         classes: 'lang-toggle',
-        events: {'click': (_) => _toggleLang()},
-        attributes: {'role': 'button', 'aria-label': 'Toggle language'},
+        events: {
+          'click': (_) => _toggleLang(),
+          'keydown': onActivateKey((_) => _toggleLang()),
+        },
+        attributes: {
+          'role': 'button',
+          'tabindex': '0',
+          // Names the action and its outcome. A bare "ES"/"EN" tells a
+          // screen-reader user nothing about what pressing it does.
+          'aria-label': _lang == Lang.es ? 'Cambiar idioma a inglés' : 'Switch language to Spanish',
+        },
         [Component.text(_lang == Lang.es ? 'ES' : 'EN')],
       ),
 

@@ -7,6 +7,7 @@ import 'package:universal_web/js_interop.dart';
 import 'package:universal_web/web.dart' as web;
 
 import '../models/station.dart';
+import '../utils/keyboard.dart';
 import '../utils/motion.dart';
 import 'collected_stations.dart';
 import 'radio_audio.dart' show unlockAudioContext;
@@ -208,6 +209,47 @@ class RadioDialState extends State<RadioDial> {
   /// Notch rotation for the volume knob: -135° at volume 0 (fully
   /// counter-clockwise, "off" position) → +135° at volume 1.
   double get _volAngle => component.volume * 270.0 - 135.0;
+
+  /// The tuned frequency as it should be spoken: "FM 97.7 MHz".
+  String _spokenFrequency() {
+    final isFm = component.band == Band.fm;
+    final value = isFm ? _freq.toStringAsFixed(1) : _freq.toInt().toString();
+    return '${component.band.name.toUpperCase()} $value ${isFm ? 'MHz' : 'kHz'}';
+  }
+
+  /// Volume as a spoken percentage.
+  String _spokenVolume() => '${(component.volume * 100).round()}%';
+
+  /// Arrow-key handling for the volume knob.
+  ///
+  /// The knob is drag-only by pointer, which made master volume the one
+  /// control with no keyboard path at all. Up/Right raise, Down/Left
+  /// lower, Home/End jump to the extremes - the conventions a native
+  /// range input would give for free.
+  void _onVolKeyDown(web.Event e) {
+    final ke = e as web.KeyboardEvent;
+    if (!component.isPowered) return;
+    const stepSize = 0.05;
+    double? next;
+    switch (ke.key) {
+      case 'ArrowUp':
+      case 'ArrowRight':
+        next = component.volume + stepSize;
+      case 'ArrowDown':
+      case 'ArrowLeft':
+        next = component.volume - stepSize;
+      case 'Home':
+        next = 0.0;
+      case 'End':
+        next = 1.0;
+    }
+    if (next == null) return;
+    // Stop the document-level handler from also treating Left/Right as
+    // a tuning gesture while focus is on the volume knob.
+    ke.preventDefault();
+    ke.stopPropagation();
+    component.onVolumeChanged?.call(next.clamp(0.0, 1.0));
+  }
 
   void _setFrequency(double v) {
     final cfg = _cfg;
@@ -524,11 +566,22 @@ class RadioDialState extends State<RadioDial> {
               classes:
                   'power-rocker${powered ? ' power-on' : ''}'
                   '${component.showPowerHint ? ' power-attract' : ''}',
-              events: {'click': _onPowerTap, 'touchend': _onPowerTap},
+              events: {
+                'click': _onPowerTap,
+                'touchend': _onPowerTap,
+                // A keydown is a user gesture too, so unlockAudioContext
+                // still runs inside a real gesture callstack and mobile
+                // autoplay policy is satisfied on this path as well.
+                'keydown': onActivateKey(_onPowerTap),
+              },
               attributes: {
                 'role': 'switch',
                 'aria-label': 'Power',
                 'aria-checked': powered ? 'true' : 'false',
+                // The way into the entire experience. It was reachable
+                // by pointer only, so a keyboard-only visitor could not
+                // switch the radio on at all.
+                'tabindex': '0',
               },
               [
                 span(classes: 'rocker-half rocker-on', [Component.text('ON')]),
@@ -566,6 +619,17 @@ class RadioDialState extends State<RadioDial> {
                 'pointermove': _onVolMove,
                 'pointerup': _onVolUp,
                 'pointercancel': _onVolUp,
+                'keydown': _onVolKeyDown,
+              },
+              attributes: {
+                'role': 'slider',
+                'tabindex': powered ? '0' : '-1',
+                'aria-label': 'Volume',
+                'aria-valuemin': '0',
+                'aria-valuemax': '100',
+                'aria-valuenow': (component.volume * 100).round().toString(),
+                'aria-valuetext': _spokenVolume(),
+                if (!powered) 'aria-disabled': 'true',
               },
               [
                 div(classes: 'vol-knob-cap', [
@@ -635,6 +699,25 @@ class RadioDialState extends State<RadioDial> {
                 'pointermove': _onStripMove,
                 'pointerup': _onStripUp,
                 'pointercancel': _onStripUp,
+              },
+              attributes: {
+                // The dial is a continuous value control, so it gets
+                // slider semantics rather than being an unlabelled div
+                // that only responds to dragging. aria-valuetext carries
+                // the spoken form ("FM 97.7 MHz"), because aria-valuenow
+                // alone would be read as a bare number with no unit and
+                // no band.
+                'role': 'slider',
+                'tabindex': powered ? '0' : '-1',
+                'aria-label': 'Tuning dial',
+                'aria-valuemin': _cfg.minFreq.toString(),
+                'aria-valuemax': _cfg.maxFreq.toString(),
+                'aria-valuenow': _freq.toString(),
+                'aria-valuetext': _spokenFrequency(),
+                // Points at the shortcut list rendered by `AppState`, so
+                // landing on the dial explains how to drive it.
+                'aria-describedby': 'dial-instructions',
+                if (!powered) 'aria-disabled': 'true',
               },
               [
                 div(
@@ -762,7 +845,7 @@ class RadioDialState extends State<RadioDial> {
     if (_memFlash) classes.write(' ind-mem-flash');
     return span(
       classes: classes.toString(),
-      events: armed ? {'click': _onMemTap} : const {},
+      events: armed ? {'click': _onMemTap, 'keydown': onActivateKey(_onMemTap)} : const {},
       attributes: {
         'role': 'button',
         'aria-label': armed ? 'Save current station' : 'No station available to save',
@@ -1225,12 +1308,11 @@ class RadioDialState extends State<RadioDial> {
           'text-shadow': '0 0 3px rgba(232,160,53,0.5), 0 1px 0 rgba(0,0,0,0.55)',
         },
       ),
-      css('&.ind-band-clickable:focus-visible').styles(
-        raw: {
-          'outline': '1px solid rgba(232,160,53,0.7)',
-          'outline-offset': '1px',
-        },
-      ),
+      // Focus ring deliberately not defined here. It used to be a 1px
+      // outline local to this one control, which outranked the shared
+      // rule in `main.server.dart` on specificity and left the band
+      // pills with a thinner ring than every other control. Focus is now
+      // owned in exactly one place.
     ]),
     // ── MEM button ──
     // Lives in the indicator row next to the FM/AM/ST/MONO pills,

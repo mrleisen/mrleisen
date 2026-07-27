@@ -372,9 +372,11 @@ class CollectedStationsState extends State<CollectedStations> {
         },
       ),
       css('&:active').styles(raw: {'transform': 'translateY(1px)'}),
+      // Keeps the inner amber glow as a secondary cue, but no longer
+      // sets `outline: none` - that was suppressing the shared focus
+      // ring and leaving this control styled unlike every other one.
       css('&:focus-visible').styles(
         raw: {
-          'outline': 'none',
           'border-color': '#3a2a14',
           'box-shadow':
               'inset 0 1px 1px rgba(0,0,0,0.6), '

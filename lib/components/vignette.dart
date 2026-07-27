@@ -10,7 +10,11 @@ class Vignette extends StatelessComponent {
 
   @override
   Component build(BuildContext context) {
-    return div(classes: 'vignette', []);
+    return div(
+      classes: 'vignette',
+      attributes: const {'aria-hidden': 'true'},
+      [],
+    );
   }
 
   @css
