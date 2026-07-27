@@ -4,6 +4,7 @@ import 'package:jaspr/dom.dart';
 import 'package:jaspr/jaspr.dart';
 
 import '../models/station.dart';
+import '../utils/motion.dart';
 
 /// Five-segment signal-strength meter in the top-left corner.
 ///
@@ -132,6 +133,15 @@ class _SignalBarsState extends State<SignalBars> {
   }
 
   void _startScanning() {
+    // Under reduced motion the meter shows real signal strength straight
+    // away instead of running the Knight Rider sweep. Handled here rather
+    // than in CSS because the sweep is a rendering mode, not just an
+    // animation on an otherwise-correct display.
+    if (prefersReducedMotion) {
+      _scanTimer?.cancel();
+      if (_isScanning) setState(() => _isScanning = false);
+      return;
+    }
     _scanTimer?.cancel();
     setState(() => _isScanning = true);
     _scanTimer = Timer(_scanDuration, () {

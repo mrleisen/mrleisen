@@ -770,13 +770,20 @@ class AppState extends State<App> {
       color: const Color('#a6a6b0'),
       raw: {'letter-spacing': '0.15em'},
     ),
+    // Purely a visual divider between the band, range and unit, so it
+    // stays below the text floor on purpose - it is punctuation, not
+    // content, and is skipped by screen readers along with the rest of
+    // the decorative row.
     css('.carrier-band-sep').styles(
-      color: const Color('#44444a'),
+      color: const Color('#5c5c64'),
       raw: {'font-weight': '700', 'transform': 'translateY(-1px)'},
     ),
     css('.carrier-band-unit').styles(
       fontWeight: FontWeight.w500,
-      color: const Color('#66666f'),
+      // Was #66666f → 3.58:1. Now 6.36:1. The unit ("MHZ" / "KHZ") is
+      // what tells you which band you are reading, so it has to survive
+      // the noise layer.
+      color: const Color('#8f8f99'),
     ),
 
     // ── sweep ribbon ──
@@ -823,11 +830,15 @@ class AppState extends State<App> {
         FontFamily('IBM Plex Mono'),
         FontFamilies.monospace,
       ]),
-      fontSize: Unit.pixels(9),
+      fontSize: Unit.pixels(11),
       fontWeight: FontWeight.w500,
       letterSpacing: 0.55.em,
       textTransform: TextTransform.upperCase,
-      color: const Color('#5a5a62'),
+      // Was #5a5a62 at 9 px, i.e. 2.98:1 before carrier-breathe even
+      // touched it. This is real status copy ("SCANNING BAND"), not
+      // ornament, so it gets a real contrast budget: 7.32:1 at the top
+      // of the breathe cycle and 5.50:1 at the trough.
+      color: const Color('#9a9aa6'),
       raw: {
         'animation': 'carrier-breathe 4s ease-in-out infinite',
         'text-indent': '0.55em', // compensate trailing letter-spacing
@@ -837,8 +848,8 @@ class AppState extends State<App> {
     css.media(MediaQuery.screen(maxWidth: 600.px), [
       // Compact lang toggle so it doesn't crowd the top edge.
       css('.lang-toggle').styles(
-        fontSize: Unit.pixels(10),
-        padding: Padding.symmetric(horizontal: 8.px, vertical: 4.px),
+        fontSize: Unit.pixels(11),
+        padding: Padding.symmetric(horizontal: 10.px, vertical: 6.px),
         position: Position.fixed(top: 10.px, right: 10.px),
       ),
       // Idle readout sits a touch higher so it can't overlap the
@@ -852,19 +863,23 @@ class AppState extends State<App> {
       ),
       css('.carrier-dashes').styles(gap: Gap(column: 12.px)),
       css('.carrier-dash').styles(fontSize: 1.9.rem),
+      // Phones keep the full 11 px floor. The old mobile ramp went down
+      // to 8 px, which is below what most people can read at arm's
+      // length even at full contrast. Tracking absorbs the extra width
+      // instead of the type size.
       css('.carrier-state-text').styles(
-        fontSize: Unit.pixels(10),
-        letterSpacing: 0.35.em,
+        fontSize: Unit.pixels(11),
+        letterSpacing: 0.28.em,
       ),
       css('.carrier-band').styles(
-        fontSize: Unit.pixels(9),
-        letterSpacing: 0.18.em,
+        fontSize: Unit.pixels(11),
+        letterSpacing: 0.12.em,
         gap: Gap(column: 6.px),
       ),
       css('.carrier-sweep').styles(width: 180.px),
       css('.carrier-sub').styles(
-        fontSize: Unit.pixels(8),
-        letterSpacing: 0.35.em,
+        fontSize: Unit.pixels(11),
+        letterSpacing: 0.28.em,
       ),
     ]),
   ];
