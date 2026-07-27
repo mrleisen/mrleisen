@@ -491,6 +491,47 @@ void main() {
           ),
         }),
 
+        // ── Focus ──
+        // One ring for every custom control on the faceplate, so keyboard
+        // focus is never ambiguous and never inherits the user-agent blue
+        // outline, which would look like a browser error on top of the
+        // hardware.
+        //
+        // Amber to match the receiver's own indicator language, and drawn
+        // with outline + offset rather than box-shadow so it survives on
+        // controls that already spend their box-shadow budget on bevels
+        // (the rocker, the knobs, the LCD).
+        //
+        // `:focus-visible` rather than `:focus`: a pointer user pressing
+        // the power switch should not be left with a ring sitting on it.
+        css(
+          '.power-rocker:focus-visible, '
+          '.lang-toggle:focus-visible, '
+          '.dial-window:focus-visible, '
+          '.vol-knob:focus-visible, '
+          '.ind:focus-visible, '
+          '.collected-pill:focus-visible, '
+          '.pill:focus-visible',
+        ).styles(
+          raw: {
+            'outline': '2px solid rgba(232,160,53,0.9)',
+            'outline-offset': '3px',
+            'border-radius': '4px',
+          },
+        ),
+        // Suppress the default ring only where a replacement is drawn
+        // above, never globally - a blanket `outline: none` is how sites
+        // end up with invisible focus.
+        css(
+          '.power-rocker:focus:not(:focus-visible), '
+          '.lang-toggle:focus:not(:focus-visible), '
+          '.dial-window:focus:not(:focus-visible), '
+          '.vol-knob:focus:not(:focus-visible), '
+          '.ind:focus:not(:focus-visible), '
+          '.collected-pill:focus:not(:focus-visible), '
+          '.pill:focus:not(:focus-visible)',
+        ).styles(raw: {'outline': 'none'}),
+
         // ── Reduced motion ──
         // The whole piece is built out of flicker, tearing and jitter, so
         // an unguarded visit is genuinely hostile to anyone sensitive to

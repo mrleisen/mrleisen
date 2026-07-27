@@ -44,6 +44,10 @@ class StaticNoise extends StatelessComponent {
   Component build(BuildContext context) {
     return div(
       classes: 'tv-flicker-host',
+      // Pure texture. Nothing here carries meaning a screen reader could
+      // use, and the noise level is already described in words by the
+      // live region in `AppState`.
+      attributes: const {'aria-hidden': 'true'},
       styles: Styles(
         // The flicker keyframe multiplies into this base opacity by setting
         // `opacity` itself only at brief dip moments; setting the CSS var

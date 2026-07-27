@@ -10,7 +10,11 @@ class Scanlines extends StatelessComponent {
 
   @override
   Component build(BuildContext context) {
-    return div(classes: 'scanlines', []);
+    return div(
+      classes: 'scanlines',
+      attributes: const {'aria-hidden': 'true'},
+      [],
+    );
   }
 
   @css

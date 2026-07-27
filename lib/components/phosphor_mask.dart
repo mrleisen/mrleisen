@@ -39,6 +39,7 @@ class PhosphorMask extends StatelessComponent {
   Component build(BuildContext context) {
     return div(
       classes: 'phosphor-mask${isPowered ? '' : ' phosphor-off'}',
+      attributes: const {'aria-hidden': 'true'},
       styles: Styles(
         raw: {
           '--mask-i': intensity.toStringAsFixed(3),
