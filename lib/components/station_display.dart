@@ -229,17 +229,37 @@ class StationDisplay extends StatelessComponent {
   }
 
   Component _detodouisPanel(Station s, Lang lang) {
+    final subtitle = lang == Lang.es ? 'App de comunidad universitaria' : 'University community app';
     final body = lang == Lang.es
         ? 'La app de la comunidad UIS desde 2015. Puntajes de corte, '
-              'profesores, materias, el Oráculo y más.'
+              'profesores, materias, el Oráculo y más. Nació de la '
+              'necesidad de centralizar información que estaba dispersa '
+              'entre foros, grupos de chat y el boca a boca, y hoy la usan '
+              'tanto aspirantes que aún no entran como estudiantes que ya '
+              'llevan años dentro.'
         : 'The UIS community app since 2015. Cut scores, professors, '
-              'subjects, the Oracle and more.';
+              'subjects, the Oracle and more. It started because the '
+              'information students actually needed was scattered across '
+              'forums, chat groups and word of mouth, and it now serves '
+              'both applicants who have not got in yet and students who '
+              'have been there for years.';
     return _panelShell(
       color: s.color,
       label: _stationLabel(s, lang),
       title: 'DeTodoUIS',
       children: [
+        div(classes: 'panel-subtitle', [Component.text(subtitle)]),
         p(classes: 'panel-body', [Component.text(body)]),
+        _transmissionData([
+          (_key(lang, 'since'), '2015'),
+          (_key(lang, 'platforms'), 'iOS / Android / Web'),
+          (_key(lang, 'stack'), 'Flutter · Laravel · Firebase'),
+          (
+            _key(lang, 'role'),
+            lang == Lang.es ? 'Creador / Mantenedor' : 'Creator / Maintainer',
+          ),
+          (_key(lang, 'status'), _status(lang, 'active')),
+        ]),
         div(classes: 'pill-row', [
           _pill('Web', href: 'https://detodouis.com'),
           _pill(
@@ -255,13 +275,23 @@ class StationDisplay extends StatelessComponent {
     );
   }
 
+  /// Not a project: the operator's own contact frequency, the station
+  /// you tune to in order to reach whoever is broadcasting the rest.
   Component _connectPanel(Station s, Lang lang) {
-    final title = lang == Lang.es ? 'Conectar' : 'Connect';
+    final title = lang == Lang.es ? 'Contacto' : 'Contact';
+    final subtitle = lang == Lang.es ? 'Frecuencia del operador' : 'Operator frequency';
+    final body = lang == Lang.es
+        ? 'Para trabajo, preguntas sobre cualquiera de estas señales, o '
+              'simplemente para decir que pasaste por aquí.'
+        : 'For work, questions about any of these signals, or simply to '
+              'say you passed through.';
     return _panelShell(
       color: s.color,
       label: _stationLabel(s, lang),
       title: title,
       children: [
+        div(classes: 'panel-subtitle', [Component.text(subtitle)]),
+        p(classes: 'panel-body', [Component.text(body)]),
         div(classes: 'pill-row', [
           _pill('GitHub', href: 'https://github.com/mrleisen'),
           _pill(
@@ -276,10 +306,18 @@ class StationDisplay extends StatelessComponent {
   Component _itnwPanel(Station s, Lang lang) {
     final subtitle = lang == Lang.es ? 'Canal de YouTube - audio inmersivo' : 'YouTube channel - immersive audio';
     final body = lang == Lang.es
-        ? 'Exploraciones sonoras inmersivas de realidades imaginadas. '
-              'Paisajes en capas, texturas narrativas y experimentos sonoros.'
-        : 'Immersive audio explorations of imagined realities. '
-              'Layered soundscapes, narrative textures, and sonic experiments.';
+        ? 'Cada episodio parte de una sola regla - una condición especial - '
+              'y construye un mundo entero a partir de ella. El narrador '
+              'habla desde adentro, como alguien que siempre vivió ahí: no '
+              'hay explicación ni origen, el mundo simplemente es. Detrás '
+              'hay una herramienta propia que lleva un mundo del concepto '
+              'al video publicado, entera en local y sin nube.'
+        : 'Each episode starts from a single rule - one special condition - '
+              'and builds an entire world out of it. The narrator speaks '
+              'from inside, as someone who has always lived there: no '
+              'explanation, no origin story, the world simply is. Behind it '
+              'is a purpose-built tool that carries a world from concept to '
+              'published video, entirely local, with no cloud.';
     return _panelShell(
       color: s.color,
       label: _stationLabel(s, lang),
@@ -287,6 +325,21 @@ class StationDisplay extends StatelessComponent {
       children: [
         div(classes: 'panel-subtitle', [Component.text(subtitle)]),
         p(classes: 'panel-body', [Component.text(body)]),
+        _transmissionData([
+          (
+            _key(lang, 'format'),
+            lang == Lang.es ? 'Narración inmersiva larga' : 'Long-form immersive narration',
+          ),
+          (
+            _key(lang, 'episodes'),
+            lang == Lang.es ? 'EP01 publicado · más en producción' : 'EP01 published · more in production',
+          ),
+          (
+            _key(lang, 'stack'),
+            lang == Lang.es ? 'Monorepo propio · local-first' : 'In-house monorepo · local-first',
+          ),
+          (_key(lang, 'status'), _status(lang, 'production')),
+        ]),
         div(classes: 'pill-row', [
           _pill('YouTube', href: 'https://www.youtube.com/@InThisNewWorld'),
         ]),
@@ -297,10 +350,14 @@ class StationDisplay extends StatelessComponent {
   Component _tropPanel(Station s, Lang lang) {
     final subtitle = lang == Lang.es ? 'Universo narrativo en expansión' : 'An expanding narrative universe';
     final body = lang == Lang.es
-        ? 'Un personaje y su universo. Cómics, juegos, apps - '
-              'creciendo desde 2017.'
-        : 'A character and a universe of their own. Comics, games, apps - '
-              'growing since 2017.';
+        ? 'Un personaje y el universo que se le fue formando alrededor. '
+              'Empezó en 2017 como dibujos sueltos y con los años acumuló '
+              'lore, capítulos y apariciones en otros proyectos míos. No '
+              'tiene final planeado: se sigue expandiendo por donde pida.'
+        : 'A character, and the universe that grew around him. It started '
+              'in 2017 as loose drawings and has since accumulated lore, '
+              'chapters and cameos across my other projects. There is no '
+              'planned ending: it keeps expanding wherever it asks to.';
     return _panelShell(
       color: s.color,
       label: _stationLabel(s, lang),
@@ -308,6 +365,14 @@ class StationDisplay extends StatelessComponent {
       children: [
         div(classes: 'panel-subtitle', [Component.text(subtitle)]),
         p(classes: 'panel-body', [Component.text(body)]),
+        _transmissionData([
+          (_key(lang, 'origin'), '2017'),
+          (
+            _key(lang, 'format'),
+            lang == Lang.es ? 'Cómics · Juegos · Relatos' : 'Comics · Games · Stories',
+          ),
+          (_key(lang, 'status'), _status(lang, 'expanding')),
+        ]),
         div(classes: 'pill-row', [
           _pill('Instagram', href: 'https://www.instagram.com/tropelorio'),
         ]),
@@ -326,6 +391,8 @@ class StationDisplay extends StatelessComponent {
     required String title,
     required String subtitle,
     required String body,
+    required String status,
+    List<(String, String)> data = const [],
     String? href,
     String? websiteHref,
   }) {
@@ -334,6 +401,14 @@ class StationDisplay extends StatelessComponent {
       h2(classes: 'am-title', [Component.text(title)]),
       div(classes: 'am-subtitle', [Component.text(subtitle)]),
       p(classes: 'am-body', [Component.text(body)]),
+      // STATUS is what turns an unfinished idea into a deliberate draft.
+      // "STATUS: ABANDONED" is both more honest and more interesting than
+      // a one-line description that reads like a placeholder nobody got
+      // around to filling in.
+      _transmissionData([
+        ...data,
+        (_key(lang, 'status'), status),
+      ]),
       if (href != null || websiteHref != null)
         div(classes: 'pill-row', [
           if (websiteHref != null) _pill('Web', href: websiteHref),
@@ -345,15 +420,36 @@ class StationDisplay extends StatelessComponent {
   Component _bblPanel(Station s, Lang lang) {
     final subtitle = lang == Lang.es ? 'Copiloto de lotería' : 'Lottery copilot';
     final body = lang == Lang.es
-        ? 'Tu copiloto de lotería para Baloto, MiLoto y ColorLoto'
-        : 'Your lottery copilot for Baloto, MiLoto and ColorLoto';
+        ? 'Un acompañante para quien juega lotería en Colombia y quiere '
+              'control de sus tiquetes sin cuenta, sin anuncios y sin '
+              'entregar sus datos. Registras el tiquete, ocurre el sorteo, '
+              'la app trae el resultado oficial y lo verifica en el propio '
+              'teléfono. Nunca vende tiquetes ni mueve dinero.'
+        : 'A companion for Colombian lottery players who want control of '
+              'their tickets without an account, ads, or handing over their '
+              'data. Register a ticket, the draw happens, the app fetches '
+              'the official result and checks it on the device itself. It '
+              'never sells tickets or handles money.';
     return _panelShell(
       color: s.color,
       label: _stationLabel(s, lang),
-      title: 'Boom Boom Lottery',
+      title: 'Boom Boom Lotter',
       children: [
         div(classes: 'panel-subtitle', [Component.text(subtitle)]),
         p(classes: 'panel-body', [Component.text(body)]),
+        _transmissionData([
+          (_key(lang, 'games'), 'MiLoto · Baloto + Revancha · ColorLoto'),
+          (_key(lang, 'stack'), 'Flutter · BLoC · Laravel'),
+          (
+            _key(lang, 'privacy'),
+            lang == Lang.es ? 'Sin cuenta · Offline-first' : 'No account · Offline-first',
+          ),
+          (
+            _key(lang, 'role'),
+            lang == Lang.es ? 'Creador' : 'Creator',
+          ),
+          (_key(lang, 'status'), _status(lang, 'prelaunch')),
+        ]),
         div(classes: 'pill-row', [
           _pill('Web', href: 'https://boomboomlotter.com'),
         ]),
@@ -361,12 +457,32 @@ class StationDisplay extends StatelessComponent {
     );
   }
 
+  /// The one AM station with a finished body of work behind it. It sits
+  /// on AM anyway because AM is the side of the dial for things that are
+  /// not the current job - and a record you closed in 2012 belongs there
+  /// as squarely as an idea you never started.
   Component _awsPanel(Station s, Lang lang) => _amPanel(
     s: s,
     lang: lang,
     title: 'A Wired Spine',
-    subtitle: lang == Lang.es ? 'Experimento musical' : 'Musical experiment',
-    body: lang == Lang.es ? 'Canciones originales' : 'Original music tracks',
+    subtitle: lang == Lang.es ? 'Proyecto musical' : 'Music project',
+    body: lang == Lang.es
+        ? 'Electrónica instrumental, sin voces: ambient, ruido, rock '
+              'hipnótico. Algunas pistas usan grabaciones cortas de casete '
+              '(lluvia, pasos, agua, carros de noche) como textura. Todo '
+              'hecho en FL Studio y autoeditado.'
+        : 'Instrumental electronic, no vocals: ambient, noise, hypnotic '
+              'rock. A few tracks use short cassette recordings - rain, '
+              'steps, water, cars at night - as texture. All made in FL '
+              'Studio and self-released.',
+    data: [
+      (
+        _key(lang, 'records'),
+        'INTERRUPTOR (2006) · PLEASE, PLEASE!!! (2010) · ROUTINE (2012)',
+      ),
+      (_key(lang, 'recorded'), '2004 – 2012'),
+    ],
+    status: _status(lang, 'archived'),
     href: 'https://soundcloud.com/awiredspine',
     websiteHref: 'https://awiredspine.com',
   );
@@ -375,8 +491,16 @@ class StationDisplay extends StatelessComponent {
     s: s,
     lang: lang,
     title: 'MyNFTGenerator',
-    subtitle: lang == Lang.es ? 'Concepto' : 'Concept',
-    body: lang == Lang.es ? 'Herramienta de generación de NFTs' : 'NFT generation tool',
+    subtitle: lang == Lang.es ? 'Herramienta' : 'Tool',
+    body: lang == Lang.es
+        ? 'Una herramienta para generar colecciones a partir de capas de '
+              'arte y reglas de rareza. Se quedó en el camino junto con el '
+              'entusiasmo general por el tema, y no me arrepiento de no '
+              'haberla terminado.'
+        : 'A tool for generating collections from art layers and rarity '
+              'rules. It stalled along with the general enthusiasm for the '
+              'whole subject, and I do not regret leaving it unfinished.',
+    status: _status(lang, 'abandoned'),
   );
 
   Component _pnkPanel(Station s, Lang lang) => _amPanel(
@@ -384,7 +508,18 @@ class StationDisplay extends StatelessComponent {
     lang: lang,
     title: 'PunkLLM',
     subtitle: lang == Lang.es ? 'Experimento' : 'Experiment',
-    body: lang == Lang.es ? 'Un intento de crear un LLM punk' : 'An attempt to create a punk LLM',
+    body: lang == Lang.es
+        ? 'La idea: un modelo de lenguaje que no fuera servicial. Que '
+              'contestara mal, que se negara, que tuviera opiniones '
+              'incómodas. Casi todo el trabajo de alineamiento va en la '
+              'dirección contraria, así que resultó ser más un experimento '
+              'sobre qué esperamos de estas cosas que sobre el modelo.'
+        : 'The idea: a language model that is not helpful. One that talks '
+              'back, refuses, holds inconvenient opinions. Nearly all '
+              'alignment work pulls the other way, so it turned out to be '
+              'less an experiment about the model than about what we '
+              'expect from these things.',
+    status: _status(lang, 'concept'),
   );
 
   Component _numeloroPanel(Station s, Lang lang) => _amPanel(
@@ -393,10 +528,17 @@ class StationDisplay extends StatelessComponent {
     title: 'Numeloro',
     subtitle: lang == Lang.es ? 'Patio de números' : 'Number playground',
     body: lang == Lang.es
-        ? 'Un patio donde los números salen a pasear y a charlar '
-              'como loros en el numeloro'
-        : 'A playground where numbers hang out and chat away '
-              'like parrots on the numeloro',
+        ? 'Un patio donde los números salen a pasear y a charlar como '
+              'loros en el numeloro. La idea es enseñar aritmética temprana '
+              'sin que parezca una tarea: cada número es un personaje con '
+              'carácter propio y las operaciones son conversaciones entre '
+              'ellos.'
+        : 'A playground where numbers hang out and chat away like parrots '
+              'on the numeloro. The idea is to teach early arithmetic '
+              'without it feeling like homework: every number is a '
+              'character with its own temperament, and operations are '
+              'conversations between them.',
+    status: _status(lang, 'concept'),
   );
 
   Component _ayuwokiPanel(Station s, Lang lang) => _amPanel(
@@ -404,7 +546,16 @@ class StationDisplay extends StatelessComponent {
     lang: lang,
     title: 'Ayuwoki',
     subtitle: lang == Lang.es ? 'Homenaje' : 'Tribute',
-    body: lang == Lang.es ? 'Un homenaje al meme de internet' : 'A tribute to the internet meme',
+    body: lang == Lang.es
+        ? 'Un homenaje al meme que aterrorizó al internet hispanohablante '
+              'sin proponérselo. Me interesa menos el susto que cómo una '
+              'imagen mal comprimida se convierte en folclore compartido '
+              'por millones de personas que nunca se pusieron de acuerdo.'
+        : 'A tribute to the meme that terrified the Spanish-speaking '
+              'internet without meaning to. The scare interests me less '
+              'than how a badly compressed image becomes folklore shared '
+              'by millions of people who never agreed on anything.',
+    status: _status(lang, 'concept'),
   );
 
   Component _conspiranoicoPanel(Station s, Lang lang) => _amPanel(
@@ -413,13 +564,79 @@ class StationDisplay extends StatelessComponent {
     title: 'Conspiranoico',
     subtitle: lang == Lang.es ? 'Lugar curioso' : 'A curious place',
     body: lang == Lang.es
-        ? 'Un lugar para todas las teorías conspirativas - no para '
-              'creerlas, sino para conocerlas. Pura curiosidad.'
-        : 'A place for every conspiracy theory - not to believe them, '
-              'but to be aware of them. Pure curiosity.',
+        ? 'Un archivo de teorías conspirativas: no para creerlas, sino '
+              'para conocerlas. La pregunta que me interesa no es si son '
+              'ciertas, sino por qué resultan tan atractivas y qué dice de '
+              'nosotros que lo sean. Catalogar sin avalar es la parte '
+              'difícil, y es la razón por la que sigue siendo una idea.'
+        : 'An archive of conspiracy theories: not to believe them, but to '
+              'know them. The question that interests me is not whether '
+              'they are true, but why they are so appealing and what it '
+              'says about us that they are. Cataloguing without endorsing '
+              'is the hard part, and the reason this is still an idea.',
+    status: _status(lang, 'concept'),
   );
 
   // ── shared building blocks ──
+
+  /// A block of station telemetry: label on the left, value on the
+  /// right, in the receiver's own microtype.
+  ///
+  /// The point is depth without turning a station into a case study.
+  /// A conventional project page would break the conceit - the whole
+  /// piece only works while it reads as a receiver - so the extra
+  /// substance arrives as a data card the hardware could plausibly be
+  /// printing, not as a section of a portfolio site.
+  ///
+  /// Every value here is verified against the project's own repo or its
+  /// store listing. Nothing is estimated; a plausible-looking number
+  /// nobody checked is worse than no number.
+  Component _transmissionData(List<(String, String)> rows) {
+    return div(classes: 'tx-data', [
+      for (final (label, value) in rows) ...[
+        div(classes: 'tx-key', [Component.text(label)]),
+        div(classes: 'tx-val', [Component.text(value)]),
+      ],
+    ]);
+  }
+
+  /// Localised `STATUS` value. AM stations lean on this heavily: it is
+  /// the field that makes an unfinished idea legible as a deliberate
+  /// draft instead of an empty panel.
+  String _status(Lang lang, String key) {
+    const table = {
+      'active': ('ACTIVO', 'ACTIVE'),
+      'prelaunch': ('PRE-LANZAMIENTO', 'PRE-LAUNCH'),
+      'production': ('EN PRODUCCIÓN', 'IN PRODUCTION'),
+      'expanding': ('EN EXPANSIÓN', 'EXPANDING'),
+      'archived': ('ARCHIVADO', 'ARCHIVED'),
+      'concept': ('CONCEPTO', 'CONCEPT'),
+      'abandoned': ('ABANDONADO', 'ABANDONED'),
+    };
+    final pair = table[key]!;
+    return lang == Lang.es ? pair.$1 : pair.$2;
+  }
+
+  /// Shared telemetry label vocabulary, so two panels never disagree on
+  /// what the same field is called.
+  String _key(Lang lang, String k) {
+    const table = {
+      'since': ('EN LÍNEA DESDE', 'ONLINE SINCE'),
+      'platforms': ('PLATAFORMAS', 'PLATFORMS'),
+      'stack': ('STACK', 'STACK'),
+      'role': ('ROL', 'ROLE'),
+      'status': ('ESTADO', 'STATUS'),
+      'games': ('JUEGOS', 'GAMES'),
+      'format': ('FORMATO', 'FORMAT'),
+      'records': ('DISCOS', 'RECORDS'),
+      'recorded': ('GRABADO', 'RECORDED'),
+      'origin': ('ORIGEN', 'ORIGIN'),
+      'episodes': ('EPISODIOS', 'EPISODES'),
+      'privacy': ('PRIVACIDAD', 'PRIVACY'),
+    };
+    final pair = table[k]!;
+    return lang == Lang.es ? pair.$1 : pair.$2;
+  }
 
   Component _panelShell({
     required String color,
@@ -591,6 +808,54 @@ class StationDisplay extends StatelessComponent {
         'text-shadow':
             'calc(var(--distortion, 0) * 1.5px) 0 rgba(255,0,0,0.45), '
             'calc(var(--distortion, 0) * -1.5px) 0 rgba(0,255,255,0.45)',
+      },
+    ),
+
+    // ── transmission data block ──
+    // Two-column key/value card, deliberately built to read as something
+    // the receiver is printing rather than as a spec table on a product
+    // page. Labels are dim and heavily tracked like instrument legends;
+    // values carry the weight.
+    css('.tx-data').styles(
+      display: Display.grid,
+      justifyContent: JustifyContent.center,
+      gap: Gap(row: 6.px, column: 16.px),
+      maxWidth: 440.px,
+      raw: {
+        // Label column sizes to its content, value column takes what is
+        // left, so the two stay aligned down the block no matter how
+        // long any individual label is.
+        'grid-template-columns': 'auto minmax(0, 1fr)',
+        'margin': '2px auto 0',
+        'text-align': 'left',
+        'padding-top': '12px',
+        'border-top': '1px solid rgba(255,255,255,0.07)',
+        'width': '100%',
+      },
+    ),
+    css('.tx-key').styles(
+      fontFamily: const FontFamily.list([
+        FontFamily('IBM Plex Mono'),
+        FontFamilies.monospace,
+      ]),
+      fontSize: Unit.pixels(11),
+      fontWeight: FontWeight.w500,
+      letterSpacing: 0.16.em,
+      textTransform: TextTransform.upperCase,
+      color: const Color('#938d81'),
+      raw: {'line-height': '1.45', 'white-space': 'nowrap'},
+    ),
+    css('.tx-val').styles(
+      fontFamily: const FontFamily.list([
+        FontFamily('IBM Plex Mono'),
+        FontFamilies.monospace,
+      ]),
+      fontSize: Unit.pixels(11),
+      fontWeight: FontWeight.w500,
+      letterSpacing: 0.02.em,
+      raw: {
+        'color': 'color-mix(in srgb, var(--sc, #E8A035) 45%, #d8d2c4)',
+        'line-height': '1.45',
       },
     ),
 
