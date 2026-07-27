@@ -2,6 +2,7 @@ import 'package:jaspr/dom.dart';
 import 'package:jaspr/jaspr.dart';
 
 import '../models/station.dart';
+import '../utils/keyboard.dart';
 
 /// Currently-supported UI languages.
 enum Lang { es, en }
@@ -26,6 +27,8 @@ class StationDisplay extends StatelessComponent {
     required this.band,
     required this.lang,
     this.isPowered = true,
+    this.onOpenTech,
+    this.techTriggerId = 'tech-trigger',
     super.key,
   });
 
@@ -36,6 +39,14 @@ class StationDisplay extends StatelessComponent {
   /// When false every panel collapses to opacity 0 and skips the
   /// distortion animations so nothing runs behind the CRT-off overlay.
   final bool isPowered;
+
+  /// Opens the technical-transmission dialog. Owned by `AppState`
+  /// because the dialog overlays everything and needs document-level
+  /// Escape handling.
+  final VoidCallback? onOpenTech;
+
+  /// Id stamped on the trigger so the dialog can hand focus back to it.
+  final String techTriggerId;
 
   /// Identify which (if any) station's panel should be active on the
   /// active band. Stations within a band sit far enough apart that at
@@ -197,33 +208,91 @@ class StationDisplay extends StatelessComponent {
     return '$bandStr $freq $unit - $suffix';
   }
 
+  /// The operator's own station, and the most important panel here: it
+  /// answers the one question a visitor actually has. It used to read
+  /// like a LinkedIn summary, which made it the least interesting thing
+  /// on an otherwise unusual site.
+  ///
+  /// Carries its own label ("origin signal" rather than "decoded
+  /// transmission") so tuning into it feels like arriving somewhere
+  /// rather than passing another project.
   Component _aboutPanel(Station s, Lang lang) {
-    final title = lang == Lang.es ? 'Bienvenido a mi Radio' : 'Welcome to my Radio';
-    final intro = lang == Lang.es
-        ? 'Hola, mi nombre es Rafael Camargo. '
-              'Software engineer con 10+ años de experiencia, '
-              'últimamente enfocado en construir experiencias crossplatform.'
-        : 'Hi, my name is Rafael Camargo. '
-              'Software engineer with 10+ years of experience, '
-              'lately focused on building cross-platform experiences.';
-    final note = lang == Lang.es
-        ? 'Este sitio fue construido completamente en Dart, '
-              'compilado a HTML estático con Jaspr.'
-        : 'This site was built entirely in Dart, '
-              'compiled to static HTML with Jaspr.';
-    return _panelShell(
-      color: s.color,
-      label: _stationLabel(s, lang),
-      title: title,
-      children: [
-        p(classes: 'panel-body', [Component.text(intro)]),
-        p(classes: 'panel-body', [Component.text(note)]),
-        div(classes: 'pill-row', [
-          _pill(
-            'LinkedIn',
-            href: 'https://www.linkedin.com/in/rafael-c-a6132982/',
-          ),
-        ]),
+    final es = lang == Lang.es;
+    final unit = s.band == Band.fm ? 'MHz' : 'kHz';
+    final label =
+        '${s.band.name.toUpperCase()} ${s.frequency.toStringAsFixed(1)} $unit '
+        '- ${es ? 'señal de origen' : 'origin signal'}';
+
+    final intro = es
+        ? 'Llevo más de diez años construyendo productos digitales, casi '
+              'siempre solo y de punta a punta: la idea, la app, el backend, '
+              'la ficha en la tienda y el soporte a la mañana siguiente. Me '
+              'interesa lo que la gente termina usando de verdad, no lo que '
+              'se demuestra bien.'
+        : 'I have spent more than ten years building digital products, '
+              'mostly alone and end to end: the idea, the app, the backend, '
+              'the store listing and the support ticket the next morning. I '
+              'care about what people keep using, not about what demos well.';
+
+    final note = es
+        ? 'Este receptor es un ejemplo de eso. Todo lo que oyes está '
+              'sintetizado en el navegador y todo lo que ves es CSS.'
+        : 'This receiver is an example of that. Everything you hear is '
+              'synthesised in the browser and everything you see is CSS.';
+
+    return div(classes: 'panel-shell panel-origin', [
+      div(classes: 'panel-label', [Component.text(label)]),
+      h2(classes: 'panel-title', [Component.text('Rafael Camargo')]),
+      div(classes: 'panel-subtitle', [
+        Component.text(
+          es ? 'Ingeniero de software · Bucaramanga, Colombia' : 'Software engineer · Bucaramanga, Colombia',
+        ),
+      ]),
+      p(classes: 'panel-body', [Component.text(intro)]),
+      _transmissionData([
+        (es ? 'CONSTRUYENDO DESDE' : 'BUILDING SINCE', '2015'),
+        (
+          es ? 'ENFOQUE' : 'FOCUS',
+          es ? 'Apps multiplataforma · Web experimental' : 'Cross-platform apps · Experimental web',
+        ),
+        (
+          es ? 'MODO' : 'MODE',
+          es ? 'Productos independientes' : 'Independent products',
+        ),
+      ]),
+      p(classes: 'panel-body', [Component.text(note)]),
+      div(classes: 'pill-row', [
+        _techPill(lang),
+        _pill(
+          'LinkedIn',
+          href: 'https://www.linkedin.com/in/rafael-c-a6132982/',
+        ),
+        _pill('GitHub', href: 'https://github.com/mrleisen'),
+      ]),
+    ]);
+  }
+
+  /// Opens the technical-transmission dialog. Rendered as a button
+  /// rather than a link: it navigates nowhere, so it must not claim to.
+  Component _techPill(Lang lang) {
+    return span(
+      classes: 'pill pill-action',
+      id: techTriggerId,
+      events: onOpenTech == null
+          ? const {}
+          : {
+              'click': (_) => onOpenTech!(),
+              'keydown': onActivateKey((_) => onOpenTech!()),
+            },
+      attributes: {
+        'role': 'button',
+        'tabindex': '0',
+        'aria-haspopup': 'dialog',
+      },
+      [
+        Component.text(
+          lang == Lang.es ? 'Transmisión técnica' : 'Technical transmission',
+        ),
       ],
     );
   }
@@ -959,6 +1028,32 @@ class StationDisplay extends StatelessComponent {
         },
       ),
     ]),
+
+    // The technical-transmission trigger. Same physical pill as the
+    // links around it, but with an amber cast and no LED dot, so it
+    // reads as a control on the panel rather than as a way off the site.
+    css('.pill.pill-action', [
+      css('&').styles(
+        raw: {
+          'color': '#E8A035',
+          'border-color': 'rgba(232,160,53,0.30)',
+          'text-shadow': '0 0 4px rgba(232,160,53,0.35)',
+        },
+      ),
+      css('&::before').styles(
+        raw: {
+          'background': '#E8A035',
+          'box-shadow': '0 0 5px #E8A035, 0 0 1px rgba(0,0,0,0.8)',
+        },
+      ),
+      css('&:hover').styles(
+        raw: {'border-color': 'rgba(232,160,53,0.55)'},
+      ),
+    ]),
+
+    // The origin station gets a touch more air between blocks than the
+    // project panels: it is the one people stop and read.
+    css('.panel-origin').styles(gap: Gap(row: 16.px)),
 
     // ── AM lo-fi panel aesthetic ──
     // AM is for idea-stage projects, so the panels are intentionally

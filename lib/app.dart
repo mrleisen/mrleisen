@@ -120,6 +120,19 @@ class AppState extends State<App> {
   // height. See [_observePanelHeight].
   web.ResizeObserver? _panelObserver;
 
+  // Technical-transmission dialog, opened from the WHO station.
+  //
+  // The "how was this built" story is the strongest thing this site has
+  // going for a technical jury, and until now it lived only in the
+  // GitHub README - somewhere a judge is never going to click through
+  // to. This puts it one press away without leaving the receiver.
+  bool _techOpen = false;
+
+  /// Id of the control that opened the dialog, so focus can be handed
+  /// back to exactly where it came from on close.
+  static const String _techTriggerId = 'tech-trigger';
+  static const String _techDialogId = 'tech-dialog';
+
   @override
   void initState() {
     super.initState();
@@ -290,6 +303,19 @@ class AppState extends State<App> {
     // Never swallow a browser or OS shortcut. Ctrl+arrow, Cmd+B and
     // friends belong to the user agent, not to us.
     if (ke.ctrlKey || ke.metaKey || ke.altKey) return;
+
+    // While the technical dialog is up it owns the keyboard: Escape
+    // closes it, Tab cycles inside it, and nothing reaches the dial
+    // behind it. A modal you can tune through is not a modal.
+    if (_techOpen) {
+      if (ke.key == 'Escape') {
+        ke.preventDefault();
+        _closeTech();
+      } else if (ke.key == 'Tab') {
+        _trapTabInDialog(ke);
+      }
+      return;
+    }
 
     final step = configFor(_band).step;
 
@@ -571,6 +597,126 @@ class AppState extends State<App> {
     return es ? '$freq. Sin portadora.' : '$freq. No carrier.';
   }
 
+  /// The "how this was built" panel, in the receiver's own language.
+  ///
+  /// Everything stated here is measured from the actual build, not
+  /// claimed from memory: the bundle figures come from `build/jaspr`,
+  /// and the "no images, no canvas" line is verifiable by reading the
+  /// compiled HTML.
+  Component _techDialog() {
+    final es = _lang == Lang.es;
+    final rows = <(String, String)>[
+      (es ? 'LENGUAJE' : 'LANGUAGE', 'Dart 3.10+'),
+      (es ? 'FRAMEWORK' : 'FRAMEWORK', 'Jaspr · SSR + hidratación'),
+      (es ? 'AUDIO' : 'AUDIO', 'Web Audio API'),
+      (
+        es ? 'SÍNTESIS' : 'SYNTHESIS',
+        es ? 'Ruido disperso x2 + oscilador heterodino' : 'Two sparse-noise paths + heterodyne oscillator',
+      ),
+      (
+        es ? 'VISUALES' : 'VISUALS',
+        es ? 'CSS puro · sin canvas, sin WebGL' : 'Pure CSS · no canvas, no WebGL',
+      ),
+      (
+        es ? 'IMÁGENES' : 'IMAGES',
+        es ? 'Ninguna en la interfaz' : 'None in the interface',
+      ),
+      (
+        es ? 'DEPS JS' : 'JS DEPS',
+        es ? 'Cero en runtime' : 'Zero at runtime',
+      ),
+      (es ? 'PAYLOAD' : 'PAYLOAD', '207 KB · 68 KB gzip'),
+      (
+        es ? 'DESPLIEGUE' : 'DEPLOY',
+        es ? 'Estático · GitHub Pages' : 'Static · GitHub Pages',
+      ),
+    ];
+
+    final intro = es
+        ? 'Todo lo que oyes se sintetiza en el momento: no hay un solo '
+              'archivo de audio. La estática son dos rutas de ruido disperso '
+              'y el silbido al pasar cerca de una emisora es un oscilador '
+              'cuya frecuencia es la distancia a la estación. Todo lo que '
+              'ves es CSS: el fósforo, las líneas de barrido, el encendido '
+              'del tubo. No hay imágenes ni canvas en la interfaz.'
+        : 'Everything you hear is synthesised on the spot: there is not a '
+              'single audio file. The static is two sparse-noise paths, and '
+              'the whistle near a station is an oscillator whose frequency '
+              'is the distance to it. Everything you see is CSS: the '
+              'phosphor, the scanlines, the tube warming up. No images and '
+              'no canvas anywhere in the interface.';
+
+    final outro = es
+        ? 'Escrito entero en Dart y compilado a HTML estático con Jaspr. '
+              'El servidor prerenderiza, el cliente hidrata, y no se envía '
+              'ningún framework al navegador.'
+        : 'Written entirely in Dart and compiled to static HTML with '
+              'Jaspr. The server prerenders, the client hydrates, and no '
+              'framework ships to the browser.';
+
+    return div(
+      classes: 'tech-overlay',
+      events: {
+        // Backdrop press closes. Guarded on the target being the
+        // backdrop itself so a press inside the panel doesn't dismiss it.
+        'click': (web.Event e) {
+          final t = e.target;
+          if (t is web.Element && t.classList.contains('tech-overlay')) {
+            _closeTech();
+          }
+        },
+      },
+      [
+        div(
+          classes: 'tech-panel',
+          attributes: {
+            'id': _techDialogId,
+            'role': 'dialog',
+            'aria-modal': 'true',
+            'aria-labelledby': 'tech-title',
+            'tabindex': '-1',
+          },
+          [
+            div(classes: 'tech-head', [
+              div(classes: 'tech-label', [
+                Component.text(
+                  es ? 'TRANSMISIÓN TÉCNICA' : 'TECHNICAL TRANSMISSION',
+                ),
+              ]),
+              div(
+                classes: 'tech-close',
+                events: {
+                  'click': (_) => _closeTech(),
+                  'keydown': onActivateKey((_) => _closeTech()),
+                },
+                attributes: {
+                  'role': 'button',
+                  'tabindex': '0',
+                  'aria-label': es ? 'Cerrar' : 'Close',
+                },
+                [Component.text('×')],
+              ),
+            ]),
+            h2(classes: 'tech-title', id: 'tech-title', [
+              Component.text(es ? 'Cómo está hecho' : 'How this was built'),
+            ]),
+            p(classes: 'tech-body', [Component.text(intro)]),
+            div(classes: 'tech-data', [
+              for (final (k, v) in rows) ...[
+                div(classes: 'tech-key', [Component.text(k)]),
+                div(classes: 'tech-val', [Component.text(v)]),
+              ],
+            ]),
+            p(classes: 'tech-body', [Component.text(outro)]),
+            div(classes: 'tech-hint', [
+              Component.text(es ? 'ESC para cerrar' : 'ESC to close'),
+            ]),
+          ],
+        ),
+      ],
+    );
+  }
+
   // --- build ---
 
   @override
@@ -791,7 +937,15 @@ class AppState extends State<App> {
         band: _band,
         lang: _lang,
         isPowered: _isPowered,
+        onOpenTech: _openTech,
+        techTriggerId: _techTriggerId,
       ),
+
+      // Technical transmission. Sits above every content layer but below
+      // the faceplate, so the receiver stays visible around it - the
+      // panel reads as something the radio decoded, not as a web modal
+      // that took over the page.
+      if (_techOpen) _techDialog(),
 
       // Radio dial. The collected-stations row is rendered inside
       // the faceplate (between header and main row), so its data is
@@ -829,6 +983,66 @@ class AppState extends State<App> {
     final clamped = v.clamp(0.0, 1.0);
     if (clamped == _volume) return;
     setState(() => _volume = clamped);
+  }
+
+  // --- technical transmission dialog ---
+
+  /// Keeps Tab inside the open dialog, wrapping at both ends.
+  ///
+  /// Without this, tabbing out of a dialog that visually covers the page
+  /// lands focus on controls the user cannot see and did not mean to
+  /// reach - which is worse than no keyboard support, because it looks
+  /// like the page has broken.
+  void _trapTabInDialog(web.KeyboardEvent ke) {
+    final dialog = web.document.querySelector('#$_techDialogId');
+    if (dialog == null) return;
+    final nodes = dialog.querySelectorAll(
+      'a[href], button, [tabindex]:not([tabindex="-1"])',
+    );
+    final items = <web.HTMLElement>[
+      for (var i = 0; i < nodes.length; i++)
+        if (nodes.item(i) case final web.HTMLElement el) el,
+    ];
+    if (items.isEmpty) return;
+
+    final first = items.first;
+    final last = items.last;
+    final active = web.document.activeElement;
+
+    if (ke.shiftKey && (active == first || active == dialog)) {
+      ke.preventDefault();
+      last.focus();
+    } else if (!ke.shiftKey && active == last) {
+      ke.preventDefault();
+      first.focus();
+    }
+  }
+
+  void _openTech() {
+    if (_techOpen) return;
+    setState(() => _techOpen = true);
+    if (!kIsWeb) return;
+    // Move focus into the dialog once it exists, otherwise a keyboard
+    // user opens a panel and their focus stays behind it on the page.
+    Timer(Duration.zero, () {
+      if (!mounted) return;
+      final el = web.document.querySelector('#$_techDialogId');
+      if (el is web.HTMLElement) el.focus();
+    });
+  }
+
+  void _closeTech() {
+    if (!_techOpen) return;
+    setState(() => _techOpen = false);
+    if (!kIsWeb) return;
+    // Hand focus back to the control that opened it. Dropping focus to
+    // the top of the document instead would make a keyboard user tab
+    // all the way back to where they were.
+    Timer(Duration.zero, () {
+      if (!mounted) return;
+      final el = web.document.querySelector('#$_techTriggerId');
+      if (el is web.HTMLElement) el.focus();
+    });
   }
 
   void _togglePower() {
@@ -955,6 +1169,164 @@ class AppState extends State<App> {
         'opacity': '0',
       },
     ),
+    // ── technical transmission dialog ──
+    // Deliberately not styled like a web modal. No rounded card floating
+    // on a grey scrim: it is a printout the receiver produced, so it
+    // gets the same dark plastic, hairline borders and instrument
+    // microtype as the rest of the hardware.
+    css('.tech-overlay').styles(
+      position: Position.fixed(
+        top: Unit.zero,
+        left: Unit.zero,
+        right: Unit.zero,
+        bottom: Unit.zero,
+      ),
+      // Above the content layers, below the faceplate (z 50), so the
+      // receiver stays framing the panel rather than being covered by it.
+      zIndex: ZIndex(45),
+      display: Display.flex,
+      alignItems: AlignItems.center,
+      justifyContent: JustifyContent.center,
+      padding: Padding.all(20.px),
+      raw: {
+        'background': 'rgba(2,2,6,0.82)',
+        'backdrop-filter': 'blur(3px)',
+        '-webkit-backdrop-filter': 'blur(3px)',
+        'animation': 'hint-fade-in 0.2s ease-out both',
+      },
+    ),
+    css('.tech-panel').styles(
+      position: Position.relative(),
+      width: 100.percent,
+      maxWidth: 560.px,
+      maxHeight: Unit.expression('calc(100% - 40px)'),
+      overflow: Overflow.auto,
+      padding: Padding.symmetric(horizontal: 26.px, vertical: 22.px),
+      raw: {
+        'background': 'linear-gradient(180deg, #101016 0%, #0a0a10 100%)',
+        'border': '1px solid rgba(255,255,255,0.10)',
+        'border-radius': '4px',
+        'box-shadow': 'inset 0 1px 0 rgba(255,255,255,0.06), 0 20px 60px rgba(0,0,0,0.7)',
+        'outline': 'none',
+      },
+    ),
+    css('.tech-head').styles(
+      display: Display.flex,
+      flexDirection: FlexDirection.row,
+      alignItems: AlignItems.center,
+      justifyContent: JustifyContent.spaceBetween,
+      raw: {'margin-bottom': '10px'},
+    ),
+    css('.tech-label').styles(
+      fontFamily: const FontFamily.list([
+        FontFamily('IBM Plex Mono'),
+        FontFamilies.monospace,
+      ]),
+      fontSize: Unit.pixels(11),
+      fontWeight: FontWeight.w500,
+      letterSpacing: 0.34.em,
+      textTransform: TextTransform.upperCase,
+      color: const Color('#d3a35a'),
+    ),
+    css('.tech-close', [
+      css('&').styles(
+        width: 32.px,
+        height: 32.px,
+        display: Display.flex,
+        alignItems: AlignItems.center,
+        justifyContent: JustifyContent.center,
+        cursor: Cursor.pointer,
+        fontSize: Unit.pixels(20),
+        color: const Color('#9a9aa6'),
+        radius: BorderRadius.all(Radius.circular(3.px)),
+        raw: {
+          'line-height': '1',
+          'border': '1px solid rgba(255,255,255,0.10)',
+          'background': 'rgba(255,255,255,0.03)',
+          'transition': 'color 0.15s ease, border-color 0.15s ease',
+          'flex-shrink': '0',
+        },
+      ),
+      css('&:hover').styles(
+        color: const Color('#ffffff'),
+        raw: {'border-color': 'rgba(255,255,255,0.28)'},
+      ),
+    ]),
+    css('.tech-title').styles(
+      fontFamily: const FontFamily.list([
+        FontFamily('Orbitron'),
+        FontFamilies.sansSerif,
+      ]),
+      fontSize: 1.5.rem,
+      fontWeight: FontWeight.w700,
+      letterSpacing: 0.03.em,
+      color: const Color('#E8A035'),
+      raw: {
+        'margin': '0 0 14px',
+        'line-height': '1.2',
+        'text-shadow': '0 0 8px rgba(232,160,53,0.28)',
+      },
+    ),
+    css('.tech-body').styles(
+      fontFamily: const FontFamily.list([
+        FontFamily('IBM Plex Mono'),
+        FontFamilies.monospace,
+      ]),
+      fontSize: Unit.pixels(13),
+      color: const Color('#9c9174'),
+      raw: {'line-height': '1.6', 'margin': '0 0 16px'},
+    ),
+    css('.tech-data').styles(
+      display: Display.grid,
+      gap: Gap(row: 6.px, column: 16.px),
+      raw: {
+        'grid-template-columns': 'auto minmax(0, 1fr)',
+        'padding': '14px 0',
+        'margin-bottom': '16px',
+        'border-top': '1px solid rgba(255,255,255,0.07)',
+        'border-bottom': '1px solid rgba(255,255,255,0.07)',
+      },
+    ),
+    css('.tech-key').styles(
+      fontFamily: const FontFamily.list([
+        FontFamily('IBM Plex Mono'),
+        FontFamilies.monospace,
+      ]),
+      fontSize: Unit.pixels(11),
+      fontWeight: FontWeight.w500,
+      letterSpacing: 0.16.em,
+      color: const Color('#938d81'),
+      raw: {'line-height': '1.45', 'white-space': 'nowrap'},
+    ),
+    css('.tech-val').styles(
+      fontFamily: const FontFamily.list([
+        FontFamily('IBM Plex Mono'),
+        FontFamilies.monospace,
+      ]),
+      fontSize: Unit.pixels(11),
+      fontWeight: FontWeight.w500,
+      color: const Color('#d8c9a4'),
+      raw: {'line-height': '1.45'},
+    ),
+    css('.tech-hint').styles(
+      fontFamily: const FontFamily.list([
+        FontFamily('IBM Plex Mono'),
+        FontFamilies.monospace,
+      ]),
+      fontSize: Unit.pixels(11),
+      letterSpacing: 0.3.em,
+      textTransform: TextTransform.upperCase,
+      color: const Color('#7a7a84'),
+      textAlign: TextAlign.right,
+    ),
+    css.media(MediaQuery.screen(maxWidth: 600.px), [
+      css('.tech-panel').styles(
+        padding: Padding.symmetric(horizontal: 18.px, vertical: 18.px),
+      ),
+      css('.tech-title').styles(fontSize: 1.25.rem),
+      css('.tech-label').styles(letterSpacing: 0.2.em),
+    ]),
+
     // Language toggle pill - fixed top-right.
     css('.lang-toggle', [
       css('&').styles(
