@@ -439,7 +439,7 @@ class AppState extends State<App> {
         classes: 'lang-toggle',
         events: {'click': (_) => _toggleLang()},
         attributes: {'role': 'button', 'aria-label': 'Toggle language'},
-        [text(_lang == Lang.es ? 'ES' : 'EN')],
+        [Component.text(_lang == Lang.es ? 'ES' : 'EN')],
       ),
 
       // Idle readout - what a real receiver shows when the dial is
@@ -475,7 +475,7 @@ class AppState extends State<App> {
                   styles: Styles(raw: {
                     'animation-delay': '${(i * 0.18).toStringAsFixed(2)}s',
                   }),
-                  [text('–')],
+                  [Component.text('–')],
                 ),
             ],
           ),
@@ -483,19 +483,19 @@ class AppState extends State<App> {
           // teletype aesthetic.
           div(classes: 'carrier-state', [
             span(classes: 'carrier-dot', []),
-            span(classes: 'carrier-state-text', [text(idleTop)]),
+            span(classes: 'carrier-state-text', [Component.text(idleTop)]),
             span(classes: 'carrier-dot', []),
           ]),
           // Band + range. The tick-bracket on either side is just
           // text ("[") but the centered ribbon below carries the
           // live search sweep.
           div(classes: 'carrier-band', [
-            span(classes: 'carrier-band-band', [text(bandLabel)]),
-            span(classes: 'carrier-band-sep', [text('·')]),
+            span(classes: 'carrier-band-band', [Component.text(bandLabel)]),
+            span(classes: 'carrier-band-sep', [Component.text('·')]),
             span(classes: 'carrier-band-range',
-                [text('$minLabel – $maxLabel')]),
-            span(classes: 'carrier-band-sep', [text('·')]),
-            span(classes: 'carrier-band-unit', [text(unitLabel)]),
+                [Component.text('$minLabel – $maxLabel')]),
+            span(classes: 'carrier-band-sep', [Component.text('·')]),
+            span(classes: 'carrier-band-unit', [Component.text(unitLabel)]),
           ]),
           // Sweep ribbon - a thin horizontal bar under the range
           // with a single brighter tracer that runs left→right.
@@ -504,7 +504,7 @@ class AppState extends State<App> {
             div(classes: 'carrier-sweep-head', []),
           ]),
           // Sub-caption - small, tracked, breathing opacity.
-          div(classes: 'carrier-sub', [text(idleSub)]),
+          div(classes: 'carrier-sub', [Component.text(idleSub)]),
         ],
       ),
 

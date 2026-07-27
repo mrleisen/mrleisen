@@ -464,8 +464,8 @@ class RadioDialState extends State<RadioDial> {
           // real piece of 90s receiver signage rather than a
           // placeholder "RADIO" label.
           div(classes: 'brand-plate', [
-            span(classes: 'brand', [text('RCHF · 2600')]),
-            span(classes: 'brand-sub', [text('AM/FM STEREO RECEIVER')]),
+            span(classes: 'brand', [Component.text('RCHF · 2600')]),
+            span(classes: 'brand-sub', [Component.text('AM/FM STEREO RECEIVER')]),
           ]),
           div(classes: 'indicator-row', [
             div(
@@ -477,8 +477,8 @@ class RadioDialState extends State<RadioDial> {
                 'aria-checked': powered ? 'true' : 'false',
               },
               [
-                span(classes: 'rocker-half rocker-on', [text('ON')]),
-                span(classes: 'rocker-half rocker-off', [text('OFF')]),
+                span(classes: 'rocker-half rocker-on', [Component.text('ON')]),
+                span(classes: 'rocker-half rocker-off', [Component.text('OFF')]),
               ],
             ),
             _memButton(),
@@ -531,7 +531,7 @@ class RadioDialState extends State<RadioDial> {
                 ]),
               ],
             ),
-            div(classes: 'vol-knob-label', [text('VOL')]),
+            div(classes: 'vol-knob-label', [Component.text('VOL')]),
           ]),
 
           // LCD frequency readout. Clicking/tapping runs the tap-
@@ -551,11 +551,11 @@ class RadioDialState extends State<RadioDial> {
             // unlit cells on a real 7-segment LED panel. The ghost
             // width matches the live value's digit count (3-digit AM
             // needs an extra segment).
-            span(classes: 'lcd-ghost', [text(isFm ? '188.8' : '1888')]),
+            span(classes: 'lcd-ghost', [Component.text(isFm ? '188.8' : '1888')]),
             span(
               classes: 'lcd-value',
               [
-                text(
+                Component.text(
                   _scrambleValue ??
                       (isFm
                           ? _freq.toStringAsFixed(1)
@@ -565,10 +565,10 @@ class RadioDialState extends State<RadioDial> {
             ),
             // Right-side badges: band indicator + station-lock "ST".
             div(classes: 'lcd-badges', [
-              span(classes: 'lcd-fm', [text(isFm ? 'FM' : 'AM')]),
+              span(classes: 'lcd-fm', [Component.text(isFm ? 'FM' : 'AM')]),
               span(
                 classes: 'lcd-st${tuned ? ' is-lit' : ''}',
-                [text('ST')],
+                [Component.text('ST')],
               ),
             ]),
           ]),
@@ -667,7 +667,7 @@ class RadioDialState extends State<RadioDial> {
         'aria-pressed': active ? 'true' : 'false',
         if (clickable) 'tabindex': '0',
       },
-      [text(band.name.toUpperCase())],
+      [Component.text(band.name.toUpperCase())],
     );
   }
 
@@ -690,7 +690,7 @@ class RadioDialState extends State<RadioDial> {
         'aria-disabled': armed ? 'false' : 'true',
         if (armed) 'tabindex': '0',
       },
-      [text('MEM')],
+      [Component.text('MEM')],
     );
   }
 
@@ -727,7 +727,7 @@ class RadioDialState extends State<RadioDial> {
           styles: Styles(
             position: Position.absolute(left: x.px, top: Unit.zero),
           ),
-          [span(classes: 'tick-label', [text(rawLabel)])],
+          [span(classes: 'tick-label', [Component.text(rawLabel)])],
         ));
       } else {
         children.add(div(

@@ -219,8 +219,8 @@ class StationDisplay extends StatelessComponent {
       label: _stationLabel(s, lang),
       title: title,
       children: [
-        p(classes: 'panel-body', [text(intro)]),
-        p(classes: 'panel-body', [text(note)]),
+        p(classes: 'panel-body', [Component.text(intro)]),
+        p(classes: 'panel-body', [Component.text(note)]),
         div(classes: 'pill-row', [
           _pill(
             'LinkedIn',
@@ -242,7 +242,7 @@ class StationDisplay extends StatelessComponent {
       label: _stationLabel(s, lang),
       title: 'DeTodoUIS',
       children: [
-        p(classes: 'panel-body', [text(body)]),
+        p(classes: 'panel-body', [Component.text(body)]),
         div(classes: 'pill-row', [
           _pill('Web', href: 'https://detodouis.com'),
           _pill(
@@ -292,8 +292,8 @@ class StationDisplay extends StatelessComponent {
       label: _stationLabel(s, lang),
       title: 'In This New World',
       children: [
-        div(classes: 'panel-subtitle', [text(subtitle)]),
-        p(classes: 'panel-body', [text(body)]),
+        div(classes: 'panel-subtitle', [Component.text(subtitle)]),
+        p(classes: 'panel-body', [Component.text(body)]),
         div(classes: 'pill-row', [
           _pill('YouTube', href: 'https://www.youtube.com/@InThisNewWorld'),
         ]),
@@ -315,8 +315,8 @@ class StationDisplay extends StatelessComponent {
       label: _stationLabel(s, lang),
       title: 'Tropelorio',
       children: [
-        div(classes: 'panel-subtitle', [text(subtitle)]),
-        p(classes: 'panel-body', [text(body)]),
+        div(classes: 'panel-subtitle', [Component.text(subtitle)]),
+        p(classes: 'panel-body', [Component.text(body)]),
         div(classes: 'pill-row', [
           _pill('Instagram', href: 'https://www.instagram.com/tropelorio'),
         ]),
@@ -339,10 +339,10 @@ class StationDisplay extends StatelessComponent {
     String? websiteHref,
   }) {
     return div(classes: 'am-shell', [
-      div(classes: 'panel-label am-label', [text(_stationLabel(s, lang))]),
-      h2(classes: 'am-title', [text(title)]),
-      div(classes: 'am-subtitle', [text(subtitle)]),
-      p(classes: 'am-body', [text(body)]),
+      div(classes: 'panel-label am-label', [Component.text(_stationLabel(s, lang))]),
+      h2(classes: 'am-title', [Component.text(title)]),
+      div(classes: 'am-subtitle', [Component.text(subtitle)]),
+      p(classes: 'am-body', [Component.text(body)]),
       if (href != null || websiteHref != null)
         div(classes: 'pill-row', [
           if (websiteHref != null) _pill('Web', href: websiteHref),
@@ -362,8 +362,8 @@ class StationDisplay extends StatelessComponent {
       label: _stationLabel(s, lang),
       title: 'Boom Boom Lottery',
       children: [
-        div(classes: 'panel-subtitle', [text(subtitle)]),
-        p(classes: 'panel-body', [text(body)]),
+        div(classes: 'panel-subtitle', [Component.text(subtitle)]),
+        p(classes: 'panel-body', [Component.text(body)]),
         div(classes: 'pill-row', [
           _pill('Web', href: 'https://boomboomlotter.com'),
         ]),
@@ -450,8 +450,8 @@ class StationDisplay extends StatelessComponent {
     // value propagates through the subtree as the `--sc` custom
     // property set on `.station-panel` - CSS picks it up.
     return div(classes: 'panel-shell', [
-      div(classes: 'panel-label', [text(label)]),
-      h2(classes: 'panel-title', [text(title)]),
+      div(classes: 'panel-label', [Component.text(label)]),
+      h2(classes: 'panel-title', [Component.text(title)]),
       ...children,
     ]);
   }
@@ -461,14 +461,14 @@ class StationDisplay extends StatelessComponent {
   /// fallback; all current pills have real URLs).
   Component _pill(String label, {String? href}) {
     if (href == null) {
-      return a(classes: 'pill', href: '#', [text(label)]);
+      return a(classes: 'pill', href: '#', [Component.text(label)]);
     }
     return a(
       classes: 'pill',
       href: href,
       target: Target.blank,
       attributes: {'rel': 'noopener noreferrer'},
-      [text(label)],
+      [Component.text(label)],
     );
   }
 
