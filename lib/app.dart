@@ -635,7 +635,16 @@ class AppState extends State<App> {
         es ? 'DEPS JS' : 'JS DEPS',
         es ? 'Cero en runtime' : 'Zero at runtime',
       ),
-      (es ? 'PAYLOAD' : 'PAYLOAD', '207 KB · 68 KB gzip'),
+      // Re-measure these against build/jaspr whenever the bundle moves;
+      // they drifted once already when a font was added.
+      //   cat build/jaspr/*.js | wc -c        -> raw
+      //   cat build/jaspr/*.js | gzip -9 | wc -c -> gzip
+      //   du -ch build/jaspr/fonts/*.woff2    -> fonts
+      (es ? 'JAVASCRIPT' : 'JAVASCRIPT', '215 KB · 70 KB gzip'),
+      (
+        es ? 'TIPOGRAFÍAS' : 'TYPEFACES',
+        es ? '76 KB · 3 familias, subset latino' : '76 KB · 3 families, latin subset',
+      ),
       (
         es ? 'DESPLIEGUE' : 'DEPLOY',
         es ? 'Estático · GitHub Pages' : 'Static · GitHub Pages',
@@ -1265,7 +1274,7 @@ class AppState extends State<App> {
     ]),
     css('.tech-title').styles(
       fontFamily: const FontFamily.list([
-        FontFamily('Orbitron'),
+        FontFamily('Space Grotesk'),
         FontFamilies.sansSerif,
       ]),
       fontWeight: FontWeight.w700,
@@ -1411,7 +1420,7 @@ class AppState extends State<App> {
     ),
     css('.carrier-dash').styles(
       fontFamily: const FontFamily.list([
-        FontFamily('Orbitron'),
+        FontFamily('Space Grotesk'),
         FontFamilies.monospace,
       ]),
       fontSize: 3.rem,

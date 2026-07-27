@@ -923,7 +923,7 @@ class StationDisplay extends StatelessComponent {
     // colour. Chromatic glitch split still scales with --distortion.
     css('.panel-title').styles(
       fontFamily: const FontFamily.list([
-        FontFamily('Orbitron'),
+        FontFamily('Space Grotesk'),
         FontFamilies.sansSerif,
       ]),
       fontWeight: FontWeight.w700,
@@ -937,11 +937,18 @@ class StationDisplay extends StatelessComponent {
         // Fluid rather than stepped: `clamp` covers 360px to ultrawide
         // in one declaration and removes the separate mobile override
         // that used to drift out of sync with this value.
-        'font-size': 'clamp(1.75rem, 5vw, 3.2rem)',
-        // Tracking comes *down* as size goes up. Letter-spacing set for
-        // 35px type opens far too wide at 51px, and "In This New World"
-        // at 0.05em would run past the panel.
-        'letter-spacing': '0.01em',
+        // Space Grotesk carries roughly 0.52em of average advance
+        // against Orbitron's ~0.66, so the same title needs about a
+        // quarter less width. That headroom goes back into size: the
+        // ceiling moves from 3.2rem to 3.4rem, which still leaves the
+        // 17-character worst case ("In This New World") inside the
+        // panel's 512px of usable width.
+        'font-size': 'clamp(1.85rem, 5.2vw, 3.4rem)',
+        // Slightly negative at display size. Space Grotesk is already
+        // generously spaced by default, and large type needs less
+        // tracking, not more - the positive value tuned for 35px
+        // Orbitron reads as loose here.
+        'letter-spacing': '-0.01em',
         'color': 'var(--sc, #E8A035)',
         'opacity': '0.92',
         'margin': '0',
