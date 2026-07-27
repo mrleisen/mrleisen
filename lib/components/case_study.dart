@@ -2,7 +2,7 @@ import 'package:jaspr/dom.dart';
 import 'package:jaspr/jaspr.dart';
 import 'package:universal_web/web.dart' as web;
 
-import '../utils/keyboard.dart';
+import 'rx_chrome.dart';
 import 'station_display.dart' show Lang;
 
 /// The one station that gets told at length: DeTodoUIS, call sign DTU,
@@ -57,11 +57,17 @@ class CaseStudyDialog extends StatelessComponent {
     required this.lang,
     required this.onClose,
     required this.dialogId,
+    required this.signal,
     super.key,
   });
 
   final Lang lang;
   final VoidCallback onClose;
+
+  /// How the DTU carrier that produced this printout is doing right now.
+  /// The dial stays live behind the panel, so it can be tuned away while
+  /// this is still open - see `rx_chrome.dart`.
+  final RxSignalState signal;
 
   /// Id stamped on the panel so `AppState` can focus it and trap Tab
   /// inside it.
@@ -84,7 +90,8 @@ class CaseStudyDialog extends StatelessComponent {
       },
       [
         div(
-          classes: 'rx-panel rx-panel-wide',
+          classes: 'rx-panel rx-panel-wide${signal.panelClass}',
+          styles: Styles(raw: {'--distortion': signal.distortion.toStringAsFixed(3)}),
           attributes: {
             'id': dialogId,
             'role': 'dialog',
@@ -93,26 +100,13 @@ class CaseStudyDialog extends StatelessComponent {
             'tabindex': '-1',
           },
           [
-            div(classes: 'rx-head', [
-              div(classes: 'rx-label', [
-                Component.text(
-                  es ? 'TRANSMISIÓN EXTENDIDA · FM 101.8' : 'EXTENDED TRANSMISSION · FM 101.8',
-                ),
-              ]),
-              div(
-                classes: 'rx-close',
-                events: {
-                  'click': (_) => onClose(),
-                  'keydown': onActivateKey((_) => onClose()),
-                },
-                attributes: {
-                  'role': 'button',
-                  'tabindex': '0',
-                  'aria-label': es ? 'Cerrar' : 'Close',
-                },
-                [Component.text('×')],
-              ),
-            ]),
+            rxHead(
+              label: es ? 'TRANSMISIÓN EXTENDIDA · FM 101.8' : 'EXTENDED TRANSMISSION · FM 101.8',
+              lang: lang,
+              state: signal,
+              onClose: onClose,
+            ),
+            if (signal.lost) rxLostPlate(lang: lang, state: signal),
             h2(classes: 'rx-title', id: titleId, [
               Component.text('DeTodoUIS'),
             ]),
