@@ -1520,7 +1520,6 @@ class AppState extends State<App> {
         top: Unit.expression('calc(var(--free-h) / 2)'),
         left: 50.percent,
       ),
-      transform: Transform.translate(x: (-50).percent, y: (-50).percent),
       textAlign: TextAlign.center,
       zIndex: ZIndex(30),
       pointerEvents: PointerEvents.none,
@@ -1530,6 +1529,26 @@ class AppState extends State<App> {
       flexDirection: FlexDirection.column,
       alignItems: AlignItems.center,
       gap: Gap(row: 16.px),
+      raw: {
+        // Centring lives in `translate`, not in `transform`, and that is
+        // the entire reason this block used to end up off the side of a
+        // phone screen.
+        //
+        // `content-jitter` animates `transform`, and an animation owns
+        // the whole property: the moment it ran it replaced
+        // `translate(-50%, -50%)` with `translateX(2px)` and threw the
+        // centring away, dropping the readout by half its height and
+        // pushing it right by half its width - about 195 px on a 390 px
+        // screen. It only ran when the noise level was high, which is
+        // exactly the idle, between-stations state this readout exists
+        // for, so it was broken in the only state anyone ever sees it in.
+        //
+        // The individual `translate` property is applied before
+        // `transform`, so the two now compose instead of fighting: the
+        // jitter shakes a block that stays centred. Same trap the station
+        // panels avoid by keeping their animations on `.panel-fx`.
+        'translate': '-50% -50%',
+      },
     ),
 
     // ── dash array ──
