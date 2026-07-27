@@ -60,6 +60,7 @@ class RadioDial extends StatefulComponent {
     this.onSaveStation,
     this.lang = Lang.en,
     this.showPowerHint = false,
+    this.showPowerAttract = false,
     this.showTuneHint = false,
     super.key,
   });
@@ -118,9 +119,13 @@ class RadioDial extends StatefulComponent {
   /// UI language, used only for the onboarding microcopy.
   final Lang lang;
 
-  /// Radio has never been switched on. Pulses the rocker and prints a
-  /// small etched instruction beside it.
+  /// Radio is off: print the etched instruction beside the rocker.
+  /// Shown every time the receiver is off, not only on a first visit.
   final bool showPowerHint;
+
+  /// Radio is off *and* has never been switched on: also pulse the
+  /// rocker. Retired permanently after the first power-on.
+  final bool showPowerAttract;
 
   /// Radio is warm but the dial has never been moved. Prints the tuning
   /// instruction across the dial window.
@@ -626,7 +631,7 @@ class RadioDialState extends State<RadioDial> {
             div(
               classes:
                   'power-rocker${powered ? ' power-on' : ''}'
-                  '${component.showPowerHint ? ' power-attract' : ''}',
+                  '${component.showPowerAttract ? ' power-attract' : ''}',
               events: {
                 'click': _onPowerTap,
                 'touchend': _onPowerTap,
@@ -1216,12 +1221,23 @@ class RadioDialState extends State<RadioDial> {
         },
       ),
     ]),
+    // Powered-off dimming.
+    //
+    // This used to be `brightness(0.3)`, which crushed the dial's tick
+    // marks - already only #3a3a48 on a near-black window - into the
+    // background entirely. The frequency band effectively vanished while
+    // the radio was off, which reads as a broken or unfinished panel
+    // rather than as an unlit one, and it is the first thing a visitor
+    // sees. Unlit hardware still catches light; it does not disappear.
+    //
+    // 0.55 keeps the off state clearly darker than the on state while
+    // leaving the band, the numbers and the knobs legible as objects.
     css('.panel-off .panel-main').styles(
       raw: {
-        'filter': 'brightness(0.3) saturate(0.4)',
+        'filter': 'brightness(0.55) saturate(0.55)',
         'transition': 'filter 0.6s ease, opacity 0.6s ease',
         'pointer-events': 'none',
-        'opacity': '0.85',
+        'opacity': '0.9',
       },
     ),
     css('.panel-off .indicator-row').styles(
