@@ -2195,10 +2195,30 @@ class RadioDialState extends State<RadioDial> {
     // reading as one object; the plastic still spans the full width, the
     // way a rack unit would.
     css.media(MediaQuery.screen(minWidth: 1400.px), [
+      // `width: 100%` is load-bearing here, not decoration.
+      //
+      // `.radio-panel` is a column flex container with `align-items:
+      // stretch`, and per spec stretch stops applying the moment a
+      // cross-axis margin is `auto`. So these auto margins alone would
+      // drop each row to fit-content. For `.panel-main` - a grid of
+      // `auto 1fr auto` - that resolves the dial's `1fr` track to its
+      // min-content, which is zero, because `.dial-window` is
+      // `width: 100%` with `overflow: hidden`. The column collapsed, the
+      // 1230px strip was clipped away entirely, and the frequency band
+      // vanished at >=1400px while the LCD and knobs - which have
+      // intrinsic width - carried on looking fine.
+      //
+      // Giving every capped row a definite width restores the stretch
+      // the auto margins removed, and the margins then only distribute
+      // what is left over.
       css('.panel-header, .panel-main, .collected-rack').styles(
-        raw: {'max-width': '1180px', 'margin-left': 'auto', 'margin-right': 'auto'},
+        raw: {
+          'width': '100%',
+          'max-width': '1180px',
+          'margin-left': 'auto',
+          'margin-right': 'auto',
+        },
       ),
-      css('.panel-header').styles(raw: {'width': '100%'}),
     ]),
 
     css.media(MediaQuery.screen(maxWidth: 380.px), [
