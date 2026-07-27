@@ -173,8 +173,7 @@ class RadioDialState extends State<RadioDial> {
   BandConfig get _cfg => configFor(component.band);
 
   /// Total width of the scrollable strip in pixels for the active band.
-  double get _stripWidth =>
-      ((_cfg.maxFreq - _cfg.minFreq) / _cfg.step) * _cfg.pxPerStep;
+  double get _stripWidth => ((_cfg.maxFreq - _cfg.minFreq) / _cfg.step) * _cfg.pxPerStep;
 
   /// Horizontal translation applied to `.dial-strip`.
   ///
@@ -184,8 +183,7 @@ class RadioDialState extends State<RadioDial> {
   /// frequency exactly on the needle, independent of the actual window
   /// width. This is what lets the dial stretch to fill whatever grid
   /// cell it lands in without the needle drifting off-tick.
-  double get _stripOffset =>
-      -((_freq - _cfg.minFreq) / _cfg.step) * _cfg.pxPerStep;
+  double get _stripOffset => -((_freq - _cfg.minFreq) / _cfg.step) * _cfg.pxPerStep;
 
   double get _knobAngle {
     return ((_freq - _cfg.minFreq) / (_cfg.maxFreq - _cfg.minFreq)) * 270 - 135;
@@ -278,8 +276,7 @@ class RadioDialState extends State<RadioDial> {
     final pe = event as web.PointerEvent;
     // Drag up (negative dy) raises volume, drag down lowers it.
     final dy = _clientY(pe) - _volDragStartY;
-    final next =
-        (_volDragStartVolume - dy / _volPxPerFull).clamp(0.0, 1.0);
+    final next = (_volDragStartVolume - dy / _volPxPerFull).clamp(0.0, 1.0);
     component.onVolumeChanged?.call(next);
   }
 
@@ -373,7 +370,6 @@ class RadioDialState extends State<RadioDial> {
     }
     component.onPowerToggle?.call();
   }
-
 
   void _onMemTap(web.Event event) {
     if (!component.canSaveCurrent) return;
@@ -518,13 +514,13 @@ class RadioDialState extends State<RadioDial> {
                   div(
                     classes: 'vol-knob-notch',
                     styles: Styles(
-                      transform:
-                          Transform.rotate(Angle.deg(_volAngle)),
+                      transform: Transform.rotate(Angle.deg(_volAngle)),
                     ),
                     [],
                   ),
                   div(
-                    classes: 'knob-led'
+                    classes:
+                        'knob-led'
                         '${(powered && component.volume > 0) ? ' knob-led-on' : ''}',
                     [],
                   ),
@@ -541,37 +537,36 @@ class RadioDialState extends State<RadioDial> {
             classes: 'lcd${tuned ? ' lcd-locked' : ''}',
             events: {'click': _onLcdTap},
             styles: _lcdTapNonce > 0
-                ? Styles(raw: {
-                    'animation':
-                        'lcd-tap-glitch 0.8s step-end ${(_lcdTapNonce * 0.0001).toStringAsFixed(4)}s',
-                  })
+                ? Styles(
+                    raw: {
+                      'animation': 'lcd-tap-glitch 0.8s step-end ${(_lcdTapNonce * 0.0001).toStringAsFixed(4)}s',
+                    },
+                  )
                 : null,
             [
-            // Faded "ghost" segments behind the live digits, like the
-            // unlit cells on a real 7-segment LED panel. The ghost
-            // width matches the live value's digit count (3-digit AM
-            // needs an extra segment).
-            span(classes: 'lcd-ghost', [Component.text(isFm ? '188.8' : '1888')]),
-            span(
-              classes: 'lcd-value',
-              [
-                Component.text(
-                  _scrambleValue ??
-                      (isFm
-                          ? _freq.toStringAsFixed(1)
-                          : _freq.toInt().toString()),
-                ),
-              ],
-            ),
-            // Right-side badges: band indicator + station-lock "ST".
-            div(classes: 'lcd-badges', [
-              span(classes: 'lcd-fm', [Component.text(isFm ? 'FM' : 'AM')]),
+              // Faded "ghost" segments behind the live digits, like the
+              // unlit cells on a real 7-segment LED panel. The ghost
+              // width matches the live value's digit count (3-digit AM
+              // needs an extra segment).
+              span(classes: 'lcd-ghost', [Component.text(isFm ? '188.8' : '1888')]),
               span(
-                classes: 'lcd-st${tuned ? ' is-lit' : ''}',
-                [Component.text('ST')],
+                classes: 'lcd-value',
+                [
+                  Component.text(
+                    _scrambleValue ?? (isFm ? _freq.toStringAsFixed(1) : _freq.toInt().toString()),
+                  ),
+                ],
               ),
-            ]),
-          ]),
+              // Right-side badges: band indicator + station-lock "ST".
+              div(classes: 'lcd-badges', [
+                span(classes: 'lcd-fm', [Component.text(isFm ? 'FM' : 'AM')]),
+                span(
+                  classes: 'lcd-st${tuned ? ' is-lit' : ''}',
+                  [Component.text('ST')],
+                ),
+              ]),
+            ],
+          ),
 
           // Dial window (etched slit).
           div(classes: 'dial-frame', [
@@ -685,8 +680,7 @@ class RadioDialState extends State<RadioDial> {
       events: armed ? {'click': _onMemTap} : const {},
       attributes: {
         'role': 'button',
-        'aria-label':
-            armed ? 'Save current station' : 'No station available to save',
+        'aria-label': armed ? 'Save current station' : 'No station available to save',
         'aria-disabled': armed ? 'false' : 'true',
         if (armed) 'tabindex': '0',
       },
@@ -719,24 +713,28 @@ class RadioDialState extends State<RadioDial> {
         // FM labels show integer MHz (88, 89, …). AM labels are the
         // frequency divided by 10 (600 kHz → "60", 1400 → "140"), the
         // standard compact form on physical car-stereo AM dials.
-        final rawLabel = component.band == Band.fm
-            ? freq.round().toString()
-            : (freq / 10).round().toString();
-        children.add(div(
-          classes: 'tick tick-major',
-          styles: Styles(
-            position: Position.absolute(left: x.px, top: Unit.zero),
+        final rawLabel = component.band == Band.fm ? freq.round().toString() : (freq / 10).round().toString();
+        children.add(
+          div(
+            classes: 'tick tick-major',
+            styles: Styles(
+              position: Position.absolute(left: x.px, top: Unit.zero),
+            ),
+            [
+              span(classes: 'tick-label', [Component.text(rawLabel)]),
+            ],
           ),
-          [span(classes: 'tick-label', [Component.text(rawLabel)])],
-        ));
+        );
       } else {
-        children.add(div(
-          classes: 'tick tick-minor',
-          styles: Styles(
-            position: Position.absolute(left: x.px, top: Unit.zero),
+        children.add(
+          div(
+            classes: 'tick tick-minor',
+            styles: Styles(
+              position: Position.absolute(left: x.px, top: Unit.zero),
+            ),
+            [],
           ),
-          [],
-        ));
+        );
       }
     }
 
@@ -772,8 +770,8 @@ class RadioDialState extends State<RadioDial> {
         // Brushed dark plastic: vertical hairline texture + soft gradient.
         'background':
             'repeating-linear-gradient(90deg, rgba(255,255,255,0.018) 0px, rgba(255,255,255,0.018) 1px, transparent 1px, transparent 3px),'
-                'repeating-linear-gradient(0deg, rgba(0,0,0,0.18) 0px, rgba(0,0,0,0.18) 1px, transparent 1px, transparent 2px),'
-                'linear-gradient(to bottom, #1d1d24 0%, #14141a 45%, #0a0a10 100%)',
+            'repeating-linear-gradient(0deg, rgba(0,0,0,0.18) 0px, rgba(0,0,0,0.18) 1px, transparent 1px, transparent 2px),'
+            'linear-gradient(to bottom, #1d1d24 0%, #14141a 45%, #0a0a10 100%)',
         'border-top': '1px solid #2c2c38',
         'box-shadow':
             'inset 0 1px 0 rgba(255,255,255,0.05), inset 0 -2px 6px rgba(0,0,0,0.6), 0 -8px 24px rgba(0,0,0,0.55)',
@@ -787,8 +785,7 @@ class RadioDialState extends State<RadioDial> {
       width: 100.percent,
       height: 1.px,
       raw: {
-        'background':
-            'linear-gradient(to right, transparent, rgba(255,255,255,0.18), transparent)',
+        'background': 'linear-gradient(to right, transparent, rgba(255,255,255,0.18), transparent)',
         'pointer-events': 'none',
       },
     ),
@@ -825,8 +822,7 @@ class RadioDialState extends State<RadioDial> {
           'box-sizing': 'border-box',
           'background': '#1a1a1a',
           'border': '1px solid rgba(255,255,255,0.12)',
-          'box-shadow':
-              'inset 0 1px 3px rgba(0,0,0,0.75), 0 1px 0 rgba(255,255,255,0.05)',
+          'box-shadow': 'inset 0 1px 3px rgba(0,0,0,0.75), 0 1px 0 rgba(255,255,255,0.05)',
           'user-select': 'none',
           '-webkit-user-select': 'none',
           '-webkit-tap-highlight-color': 'transparent',
@@ -851,21 +847,20 @@ class RadioDialState extends State<RadioDial> {
           'flex': '1',
           'letter-spacing': '0.5px',
           'text-transform': 'uppercase',
-          'background':
-              'linear-gradient(to bottom, #2a2a2a 0%, #1e1e1e 100%)',
-          'box-shadow':
-              'inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.3)',
-          'transition':
-              'background 0.15s ease, box-shadow 0.15s ease, color 0.15s ease, text-shadow 0.15s ease',
+          'background': 'linear-gradient(to bottom, #2a2a2a 0%, #1e1e1e 100%)',
+          'box-shadow': 'inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.3)',
+          'transition': 'background 0.15s ease, box-shadow 0.15s ease, color 0.15s ease, text-shadow 0.15s ease',
         },
       ),
     ]),
     // Faint moulded seam between the two halves.
-    css('.rocker-half + .rocker-half').styles(raw: {
-      'border-left': '1px solid rgba(0,0,0,0.55)',
-      'box-shadow':
-          'inset 1px 0 0 rgba(255,255,255,0.04), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.3)',
-    }),
+    css('.rocker-half + .rocker-half').styles(
+      raw: {
+        'border-left': '1px solid rgba(0,0,0,0.55)',
+        'box-shadow':
+            'inset 1px 0 0 rgba(255,255,255,0.04), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.3)',
+      },
+    ),
     // Visually separate the rockers from each other and from the
     // FM/AM/ST/MONO pills in the indicator row.
     css('.indicator-row .power-rocker').styles(raw: {'margin-right': '4px'}),
@@ -873,82 +868,101 @@ class RadioDialState extends State<RadioDial> {
     // power rocker.
     css(
       '.power-rocker:not(.power-on) .rocker-off, '
-          '.power-rocker.power-on .rocker-on',
-    ).styles(raw: {
-      'background':
-          'linear-gradient(to bottom, #0d0d0d 0%, #050505 100%)',
-      'box-shadow':
-          'inset 0 2px 4px rgba(0,0,0,0.9), inset 0 -1px 1px rgba(0,0,0,0.4)',
-      'color': _lcdAmber,
-      'text-shadow':
-          '0 0 3px rgba(232,160,53,0.75), 0 0 6px rgba(232,160,53,0.35)',
-    }),
+      '.power-rocker.power-on .rocker-on',
+    ).styles(
+      raw: {
+        'background': 'linear-gradient(to bottom, #0d0d0d 0%, #050505 100%)',
+        'box-shadow': 'inset 0 2px 4px rgba(0,0,0,0.9), inset 0 -1px 1px rgba(0,0,0,0.4)',
+        'color': _lcdAmber,
+        'text-shadow': '0 0 3px rgba(232,160,53,0.75), 0 0 6px rgba(232,160,53,0.35)',
+      },
+    ),
     // ── powered-off faceplate ──
     // The header (brand + power button + indicators) keeps full
     // brightness so the power button stays clearly tappable. The main
     // row (LCD, dial, knobs) gets dimmed + desaturated + non-
     // interactive until the user taps the power button.
     css('.radio-panel', [
-      css('&').styles(raw: {
-        'transition':
-            'filter 0.6s ease',
-      }),
+      css('&').styles(
+        raw: {
+          'transition': 'filter 0.6s ease',
+        },
+      ),
     ]),
-    css('.panel-off .panel-main').styles(raw: {
-      'filter': 'brightness(0.3) saturate(0.4)',
-      'transition': 'filter 0.6s ease, opacity 0.6s ease',
-      'pointer-events': 'none',
-      'opacity': '0.85',
-    }),
-    css('.panel-off .indicator-row').styles(raw: {
-      'opacity': '0.35',
-      'transition': 'opacity 0.6s ease',
-      'pointer-events': 'none',
-    }),
+    css('.panel-off .panel-main').styles(
+      raw: {
+        'filter': 'brightness(0.3) saturate(0.4)',
+        'transition': 'filter 0.6s ease, opacity 0.6s ease',
+        'pointer-events': 'none',
+        'opacity': '0.85',
+      },
+    ),
+    css('.panel-off .indicator-row').styles(
+      raw: {
+        'opacity': '0.35',
+        'transition': 'opacity 0.6s ease',
+        'pointer-events': 'none',
+      },
+    ),
     // ── LCD off-state ──
     // When powered off the backlit LCD should read as fully dead:
     // no amber gradient, no glow, no glitch animation, and all the
     // digits/badges hidden. The dark brown-grey tone evokes an
     // unpowered liquid-crystal panel under ambient light.
-    css('.panel-off .lcd').styles(raw: {
-      'background': '#1a1510',
-      'box-shadow':
-          'inset 0 2px 4px rgba(0,0,0,0.6), inset 0 -1px 2px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(0,0,0,0.6)',
-      'animation': 'none',
-      'transition': 'background 0.4s ease, box-shadow 0.4s ease',
-    }),
-    css('.panel-off .lcd::after').styles(raw: {
-      'opacity': '0',
-      'transition': 'opacity 0.4s ease',
-    }),
+    css('.panel-off .lcd').styles(
+      raw: {
+        'background': '#1a1510',
+        'box-shadow':
+            'inset 0 2px 4px rgba(0,0,0,0.6), inset 0 -1px 2px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(0,0,0,0.6)',
+        'animation': 'none',
+        'transition': 'background 0.4s ease, box-shadow 0.4s ease',
+      },
+    ),
+    css('.panel-off .lcd::after').styles(
+      raw: {
+        'opacity': '0',
+        'transition': 'opacity 0.4s ease',
+      },
+    ),
     css(
       '.panel-off .lcd-value, .panel-off .lcd-ghost, '
-          '.panel-off .lcd-fm, .panel-off .lcd-st',
-    ).styles(raw: {
-      'opacity': '0',
-      'transition': 'opacity 0.4s ease',
-    }),
+      '.panel-off .lcd-fm, .panel-off .lcd-st',
+    ).styles(
+      raw: {
+        'opacity': '0',
+        'transition': 'opacity 0.4s ease',
+      },
+    ),
     // Base transitions so on→off AND off→on both animate. Must be
     // written AFTER the base element rules to merge transitions with
     // their original declarations (CSS `transition` is not additive -
     // the last declaration wins wholesale, so we repeat existing
     // animated properties here where needed).
-    css('.lcd-value').styles(raw: {
-      'transition':
-          'color 0.3s ease, text-shadow 0.3s ease, opacity 0.4s ease',
-    }),
-    css('.lcd-ghost').styles(raw: {
-      'transition': 'opacity 0.4s ease',
-    }),
-    css('.lcd-fm').styles(raw: {
-      'transition': 'opacity 0.4s ease',
-    }),
-    css('.panel-main').styles(raw: {
-      'transition': 'filter 0.6s ease, opacity 0.6s ease',
-    }),
-    css('.indicator-row').styles(raw: {
-      'transition': 'opacity 0.6s ease',
-    }),
+    css('.lcd-value').styles(
+      raw: {
+        'transition': 'color 0.3s ease, text-shadow 0.3s ease, opacity 0.4s ease',
+      },
+    ),
+    css('.lcd-ghost').styles(
+      raw: {
+        'transition': 'opacity 0.4s ease',
+      },
+    ),
+    css('.lcd-fm').styles(
+      raw: {
+        'transition': 'opacity 0.4s ease',
+      },
+    ),
+    css('.panel-main').styles(
+      raw: {
+        'transition': 'filter 0.6s ease, opacity 0.6s ease',
+      },
+    ),
+    css('.indicator-row').styles(
+      raw: {
+        'transition': 'opacity 0.6s ease',
+      },
+    ),
     // ── hardware model-plate ──
     // Two stacked etched labels. The plate uses a tiny outer stroke
     // (inset gradient border) so it reads as a separate metal tag
@@ -965,7 +979,8 @@ class RadioDialState extends State<RadioDial> {
         'border-radius': '2px',
         'background': 'linear-gradient(180deg, #0b0b12 0%, #07070c 100%)',
         'border': '1px solid rgba(255,255,255,0.05)',
-        'box-shadow': 'inset 0 1px 0 rgba(255,255,255,0.05), '
+        'box-shadow':
+            'inset 0 1px 0 rgba(255,255,255,0.05), '
             'inset 0 -1px 0 rgba(0,0,0,0.6), '
             '0 1px 0 rgba(255,255,255,0.04)',
       },
@@ -983,8 +998,7 @@ class RadioDialState extends State<RadioDial> {
         // Two-stroke etched feel: a bright highlight above (light
         // catching the raised edge of the pressed-in chrome) and a
         // dark drop below (shadow in the recess).
-        'text-shadow':
-            '0 1px 0 rgba(255,255,255,0.12), 0 -1px 0 rgba(0,0,0,0.75)',
+        'text-shadow': '0 1px 0 rgba(255,255,255,0.12), 0 -1px 0 rgba(0,0,0,0.75)',
       },
     ),
     css('.brand-sub').styles(
@@ -998,8 +1012,7 @@ class RadioDialState extends State<RadioDial> {
       color: const Color('#4a4a55'),
       raw: {
         'text-transform': 'uppercase',
-        'text-shadow':
-            '0 1px 0 rgba(255,255,255,0.04), 0 -1px 0 rgba(0,0,0,0.5)',
+        'text-shadow': '0 1px 0 rgba(255,255,255,0.04), 0 -1px 0 rgba(0,0,0,0.5)',
       },
     ),
     css('.indicator-row').styles(
@@ -1017,8 +1030,7 @@ class RadioDialState extends State<RadioDial> {
         color: const Color(_lcdAmberDim),
         radius: BorderRadius.all(Radius.circular(2.px)),
         raw: {
-          'background':
-              'linear-gradient(to bottom, #0a0a10, #050508)',
+          'background': 'linear-gradient(to bottom, #0a0a10, #050508)',
           'border': '1px solid #1c1c26',
           'box-shadow': 'inset 0 1px 1px rgba(0,0,0,0.6)',
         },
@@ -1026,10 +1038,8 @@ class RadioDialState extends State<RadioDial> {
       css('&.ind-on').styles(
         color: const Color(_lcdAmber),
         raw: {
-          'text-shadow':
-              '0 0 4px rgba(255,177,58,0.85), 0 0 8px rgba(255,177,58,0.4)',
-          'background':
-              'linear-gradient(to bottom, #100904, #050202)',
+          'text-shadow': '0 0 4px rgba(255,177,58,0.85), 0 0 8px rgba(255,177,58,0.4)',
+          'background': 'linear-gradient(to bottom, #100904, #050202)',
           'border': '1px solid #2a1a08',
         },
       ),
@@ -1040,26 +1050,28 @@ class RadioDialState extends State<RadioDial> {
     // soft amber-tinted hover preview signal it's interactive before
     // the user clicks.
     css('.ind-band', [
-      css('&').styles(raw: {
-        'transition':
-            'background 0.2s ease, color 0.2s ease, '
-                'border-color 0.2s ease, text-shadow 0.2s ease',
-      }),
+      css('&').styles(
+        raw: {
+          'transition':
+              'background 0.2s ease, color 0.2s ease, '
+              'border-color 0.2s ease, text-shadow 0.2s ease',
+        },
+      ),
       css('&.ind-band-clickable').styles(raw: {'cursor': 'pointer'}),
       css('&.ind-band-clickable:hover').styles(
         color: const Color('#a87a30'),
         raw: {
-          'background':
-              'linear-gradient(to bottom, #0d0a06, #060403)',
+          'background': 'linear-gradient(to bottom, #0d0a06, #060403)',
           'border': '1px solid #241a0d',
-          'text-shadow':
-              '0 0 3px rgba(232,160,53,0.5), 0 1px 0 rgba(0,0,0,0.55)',
+          'text-shadow': '0 0 3px rgba(232,160,53,0.5), 0 1px 0 rgba(0,0,0,0.55)',
         },
       ),
-      css('&.ind-band-clickable:focus-visible').styles(raw: {
-        'outline': '1px solid rgba(232,160,53,0.7)',
-        'outline-offset': '1px',
-      }),
+      css('&.ind-band-clickable:focus-visible').styles(
+        raw: {
+          'outline': '1px solid rgba(232,160,53,0.7)',
+          'outline-offset': '1px',
+        },
+      ),
     ]),
     // ── MEM button ──
     // Lives in the indicator row next to the FM/AM/ST/MONO pills,
@@ -1068,37 +1080,43 @@ class RadioDialState extends State<RadioDial> {
     // `.ind` style already gives the disabled-dim look - these rules
     // layer the armed/hover/flash states on top.
     css('.ind-mem', [
-      css('&').styles(raw: {
-        'cursor': 'default',
-        'transition':
-            'background 0.18s ease, color 0.18s ease, '
-                'border-color 0.18s ease, text-shadow 0.18s ease, '
-                'box-shadow 0.18s ease',
-      }),
+      css('&').styles(
+        raw: {
+          'cursor': 'default',
+          'transition':
+              'background 0.18s ease, color 0.18s ease, '
+              'border-color 0.18s ease, text-shadow 0.18s ease, '
+              'box-shadow 0.18s ease',
+        },
+      ),
       css('&.ind-mem-armed').styles(
         color: const Color(_lcdAmber),
         raw: {
           'cursor': 'pointer',
-          'background':
-              'linear-gradient(to bottom, #100904, #050202)',
+          'background': 'linear-gradient(to bottom, #100904, #050202)',
           'border': '1px solid #2a1a08',
-          'text-shadow':
-              '0 0 4px rgba(255,177,58,0.85), 0 0 8px rgba(255,177,58,0.4)',
+          'text-shadow': '0 0 4px rgba(255,177,58,0.85), 0 0 8px rgba(255,177,58,0.4)',
         },
       ),
-      css('&.ind-mem-armed:hover').styles(raw: {
-        'background': 'linear-gradient(to bottom, #1a1006, #0a0504)',
-        'border-color': '#3a2410',
-        'box-shadow':
-            'inset 0 1px 1px rgba(0,0,0,0.6), '
-                '0 0 6px rgba(232,160,53,0.35)',
-      }),
-      css('&.ind-mem-armed:active').styles(raw: {
-        'transform': 'translateY(1px)',
-      }),
-      css('&.ind-mem-flash').styles(raw: {
-        'animation': 'mem-flash 0.55s ease-out',
-      }),
+      css('&.ind-mem-armed:hover').styles(
+        raw: {
+          'background': 'linear-gradient(to bottom, #1a1006, #0a0504)',
+          'border-color': '#3a2410',
+          'box-shadow':
+              'inset 0 1px 1px rgba(0,0,0,0.6), '
+              '0 0 6px rgba(232,160,53,0.35)',
+        },
+      ),
+      css('&.ind-mem-armed:active').styles(
+        raw: {
+          'transform': 'translateY(1px)',
+        },
+      ),
+      css('&.ind-mem-flash').styles(
+        raw: {
+          'animation': 'mem-flash 0.55s ease-out',
+        },
+      ),
     ]),
 
     // ── main row ──
@@ -1159,29 +1177,29 @@ class RadioDialState extends State<RadioDial> {
           'background':
               // 1) Wear / micro-scratch noise.
               'repeating-linear-gradient(47deg, '
-                  'rgba(0,0,0,0.055) 0px, '
-                  'rgba(0,0,0,0.055) 1px, '
-                  'transparent 1px, '
-                  'transparent 3px),'
-                  // 2) Dead-corner shadow (top-right).
-                  'radial-gradient(circle at 82% 18%, '
-                  'rgba(0,0,0,0.28) 0%, '
-                  'transparent 48%),'
-                  // 3) Main backlight - off-centre, muted amber.
-                  'radial-gradient(ellipse at 42% 55%, '
-                  '#A67820 0%, '
-                  '#8B6418 55%, '
-                  '#6E4C10 100%)',
+              'rgba(0,0,0,0.055) 0px, '
+              'rgba(0,0,0,0.055) 1px, '
+              'transparent 1px, '
+              'transparent 3px),'
+              // 2) Dead-corner shadow (top-right).
+              'radial-gradient(circle at 82% 18%, '
+              'rgba(0,0,0,0.28) 0%, '
+              'transparent 48%),'
+              // 3) Main backlight - off-centre, muted amber.
+              'radial-gradient(ellipse at 42% 55%, '
+              '#A67820 0%, '
+              '#8B6418 55%, '
+              '#6E4C10 100%)',
           'border': '1px solid #000',
           // Bevel preserved; outer bleed dialed back ~60% - old
           // backlight barely leaks light anymore.
           'box-shadow':
               'inset 0 2px 4px rgba(0,0,0,0.5), '
-                  'inset 0 -1px 2px rgba(0,0,0,0.3), '
-                  'inset 0 0 0 1px rgba(0,0,0,0.55), '
-                  '0 0 8px rgba(166,120,32,0.22), '
-                  '0 0 18px rgba(166,120,32,0.1), '
-                  '0 1px 0 rgba(255,255,255,0.04)',
+              'inset 0 -1px 2px rgba(0,0,0,0.3), '
+              'inset 0 0 0 1px rgba(0,0,0,0.55), '
+              '0 0 8px rgba(166,120,32,0.22), '
+              '0 0 18px rgba(166,120,32,0.1), '
+              '0 1px 0 rgba(255,255,255,0.04)',
           'transition': 'box-shadow 0.3s ease, background 0.3s ease',
           // Rare worn-LCD glitches - step-end so value changes jump
           // rather than interpolate (reads like a fault, not a tween).
@@ -1201,11 +1219,11 @@ class RadioDialState extends State<RadioDial> {
           'content': '""',
           'background':
               'linear-gradient(to bottom, '
-                  'rgba(255,225,160,0.1) 0%, '
-                  'rgba(210,170,100,0.05) 35%, '
-                  'rgba(140,100,50,0.05) 55%, '
-                  'transparent 75%, '
-                  'rgba(40,25,10,0.18) 100%)',
+              'rgba(255,225,160,0.1) 0%, '
+              'rgba(210,170,100,0.05) 35%, '
+              'rgba(140,100,50,0.05) 55%, '
+              'transparent 75%, '
+              'rgba(40,25,10,0.18) 100%)',
         },
       ),
     ]),
@@ -1217,24 +1235,24 @@ class RadioDialState extends State<RadioDial> {
       raw: {
         'background':
             'repeating-linear-gradient(47deg, '
-                'rgba(0,0,0,0.055) 0px, '
-                'rgba(0,0,0,0.055) 1px, '
-                'transparent 1px, '
-                'transparent 3px),'
-                'radial-gradient(circle at 82% 18%, '
-                'rgba(0,0,0,0.22) 0%, '
-                'transparent 48%),'
-                'radial-gradient(ellipse at 42% 55%, '
-                '#C28A26 0%, '
-                '#9C711C 55%, '
-                '#78530F 100%)',
+            'rgba(0,0,0,0.055) 0px, '
+            'rgba(0,0,0,0.055) 1px, '
+            'transparent 1px, '
+            'transparent 3px),'
+            'radial-gradient(circle at 82% 18%, '
+            'rgba(0,0,0,0.22) 0%, '
+            'transparent 48%),'
+            'radial-gradient(ellipse at 42% 55%, '
+            '#C28A26 0%, '
+            '#9C711C 55%, '
+            '#78530F 100%)',
         'box-shadow':
             'inset 0 2px 4px rgba(0,0,0,0.5), '
-                'inset 0 -1px 2px rgba(0,0,0,0.3), '
-                'inset 0 0 0 1px rgba(0,0,0,0.55), '
-                '0 0 12px rgba(198,140,48,0.32), '
-                '0 0 22px rgba(166,120,32,0.14), '
-                '0 1px 0 rgba(255,255,255,0.04)',
+            'inset 0 -1px 2px rgba(0,0,0,0.3), '
+            'inset 0 0 0 1px rgba(0,0,0,0.55), '
+            '0 0 12px rgba(198,140,48,0.32), '
+            '0 0 22px rgba(166,120,32,0.14), '
+            '0 1px 0 rgba(255,255,255,0.04)',
         // A locked station is the "clean signal" moment - no glitches.
         'animation': 'none',
       },
@@ -1317,8 +1335,7 @@ class RadioDialState extends State<RadioDial> {
         color: const Color('#2a1f10'),
         raw: {
           'opacity': '0.22',
-          'transition':
-              'color 0.25s ease, opacity 0.25s ease, text-shadow 0.25s ease',
+          'transition': 'color 0.25s ease, opacity 0.25s ease, text-shadow 0.25s ease',
         },
       ),
       css('&.is-lit').styles(
@@ -1327,7 +1344,7 @@ class RadioDialState extends State<RadioDial> {
           'opacity': '0.95',
           'text-shadow':
               '0 0 2px rgba(100,200,80,0.7), '
-                  '0 0 6px rgba(100,200,80,0.35)',
+              '0 0 6px rgba(100,200,80,0.35)',
         },
       ),
     ]),
@@ -1337,11 +1354,9 @@ class RadioDialState extends State<RadioDial> {
       padding: Padding.all(3.px),
       radius: BorderRadius.all(Radius.circular(5.px)),
       raw: {
-        'background':
-            'linear-gradient(to bottom, #050508, #0d0d14)',
+        'background': 'linear-gradient(to bottom, #050508, #0d0d14)',
         'border': '1px solid #2a2a36',
-        'box-shadow':
-            'inset 0 1px 2px rgba(0,0,0,0.85), 0 1px 0 rgba(255,255,255,0.05)',
+        'box-shadow': 'inset 0 1px 2px rgba(0,0,0,0.85), 0 1px 0 rgba(255,255,255,0.05)',
       },
     ),
     css('.dial-window').styles(
@@ -1352,14 +1367,12 @@ class RadioDialState extends State<RadioDial> {
       cursor: Cursor.grab,
       radius: BorderRadius.all(Radius.circular(3.px)),
       raw: {
-        'background':
-            'linear-gradient(to bottom, #02020a 0%, #050512 50%, #02020a 100%)',
+        'background': 'linear-gradient(to bottom, #02020a 0%, #050512 50%, #02020a 100%)',
         'border-top': '1px solid #000',
         'border-left': '1px solid #000',
         'border-bottom': '1px solid #1a1a26',
         'border-right': '1px solid #1a1a26',
-        'box-shadow':
-            'inset 0 2px 5px rgba(0,0,0,0.95), inset 0 -1px 1px rgba(255,255,255,0.03)',
+        'box-shadow': 'inset 0 2px 5px rgba(0,0,0,0.95), inset 0 -1px 1px rgba(255,255,255,0.03)',
       },
     ),
     // Subtle glass reflection across the dial window.
@@ -1396,8 +1409,7 @@ class RadioDialState extends State<RadioDial> {
       css('&.tick-major').styles(
         height: 24.px,
         raw: {
-          'background':
-              'linear-gradient(to bottom, rgba(255,177,58,0.55), rgba(255,177,58,0.15))',
+          'background': 'linear-gradient(to bottom, rgba(255,177,58,0.55), rgba(255,177,58,0.15))',
           'box-shadow': '0 0 1px rgba(255,177,58,0.3)',
         },
       ),
@@ -1429,8 +1441,7 @@ class RadioDialState extends State<RadioDial> {
       pointerEvents: PointerEvents.none,
       raw: {
         'transform': 'translateX(-50%)',
-        'box-shadow':
-            '0 0 6px rgba(255,40,40,0.8), 0 0 14px rgba(255,40,40,0.35), inset 0 0 1px rgba(255,255,255,0.6)',
+        'box-shadow': '0 0 6px rgba(255,40,40,0.8), 0 0 14px rgba(255,40,40,0.35), inset 0 0 1px rgba(255,255,255,0.6)',
       },
     ),
 
@@ -1446,10 +1457,8 @@ class RadioDialState extends State<RadioDial> {
         position: Position.relative(),
         raw: {
           // Outer ribbed rim via repeating-conic-gradient.
-          'background':
-              'repeating-conic-gradient(from 0deg, #555560 0deg 4deg, #1a1a24 4deg 8deg)',
-          'box-shadow':
-              '0 3px 10px rgba(0,0,0,0.7), 0 1px 0 rgba(255,255,255,0.08), inset 0 0 0 1px rgba(0,0,0,0.6)',
+          'background': 'repeating-conic-gradient(from 0deg, #555560 0deg 4deg, #1a1a24 4deg 8deg)',
+          'box-shadow': '0 3px 10px rgba(0,0,0,0.7), 0 1px 0 rgba(255,255,255,0.08), inset 0 0 0 1px rgba(0,0,0,0.6)',
           'touch-action': 'none',
           'flex-shrink': '0',
         },
@@ -1462,8 +1471,7 @@ class RadioDialState extends State<RadioDial> {
       raw: {
         'inset': '7px',
         'border-radius': '50%',
-        'background':
-            'radial-gradient(circle at 38% 32%, #6a6a78 0%, #3a3a45 45%, #1a1a22 100%)',
+        'background': 'radial-gradient(circle at 38% 32%, #6a6a78 0%, #3a3a45 45%, #1a1a22 100%)',
         'box-shadow':
             'inset 0 1px 2px rgba(255,255,255,0.18), inset 0 -2px 4px rgba(0,0,0,0.6), 0 1px 2px rgba(0,0,0,0.4)',
       },
@@ -1475,10 +1483,8 @@ class RadioDialState extends State<RadioDial> {
       radius: BorderRadius.all(Radius.circular(1.5.px)),
       pointerEvents: PointerEvents.none,
       raw: {
-        'background':
-            'linear-gradient(to bottom, #f5f5f8 0%, #c8c8d0 60%, #888894 100%)',
-        'box-shadow':
-            '0 0 4px rgba(255,255,255,0.55), 0 0 1px rgba(0,0,0,0.6)',
+        'background': 'linear-gradient(to bottom, #f5f5f8 0%, #c8c8d0 60%, #888894 100%)',
+        'box-shadow': '0 0 4px rgba(255,255,255,0.55), 0 0 1px rgba(0,0,0,0.6)',
         'transform-origin': '50% 22px',
         'margin-left': '-1.5px',
       },
@@ -1503,10 +1509,8 @@ class RadioDialState extends State<RadioDial> {
         cursor: Cursor.grab,
         position: Position.relative(),
         raw: {
-          'background':
-              'repeating-conic-gradient(from 0deg, #555560 0deg 4deg, #1a1a24 4deg 8deg)',
-          'box-shadow':
-              '0 2px 6px rgba(0,0,0,0.65), 0 1px 0 rgba(255,255,255,0.08), inset 0 0 0 1px rgba(0,0,0,0.6)',
+          'background': 'repeating-conic-gradient(from 0deg, #555560 0deg 4deg, #1a1a24 4deg 8deg)',
+          'box-shadow': '0 2px 6px rgba(0,0,0,0.65), 0 1px 0 rgba(255,255,255,0.08), inset 0 0 0 1px rgba(0,0,0,0.6)',
           'touch-action': 'none',
           'flex-shrink': '0',
         },
@@ -1519,8 +1523,7 @@ class RadioDialState extends State<RadioDial> {
       raw: {
         'inset': '4px',
         'border-radius': '50%',
-        'background':
-            'radial-gradient(circle at 38% 32%, #6a6a78 0%, #3a3a45 45%, #1a1a22 100%)',
+        'background': 'radial-gradient(circle at 38% 32%, #6a6a78 0%, #3a3a45 45%, #1a1a22 100%)',
         'box-shadow':
             'inset 0 1px 1.5px rgba(255,255,255,0.18), inset 0 -1.5px 3px rgba(0,0,0,0.6), 0 1px 2px rgba(0,0,0,0.4)',
       },
@@ -1532,10 +1535,8 @@ class RadioDialState extends State<RadioDial> {
       radius: BorderRadius.all(Radius.circular(1.px)),
       pointerEvents: PointerEvents.none,
       raw: {
-        'background':
-            'linear-gradient(to bottom, #f5f5f8 0%, #c8c8d0 60%, #888894 100%)',
-        'box-shadow':
-            '0 0 3px rgba(255,255,255,0.55), 0 0 1px rgba(0,0,0,0.6)',
+        'background': 'linear-gradient(to bottom, #f5f5f8 0%, #c8c8d0 60%, #888894 100%)',
+        'box-shadow': '0 0 3px rgba(255,255,255,0.55), 0 0 1px rgba(0,0,0,0.6)',
         'transform-origin': '50% 11px',
         'margin-left': '-1px',
       },
@@ -1578,8 +1579,7 @@ class RadioDialState extends State<RadioDial> {
           // Outer ring = recessed socket; inner inset = dark well.
           'box-shadow':
               'inset 0 1px 1.5px rgba(0,0,0,0.75), 0 0 0 1px rgba(0,0,0,0.55), 0 1px 0 rgba(255,255,255,0.06)',
-          'transition':
-              'background-color 0.2s ease, box-shadow 0.2s ease',
+          'transition': 'background-color 0.2s ease, box-shadow 0.2s ease',
         },
       ),
       css('&.knob-led-on').styles(

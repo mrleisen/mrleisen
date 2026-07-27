@@ -120,15 +120,16 @@ class CollectedStationsState extends State<CollectedStations> {
   @override
   Component build(BuildContext context) {
     final fmStations = [
-      for (final s in component.stations) if (s.band == Band.fm) s,
+      for (final s in component.stations)
+        if (s.band == Band.fm) s,
     ];
     final amStations = [
-      for (final s in component.stations) if (s.band == Band.am) s,
+      for (final s in component.stations)
+        if (s.band == Band.am) s,
     ];
     final visible = component.isPowered && component.stations.isNotEmpty;
     return div(
-      classes:
-          'collected-rack${visible ? '' : ' collected-rack-hidden'}',
+      classes: 'collected-rack${visible ? '' : ' collected-rack-hidden'}',
       attributes: {'aria-label': 'Collected stations'},
       [
         if (fmStations.isNotEmpty) _buildBandRow(Band.fm, fmStations),
@@ -156,14 +157,10 @@ class CollectedStationsState extends State<CollectedStations> {
 
   Component _buildPill(Station s) {
     final isFm = s.band == Band.fm;
-    final freqLabel = isFm
-        ? s.frequency.toStringAsFixed(1)
-        : s.frequency.toInt().toString();
+    final freqLabel = isFm ? s.frequency.toStringAsFixed(1) : s.frequency.toInt().toString();
     final unit = isFm ? 'MHz' : 'kHz';
     final activeStation = component.activeStation;
-    final isActive = activeStation != null &&
-        activeStation.band == s.band &&
-        activeStation.frequency == s.frequency;
+    final isActive = activeStation != null && activeStation.band == s.band && activeStation.frequency == s.frequency;
     final isHolding = _holdingKey == _stationKey(s);
     final classes = StringBuffer('collected-pill');
     if (isActive) classes.write(' collected-pill-active');
@@ -199,7 +196,7 @@ class CollectedStationsState extends State<CollectedStations> {
         'tabindex': '0',
         'aria-label':
             'Tune to ${s.callSign}, ${s.band.name.toUpperCase()} $freqLabel $unit. '
-                'Press and hold to clear.',
+            'Press and hold to clear.',
       },
       [
         span(classes: 'collected-call', [Component.text(s.callSign)]),
@@ -229,7 +226,7 @@ class CollectedStationsState extends State<CollectedStations> {
         'margin-bottom': '4px',
         'transition':
             'opacity 0.35s ease, max-height 0.35s ease, '
-                'padding 0.35s ease, margin-bottom 0.35s ease',
+            'padding 0.35s ease, margin-bottom 0.35s ease',
       },
     ),
     css('.collected-rack-hidden').styles(
@@ -299,7 +296,7 @@ class CollectedStationsState extends State<CollectedStations> {
         'text-shadow': '0 1px 0 rgba(0,0,0,0.55)',
         'transition':
             'background 0.25s ease, color 0.25s ease, '
-                'border-color 0.25s ease, text-shadow 0.25s ease',
+            'border-color 0.25s ease, text-shadow 0.25s ease',
       },
     ),
     css('.collected-row-active .collected-row-label').styles(
@@ -307,8 +304,7 @@ class CollectedStationsState extends State<CollectedStations> {
       raw: {
         'background': 'linear-gradient(to bottom, #100904, #050202)',
         'border': '1px solid #2a1a08',
-        'text-shadow':
-            '0 0 4px rgba(255,177,58,0.85), 0 0 8px rgba(255,177,58,0.4)',
+        'text-shadow': '0 0 4px rgba(255,177,58,0.85), 0 0 8px rgba(255,177,58,0.4)',
       },
     ),
 
@@ -339,13 +335,12 @@ class CollectedStationsState extends State<CollectedStations> {
           'flex-shrink': '0',
           'pointer-events': 'auto',
           'overflow': 'hidden',
-          'background':
-              'linear-gradient(to bottom, #0a0a10, #050508)',
+          'background': 'linear-gradient(to bottom, #0a0a10, #050508)',
           'border': '1px solid #1c1c26',
           'box-shadow': 'inset 0 1px 1px rgba(0,0,0,0.6)',
           'transition':
               'background 0.18s ease, border-color 0.18s ease, '
-                  'box-shadow 0.18s ease, transform 0.12s ease',
+              'box-shadow 0.18s ease, transform 0.12s ease',
           'user-select': 'none',
           '-webkit-user-select': 'none',
           '-webkit-tap-highlight-color': 'transparent',
@@ -364,34 +359,39 @@ class CollectedStationsState extends State<CollectedStations> {
           'content': '""',
           'background':
               'linear-gradient(to right, '
-                  'rgba(220,70,70,0.0) 0%, '
-                  'rgba(220,70,70,0.45) 80%, '
-                  'rgba(220,70,70,0.65) 100%)',
+              'rgba(220,70,70,0.0) 0%, '
+              'rgba(220,70,70,0.45) 80%, '
+              'rgba(220,70,70,0.65) 100%)',
           'transition': 'width 0.15s ease-out',
         },
       ),
-      css('&:hover').styles(raw: {
-        'border-color': '#2a1a08',
-        'background': 'linear-gradient(to bottom, #100904, #050202)',
-      }),
+      css('&:hover').styles(
+        raw: {
+          'border-color': '#2a1a08',
+          'background': 'linear-gradient(to bottom, #100904, #050202)',
+        },
+      ),
       css('&:active').styles(raw: {'transform': 'translateY(1px)'}),
-      css('&:focus-visible').styles(raw: {
-        'outline': 'none',
-        'border-color': '#3a2a14',
-        'box-shadow':
-            'inset 0 1px 1px rgba(0,0,0,0.6), '
-                '0 0 0 1px rgba(232,160,53,0.45)',
-      }),
+      css('&:focus-visible').styles(
+        raw: {
+          'outline': 'none',
+          'border-color': '#3a2a14',
+          'box-shadow':
+              'inset 0 1px 1px rgba(0,0,0,0.6), '
+              '0 0 0 1px rgba(232,160,53,0.45)',
+        },
+      ),
     ]),
     // ── press-and-hold delete state ──
     // Width transitions to 100% over the hold duration, matching the
     // 0.9 s timer in `CollectedStationsState`. Border tints red so
     // the action reads as destructive even before the fill arrives.
-    css('.collected-pill-holding').styles(raw: {
-      'border-color': 'rgba(200,70,70,0.55)',
-      'box-shadow':
-          'inset 0 1px 1px rgba(0,0,0,0.6), 0 0 6px rgba(200,70,70,0.25)',
-    }),
+    css('.collected-pill-holding').styles(
+      raw: {
+        'border-color': 'rgba(200,70,70,0.55)',
+        'box-shadow': 'inset 0 1px 1px rgba(0,0,0,0.6), 0 0 6px rgba(200,70,70,0.25)',
+      },
+    ),
     css('.collected-pill-holding::after').styles(
       width: 100.percent,
       raw: {'transition': 'width 0.9s linear'},
@@ -401,13 +401,15 @@ class CollectedStationsState extends State<CollectedStations> {
     // amber-tinted border, and (via descendant rules) brighter text
     // with a soft glow. No big outer halo - the pill stays calm so
     // it reads as part of the faceplate, not a separate light source.
-    css('.collected-pill-active').styles(raw: {
-      'background': 'linear-gradient(to bottom, #100904, #050202)',
-      'border': '1px solid #2a1a08',
-      'box-shadow':
-          'inset 0 1px 1px rgba(0,0,0,0.6), '
-              '0 0 6px rgba(232,160,53,0.18)',
-    }),
+    css('.collected-pill-active').styles(
+      raw: {
+        'background': 'linear-gradient(to bottom, #100904, #050202)',
+        'border': '1px solid #2a1a08',
+        'box-shadow':
+            'inset 0 1px 1px rgba(0,0,0,0.6), '
+            '0 0 6px rgba(232,160,53,0.18)',
+      },
+    ),
 
     // ── call sign ──
     // Dim amber by default (so a long row of presets reads as a
@@ -430,15 +432,13 @@ class CollectedStationsState extends State<CollectedStations> {
     css('.collected-pill:hover .collected-call').styles(
       color: const Color(_lcdAmber),
       raw: {
-        'text-shadow':
-            '0 0 3px rgba(232,160,53,0.55), 0 0 6px rgba(232,160,53,0.22)',
+        'text-shadow': '0 0 3px rgba(232,160,53,0.55), 0 0 6px rgba(232,160,53,0.22)',
       },
     ),
     css('.collected-pill-active .collected-call').styles(
       color: const Color(_lcdAmber),
       raw: {
-        'text-shadow':
-            '0 0 4px rgba(232,160,53,0.7), 0 0 8px rgba(232,160,53,0.32)',
+        'text-shadow': '0 0 4px rgba(232,160,53,0.7), 0 0 8px rgba(232,160,53,0.32)',
       },
     ),
 
@@ -460,9 +460,10 @@ class CollectedStationsState extends State<CollectedStations> {
         'transition': 'color 0.18s ease',
       },
     ),
-    css('.collected-pill:hover .collected-freq, '
-            '.collected-pill-active .collected-freq')
-        .styles(color: const Color('#9a6a2a')),
+    css(
+      '.collected-pill:hover .collected-freq, '
+      '.collected-pill-active .collected-freq',
+    ).styles(color: const Color('#9a6a2a')),
 
     // ── responsive ──
     css.media(MediaQuery.screen(maxWidth: 600.px), [

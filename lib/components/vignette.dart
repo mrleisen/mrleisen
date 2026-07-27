@@ -24,10 +24,10 @@ class Vignette extends StatelessComponent {
       raw: {
         'background':
             'radial-gradient(ellipse at center, '
-                'transparent 0%, '
-                'transparent 45%, '
-                'rgba(0,0,0,0.35) 85%, '
-                'rgba(0,0,0,0.6) 100%)',
+            'transparent 0%, '
+            'transparent 45%, '
+            'rgba(0,0,0,0.35) 85%, '
+            'rgba(0,0,0,0.6) 100%)',
       },
     ),
   ];

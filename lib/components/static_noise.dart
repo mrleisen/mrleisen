@@ -32,19 +32,13 @@ class StaticNoise extends StatelessComponent {
   final bool isPowered;
 
   // Layer opacities derived from noiseLevel - zeroed when powered off.
-  double get _grainOpacity =>
-      isPowered ? (0.04 + noiseLevel * 0.85).clamp(0.0, 0.95) : 0.0;
-  double get _coarseOpacity =>
-      isPowered ? (noiseLevel * 0.7).clamp(0.0, 0.75) : 0.0;
+  double get _grainOpacity => isPowered ? (0.04 + noiseLevel * 0.85).clamp(0.0, 0.95) : 0.0;
+  double get _coarseOpacity => isPowered ? (noiseLevel * 0.7).clamp(0.0, 0.75) : 0.0;
   // Band only appears once we're well off-station.
-  double get _bandOpacity => !isPowered
-      ? 0.0
-      : (noiseLevel < 0.35
-          ? 0.0
-          : ((noiseLevel - 0.35) * 1.4).clamp(0.0, 0.85));
+  double get _bandOpacity =>
+      !isPowered ? 0.0 : (noiseLevel < 0.35 ? 0.0 : ((noiseLevel - 0.35) * 1.4).clamp(0.0, 0.85));
   // Flicker amplitude - full strength when noisy, off when locked.
-  double get _flickerStrength =>
-      isPowered ? noiseLevel.clamp(0.0, 1.0) : 0.0;
+  double get _flickerStrength => isPowered ? noiseLevel.clamp(0.0, 1.0) : 0.0;
 
   @override
   Component build(BuildContext context) {
@@ -56,9 +50,7 @@ class StaticNoise extends StatelessComponent {
         // lets us scale the dip by noise level.
         raw: {
           '--tv-flicker-amp': _flickerStrength.toStringAsFixed(3),
-          'animation': isPowered
-              ? 'tv-flicker 7.3s steps(1, end) infinite'
-              : 'none',
+          'animation': isPowered ? 'tv-flicker 7.3s steps(1, end) infinite' : 'none',
         },
       ),
       [
@@ -126,20 +118,19 @@ class StaticNoise extends StatelessComponent {
       raw: {
         'background-image':
             'repeating-linear-gradient(73deg, '
-                'rgba(255,255,255,0.55) 0px, '
-                'rgba(255,255,255,0.55) 1px, '
-                'transparent 1px, '
-                'transparent 3px),'
-                'repeating-linear-gradient(163deg, '
-                'rgba(255,255,255,0.45) 0px, '
-                'rgba(255,255,255,0.45) 1px, '
-                'transparent 1px, '
-                'transparent 4px)',
+            'rgba(255,255,255,0.55) 0px, '
+            'rgba(255,255,255,0.55) 1px, '
+            'transparent 1px, '
+            'transparent 3px),'
+            'repeating-linear-gradient(163deg, '
+            'rgba(255,255,255,0.45) 0px, '
+            'rgba(255,255,255,0.45) 1px, '
+            'transparent 1px, '
+            'transparent 4px)',
         'background-size': '3px 3px, 4px 4px',
         'mix-blend-mode': 'screen',
         'will-change': 'transform',
-        'animation':
-            'tv-grain-shift 80ms steps(8, jump-end) infinite',
+        'animation': 'tv-grain-shift 80ms steps(8, jump-end) infinite',
       },
     ),
 
@@ -151,20 +142,19 @@ class StaticNoise extends StatelessComponent {
       raw: {
         'background-image':
             'repeating-linear-gradient(17deg, '
-                'rgba(255,255,255,0.4) 0px, '
-                'rgba(255,255,255,0.4) 1px, '
-                'transparent 1px, '
-                'transparent 5px),'
-                'repeating-linear-gradient(107deg, '
-                'rgba(180,200,220,0.3) 0px, '
-                'rgba(180,200,220,0.3) 1px, '
-                'transparent 1px, '
-                'transparent 6px)',
+            'rgba(255,255,255,0.4) 0px, '
+            'rgba(255,255,255,0.4) 1px, '
+            'transparent 1px, '
+            'transparent 5px),'
+            'repeating-linear-gradient(107deg, '
+            'rgba(180,200,220,0.3) 0px, '
+            'rgba(180,200,220,0.3) 1px, '
+            'transparent 1px, '
+            'transparent 6px)',
         'background-size': '6px 6px, 7px 7px',
         'mix-blend-mode': 'screen',
         'will-change': 'transform',
-        'animation':
-            'tv-coarse-shift 130ms steps(6, jump-end) infinite reverse',
+        'animation': 'tv-coarse-shift 130ms steps(6, jump-end) infinite reverse',
       },
     ),
 
@@ -178,15 +168,15 @@ class StaticNoise extends StatelessComponent {
         'top': '0',
         'background':
             'linear-gradient(to bottom, '
-                'rgba(255,255,255,0) 0%, '
-                'rgba(255,255,255,0.55) 35%, '
-                'rgba(255,255,255,0.7) 50%, '
-                'rgba(255,255,255,0.55) 65%, '
-                'rgba(255,255,255,0) 100%)',
+            'rgba(255,255,255,0) 0%, '
+            'rgba(255,255,255,0.55) 35%, '
+            'rgba(255,255,255,0.7) 50%, '
+            'rgba(255,255,255,0.55) 65%, '
+            'rgba(255,255,255,0) 100%)',
         'box-shadow':
             '0 0 8px rgba(255,255,255,0.35), '
-                '0 -1px 0 rgba(255,40,40,0.35), '
-                '0 1px 0 rgba(40,200,255,0.35)',
+            '0 -1px 0 rgba(255,40,40,0.35), '
+            '0 1px 0 rgba(40,200,255,0.35)',
         'mix-blend-mode': 'screen',
         'animation': 'tv-band-sweep 5.7s linear infinite',
       },

@@ -26,7 +26,8 @@ class Scanlines extends StatelessComponent {
       zIndex: ZIndex(20),
       opacity: 0.12,
       raw: {
-        'background': 'repeating-linear-gradient('
+        'background':
+            'repeating-linear-gradient('
             'to bottom, '
             'transparent 0px, '
             'transparent 1px, '

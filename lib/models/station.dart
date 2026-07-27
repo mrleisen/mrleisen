@@ -94,8 +94,7 @@ const stations = <Station>[
   Station(band: Band.am, frequency: 1600.0, callSign: 'PNK', color: '#D05A8C'),
 ];
 
-Iterable<Station> stationsFor(Band band) =>
-    stations.where((s) => s.band == band);
+Iterable<Station> stationsFor(Band band) => stations.where((s) => s.band == band);
 
 /// Returns 0.0 (no signal) to 1.0 (perfect tune) based on proximity to
 /// the nearest station on [band] within [BandConfig.tolerance].

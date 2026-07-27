@@ -143,12 +143,14 @@ class _RadioAudioState extends State<RadioAudio> {
   /// Static peak amplitude when the user is actively tuning. Cap on
   /// the sum of the high-pass + low-pass paths.
   static const double _staticCeiling = 0.12;
+
   /// Idle static volume, expressed as a fraction of [_staticCeiling].
   /// When the user releases the dial the static drops to this level
   /// instead of going silent - so the radio keeps hissing like a real
   /// receiver searching for a carrier. Grabbing the dial again lifts
   /// the volume back to the full ceiling.
   static const double _idleStaticFactor = 0.7;
+
   /// Below this noiseLevel we consider the user "tuned in" → silence.
   static const double _silenceThreshold = 0.1;
 
@@ -193,8 +195,7 @@ class _RadioAudioState extends State<RadioAudio> {
   void dispose() {
     if (kIsWeb) {
       if (_visibilityListener != null) {
-        web.document
-            .removeEventListener('visibilitychange', _visibilityListener);
+        web.document.removeEventListener('visibilitychange', _visibilityListener);
       }
       if (_ctx != null) {
         try {
@@ -466,10 +467,8 @@ class _RadioAudioState extends State<RadioAudio> {
     } else {
       // Linearise noise into (0..1) above the silence threshold so
       // crossing it doesn't pop.
-      final t = ((noise - _silenceThreshold) / (1.0 - _silenceThreshold))
-          .clamp(0.0, 1.0);
-      final ceiling =
-          tuning ? _staticCeiling : _staticCeiling * _idleStaticFactor;
+      final t = ((noise - _silenceThreshold) / (1.0 - _silenceThreshold)).clamp(0.0, 1.0);
+      final ceiling = tuning ? _staticCeiling : _staticCeiling * _idleStaticFactor;
       staticTarget = ceiling * t;
     }
 
