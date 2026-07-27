@@ -675,8 +675,22 @@ class RadioDialState extends State<RadioDial> {
                 'tabindex': '0',
               },
               [
-                span(classes: 'rocker-half rocker-on', [Component.text('ON')]),
-                span(classes: 'rocker-half rocker-off', [Component.text('OFF')]),
+                // The ON/OFF legend is moulded switch marking, not a
+                // label: the control's name is "Power" and its state is
+                // carried by aria-checked. Left exposed, the two words
+                // became the element's visible text and clashed with
+                // that name under WCAG 2.5.3 - the switch appeared to be
+                // called "ON OFF".
+                span(
+                  classes: 'rocker-half rocker-on',
+                  attributes: const {'aria-hidden': 'true'},
+                  [Component.text('ON')],
+                ),
+                span(
+                  classes: 'rocker-half rocker-off',
+                  attributes: const {'aria-hidden': 'true'},
+                  [Component.text('OFF')],
+                ),
               ],
             ),
             _memButton(),
@@ -968,7 +982,9 @@ class RadioDialState extends State<RadioDial> {
       events: armed ? {'click': _onMemTap, 'keydown': onActivateKey(_onMemTap)} : const {},
       attributes: {
         'role': 'button',
-        'aria-label': armed ? 'Save current station' : 'No station available to save',
+        // Leads with the visible "MEM" so voice control can reach it by
+        // the word on the button (WCAG 2.5.3).
+        'aria-label': armed ? 'MEM - save current station' : 'MEM - no station available to save',
         'aria-disabled': armed ? 'false' : 'true',
         if (armed) 'tabindex': '0',
       },

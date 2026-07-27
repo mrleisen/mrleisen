@@ -877,9 +877,12 @@ class AppState extends State<App> {
         attributes: {
           'role': 'button',
           'tabindex': '0',
-          // Names the action and its outcome. A bare "ES"/"EN" tells a
-          // screen-reader user nothing about what pressing it does.
-          'aria-label': _lang == Lang.es ? 'Cambiar idioma a inglés' : 'Switch language to Spanish',
+          // Names the action *and opens with the visible glyph*. A bare
+          // "ES"/"EN" says nothing about what pressing it does, but a
+          // name that omits the visible text breaks WCAG 2.5.3: someone
+          // driving by voice says what they can see, so "EN" has to be
+          // in the name for "click EN" to reach this.
+          'aria-label': _lang == Lang.es ? 'ES - cambiar idioma a inglés' : 'EN - switch language to Spanish',
         },
         [Component.text(_lang == Lang.es ? 'ES' : 'EN')],
       ),

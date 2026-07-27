@@ -164,7 +164,13 @@ class _SignalBarsState extends State<SignalBars> {
 
     return div(
       classes: 'signal-bars${isPowered ? '' : ' signal-bars-off'}',
-      attributes: {'aria-label': 'Signal strength'},
+      // `aria-label` on a plain div is a prohibited attribute: a div has
+      // no role, and unroled elements cannot be named. It was also
+      // redundant - the live region in `AppState` already announces the
+      // actual strength ("signal 42 percent"), which is strictly more
+      // useful than a static "Signal strength" with no value. So the
+      // meter is exposed as the decoration it visually is.
+      attributes: const {'aria-hidden': 'true'},
       [
         for (var i = 0; i < 5; i++)
           _buildBar(
