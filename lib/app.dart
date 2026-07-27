@@ -670,7 +670,7 @@ class AppState extends State<App> {
       (es ? 'JAVASCRIPT' : 'JAVASCRIPT', '215 KB · 70 KB gzip'),
       (
         es ? 'TIPOGRAFÍAS' : 'TYPEFACES',
-        es ? '66 KB · 3 familias, subset latino' : '66 KB · 3 families, latin subset',
+        es ? '72 KB · 4 familias, subset latino' : '72 KB · 4 families, latin subset',
       ),
       (
         es ? 'DESPLIEGUE' : 'DEPLOY',
