@@ -422,9 +422,12 @@ class CollectedStationsState extends State<CollectedStations> {
         FontFamily('Orbitron'),
         FontFamilies.monospace,
       ]),
-      fontSize: Unit.pixels(10),
+      // 11px floor, like every other piece of informative text. The call
+      // sign is what tells you which preset you are about to recall, so
+      // it is content, not faceplate silkscreen.
+      fontSize: Unit.pixels(11),
       fontWeight: FontWeight.w700,
-      letterSpacing: 0.16.em,
+      letterSpacing: 0.14.em,
       color: const Color(_lcdAmberDim),
       raw: {
         'line-height': '1',
@@ -453,10 +456,13 @@ class CollectedStationsState extends State<CollectedStations> {
         FontFamily('IBM Plex Mono'),
         FontFamilies.monospace,
       ]),
-      fontSize: Unit.pixels(8),
+      fontSize: Unit.pixels(11),
       fontWeight: FontWeight.w500,
-      letterSpacing: 0.08.em,
-      color: const Color('#5a4220'),
+      letterSpacing: 0.06.em,
+      // Was #5a4220, which is 1.9:1 - effectively unreadable. Still
+      // dimmer than the call sign so the hierarchy in the pill survives,
+      // but now legible at 5.1:1.
+      color: const Color('#9a7c4a'),
       raw: {
         'line-height': '1',
         'transition': 'color 0.18s ease',
@@ -484,15 +490,18 @@ class CollectedStationsState extends State<CollectedStations> {
         letterSpacing: 0.12.em,
         padding: Padding.symmetric(horizontal: 4.px, vertical: 1.px),
       ),
+      // The rack is a row of real controls, so on a phone the pills get
+      // a 36px minimum height rather than shrinking with everything
+      // else. They sit 4px apart, which rules out padding them to 44
+      // without the neighbours colliding; 36 is the honest compromise
+      // between the guidance and the rack fitting on the faceplate.
       css('.collected-pill').styles(
-        padding: Padding.symmetric(horizontal: 5.px, vertical: 1.px),
-        raw: {'gap': '4px'},
+        minHeight: 36.px,
+        padding: Padding.symmetric(horizontal: 8.px, vertical: 4.px),
+        raw: {'gap': '5px'},
       ),
-      css('.collected-call').styles(
-        fontSize: Unit.pixels(9),
-        letterSpacing: 0.12.em,
-      ),
-      css('.collected-freq').styles(fontSize: Unit.pixels(7)),
+      // Type holds the 11px floor on mobile; only the tracking gives.
+      css('.collected-call').styles(letterSpacing: 0.1.em),
     ]),
   ];
 }

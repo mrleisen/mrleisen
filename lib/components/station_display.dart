@@ -460,7 +460,10 @@ class StationDisplay extends StatelessComponent {
     // Container - sits in the same vertical band as the idle hero text.
     css('.station-display').styles(
       position: Position.absolute(
-        top: Unit.expression('calc(50% - 100px)'),
+        // Same anchor as the idle carrier monitor, derived from the
+        // faceplate height rather than hand-tuned per breakpoint. See
+        // `--panel-h` in `app.dart`.
+        top: Unit.expression('calc((100% - var(--panel-h, 210px)) / 2)'),
         left: 50.percent,
       ),
       width: 100.percent,
@@ -789,16 +792,6 @@ class StationDisplay extends StatelessComponent {
 
     // Mobile sizing.
     css.media(MediaQuery.screen(maxWidth: 600.px), [
-      // Track the same vertical offset as the idle content so we don't
-      // overlap the mobile radio panel (height 180 px → shift content
-      // up by ~half the panel height so its vertical centre lands in
-      // the free space above the faceplate).
-      css('.station-display').styles(
-        position: Position.absolute(
-          top: Unit.expression('calc(50% - 90px)'),
-          left: 50.percent,
-        ),
-      ),
       css('.panel-title').styles(fontSize: 1.7.rem),
       // Body copy holds at 13 px on phones. It used to drop to 12 px,
       // but nothing informative goes below 11 px anywhere now, and body
@@ -807,10 +800,18 @@ class StationDisplay extends StatelessComponent {
       css('.panel-body').styles(fontSize: Unit.pixels(13)),
       css('.panel-shell').styles(gap: Gap(row: 12.px)),
       css('.station-panel').styles(maxWidth: 92.percent),
-      // Pills wrap tighter and use a smaller hit area on phones.
+      // These are the only outbound links in the whole piece, and they
+      // were ~25px tall on a phone. Given a real minimum height instead
+      // of a pseudo-element hit area: the pills wrap onto multiple rows
+      // 8px apart, so an invisible 44px box on a 25px pill would overlap
+      // the row above and start stealing its taps.
       css('.pill').styles(
-        fontSize: Unit.pixels(11),
-        padding: Padding.symmetric(horizontal: 14.px, vertical: 6.px),
+        fontSize: Unit.pixels(12),
+        minHeight: 44.px,
+        padding: Padding.symmetric(horizontal: 16.px, vertical: 8.px),
+      ),
+      css('.pill-row').styles(
+        gap: Gap(row: 10.px, column: 10.px),
       ),
       // AM panels tighten a touch on small screens.
       css('.am-shell').styles(

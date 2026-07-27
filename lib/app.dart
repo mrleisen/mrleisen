@@ -116,6 +116,10 @@ class AppState extends State<App> {
   JSFunction? _keyDownListener;
   JSFunction? _wheelListener;
 
+  // Watches the faceplate so `--panel-h` always reflects its real
+  // height. See [_observePanelHeight].
+  web.ResizeObserver? _panelObserver;
+
   @override
   void initState() {
     super.initState();
@@ -135,6 +139,10 @@ class AppState extends State<App> {
         _wheelListener,
         web.AddEventListenerOptions(passive: false),
       );
+
+      // Deferred a frame so the faceplate has been laid out and measures
+      // its real height rather than zero.
+      Timer(Duration.zero, _observePanelHeight);
     }
   }
 
@@ -157,6 +165,52 @@ class AppState extends State<App> {
       // localStorage can throw (privacy mode, quota, etc.). A failed
       // read just means we start with an empty rack - not worth
       // surfacing.
+    }
+  }
+
+  /// Keeps `--panel-h` in step with the faceplate's real height.
+  ///
+  /// The content layers centre themselves in the space above the panel,
+  /// so they need to know how tall it is. A per-breakpoint constant gets
+  /// this wrong the moment anything changes the panel's height for
+  /// reasons a media query can't see - the preset rack appearing when
+  /// the first station is saved is the obvious one, and it is enough to
+  /// push the idle readout underneath the faceplate.
+  ///
+  /// Measuring is also what makes landscape and rotation work without a
+  /// dedicated breakpoint for every device.
+  ///
+  /// The stylesheet value stays as the pre-hydration fallback; this only
+  /// ever refines it.
+  void _observePanelHeight() {
+    if (!kIsWeb) return;
+    try {
+      final root = web.document.querySelector('.signal-app');
+      final panel = web.document.querySelector('.radio-panel');
+      if (root == null || panel == null) return;
+
+      void publish() {
+        final h = panel.getBoundingClientRect().height;
+        if (h <= 0) return;
+        // Set inline on `.signal-app` rather than on `:root`: the
+        // stylesheet declares `--panel-h` on this very element, and only
+        // an inline style outranks that.
+        root.setAttribute(
+          'style',
+          '--panel-h: ${h.round()}px',
+        );
+      }
+
+      _panelObserver = web.ResizeObserver(
+        ((JSObject _, JSObject __) {
+          publish();
+        }).toJS,
+      );
+      _panelObserver!.observe(panel);
+      publish();
+    } catch (_) {
+      // No ResizeObserver, or the query failed. The CSS fallback still
+      // holds, so the layout is merely less precise, never broken.
     }
   }
 
@@ -209,6 +263,7 @@ class AppState extends State<App> {
     if (kIsWeb) {
       web.document.removeEventListener('keydown', _keyDownListener);
       web.document.removeEventListener('wheel', _wheelListener);
+      _panelObserver?.disconnect();
     }
     super.dispose();
   }
@@ -836,7 +891,19 @@ class AppState extends State<App> {
       height: 100.vh,
       overflow: Overflow.hidden,
       backgroundColor: const Color('#050507'),
+      raw: {
+        // Height of the faceplate, published so the content layers can
+        // centre themselves in whatever space is left above it.
+        //
+        // This used to be a hand-tuned magic number repeated in two
+        // files (`calc(50% - 100px)` on desktop, `calc(50% - 90px)` on
+        // mobile), which meant every change to the panel's height
+        // silently drifted the content off-centre or pushed it under the
+        // panel. One value, one place, and the arithmetic follows.
+        '--panel-h': '210px',
+      },
     ),
+    css('.signal-app').styles(raw: {'height': '100dvh'}),
     // ── CRT power overlay ──
     // Fills the viewport above the root background (#050507) but
     // below the noise layer (z:10). When the radio is off the
@@ -924,7 +991,8 @@ class AppState extends State<App> {
     // reads top-down like a real monitoring panel.
     css('.carrier-monitor').styles(
       position: Position.absolute(
-        top: Unit.expression('calc(50% - 100px)'),
+        // Centre of the free space above the faceplate.
+        top: Unit.expression('calc((100% - var(--panel-h)) / 2)'),
         left: 50.percent,
       ),
       transform: Transform.translate(x: (-50).percent, y: (-50).percent),
@@ -1126,15 +1194,10 @@ class AppState extends State<App> {
         padding: Padding.symmetric(horizontal: 10.px, vertical: 6.px),
         position: Position.fixed(top: 10.px, right: 10.px),
       ),
-      // Idle readout sits a touch higher so it can't overlap the
-      // mobile radio panel (height 180 px).
-      css('.carrier-monitor').styles(
-        position: Position.absolute(
-          top: Unit.expression('calc(50% - 90px)'),
-          left: 50.percent,
-        ),
-        gap: Gap(row: 12.px),
-      ),
+      // Matches the shorter mobile faceplate. The vertical position
+      // follows automatically from here.
+      css('.signal-app').styles(raw: {'--panel-h': '180px'}),
+      css('.carrier-monitor').styles(gap: Gap(row: 12.px)),
       css('.carrier-dashes').styles(gap: Gap(column: 12.px)),
       css('.carrier-dash').styles(fontSize: 1.9.rem),
       // Phones keep the full 11 px floor. The old mobile ramp went down

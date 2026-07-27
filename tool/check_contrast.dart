@@ -123,6 +123,14 @@ void main() {
   check('.power-hint', '#c99a4e', px: 11);
   check('.tune-hint', '#d9c9a4', px: 11);
 
+  section('MEM preset rack');
+  // Sits on the LCD-style pill face (#0d0b08-ish), close enough to page
+  // black that checking against `bg` is the conservative reading.
+  check('.collected-call', '#c8964a', px: 11);
+  // Was #5a4220, which measured 2.17:1 - present on screen, but not
+  // readable by anyone.
+  check('.collected-freq', '#9a7c4a', px: 11);
+
   section('Idle carrier monitor');
   // .carrier-sub and .carrier-state-text carry `carrier-breathe`, whose
   // trough is the real worst case - check the floor, not just the peak.
