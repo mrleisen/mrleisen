@@ -218,23 +218,27 @@ class StationDisplay extends StatelessComponent {
     return (d - cfg.lockRange) / (cfg.tolerance - cfg.lockRange);
   }
 
-  /// What an unresolved character decays into, ordered light to dense.
+  /// What an unresolved character decays into: one middle dot, always.
   ///
   /// This started as block and hatch characters, on the theory that a
   /// receiver has *not decoded* a character rather than decoded the wrong
-  /// one. The theory was fine and the execution was not: **none of those
+  /// one. The theory was right and the execution was not: **none of those
   /// glyphs exist in any of the three fonts this site ships**, so every
-  /// one of them rendered from a system fallback, at a different weight
-  /// and width, in the middle of a word. They did not read as an
-  /// undecoded signal, they read as a font that failed to load.
+  /// one rendered from a system fallback, at a different weight and width,
+  /// in the middle of a word. They did not read as an undecoded signal,
+  /// they read as a font that failed to load.
   ///
-  /// These four are all inside the latin subset of all three faces, so
-  /// they are drawn by the same typeface as the letters around them, and
-  /// they carry the state instead of only obscuring it: density rises
-  /// with the distortion, so a nearly-resolved title is faintly dotted
-  /// and a lost one is solid. The signal strength is legible in the
-  /// texture itself.
-  static const String _noiseRamp = '·-=#';
+  /// A middle dot is in the latin subset of all three faces, so the same
+  /// typeface draws it, and it is the mark that states the theory most
+  /// plainly: nothing was decoded here, rather than something was garbled
+  /// here. It also rhymes with the hardware - the LCD has carried unlit
+  /// ghost segments behind its live digits from the start, and this is the
+  /// same idea one layer up: a character cell that is simply not driven.
+  ///
+  /// A four-mark density ramp was built and tried first, where the mark
+  /// got heavier as the signal got worse. It encoded more, and read as
+  /// busier; one quiet mark won on looking at it.
+  static const String _noiseMark = '·';
 
   /// Renders [text] with a share of its characters replaced by noise,
   /// proportional to how far off station the dial is.
@@ -248,8 +252,9 @@ class StationDisplay extends StatelessComponent {
   /// Deterministic on (index, quantised distortion) rather than random:
   /// a `Random` here would produce different output on the server and on
   /// hydration, and would also churn every frame instead of stepping as
-  /// the dial moves. Quantising to twelve buckets means the glyphs
-  /// change *because you tuned*, and hold still when you stop.
+  /// the dial moves. Quantising to twelve buckets means which characters
+  /// have come through changes *because you tuned*, and holds still when
+  /// you stop.
   Component _resolvingTitle(String text, double distortion) {
     if (distortion < 0.06) return Component.text(text);
     final bucket = (distortion * 12).floor();
@@ -263,11 +268,7 @@ class StationDisplay extends StatelessComponent {
       // Cheap deterministic hash of (character position, tuning bucket).
       final h = (i * 2654435761 + bucket * 40503) & 0x7fffffff;
       if ((h % 1000) / 1000.0 < distortion) {
-        // Density tracks the signal, with a step of per-character jitter
-        // so the run never collapses into one repeated character.
-        final level = (distortion * (_noiseRamp.length - 1)).round();
-        final jitter = (h ~/ 1000) % 3 - 1;
-        out.write(_noiseRamp[(level + jitter).clamp(0, _noiseRamp.length - 1)]);
+        out.write(_noiseMark);
       } else {
         out.write(ch);
       }
