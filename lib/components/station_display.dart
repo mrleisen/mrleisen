@@ -376,16 +376,16 @@ class StationDisplay extends StatelessComponent {
               '2015. Puntajes de corte, profesores, materias, el Oráculo y '
               'más. Nació de la necesidad de centralizar información que '
               'estaba dispersa entre foros, grupos de chat y el boca a '
-              'boca. La comunidad ha aportado más de 5.000 reseñas de '
-              'profesores y materias, que es lo que permite armar horario '
-              'sin sorpresas.'
+              'boca. La comunidad ha aportado más de 6.000 reseñas de '
+              'profesores, que es lo que permite armar horario sin '
+              'sorpresas.'
         : 'An independent project built for the UIS community since 2015. '
               'Cut scores, professors, subjects, the Oracle and more. It '
               'started because the information students actually needed '
               'was scattered across forums, chat groups and word of '
-              'mouth. The community has contributed over 5,000 reviews of '
-              'professors and subjects, which is what makes it possible to '
-              'build a timetable with no surprises.';
+              'mouth. The community has contributed over 6,000 professor '
+              'reviews, which is what makes it possible to build a '
+              'timetable with no surprises.';
     return _panelShell(
       color: s.color,
       label: _stationLabel(s, lang),

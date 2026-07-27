@@ -44,6 +44,11 @@ import 'station_display.dart' show Lang;
 ///     `*_repository_impl.dart` (`getLatestModifiedAt` → remote call)
 ///   - the shared-database migration rules and the inverted soft-delete
 ///     audit are recorded in `DeTodoUIS_flutter/CLAUDE.md`
+///   - the professor-review count is the one figure with no repo behind
+///     it: the reviews live in the production MySQL database, so the
+///     operator is the source. 6,000+ as of 27 July 2026. It only ever
+///     goes up, so an out-of-date floor stays true; it is written as a
+///     floor for exactly that reason.
 ///
 /// NOTE: deliberately NOT marked `@client`, for the same reason as
 /// `StationDisplay` - the parent `App` is already the hydration island.
@@ -168,8 +173,8 @@ class CaseStudyDialog extends StatelessComponent {
               'materia en un grupo de chat, cómo funciona un examen de '
               'suficiencia en el boca a boca de la cafetería. DeTodoUIS '
               'empezó como el lugar donde todo eso vivía junto, y la '
-              'comunidad terminó de llenarlo: hoy lleva más de 5.000 '
-              'reseñas de profesores y materias escritas por estudiantes.',
+              'comunidad terminó de llenarlo: hoy lleva más de 6.000 '
+              'reseñas de profesores escritas por estudiantes.',
         ]),
         _segment('02', 'Qué transmite', [
           'Para quien todavía no entra: histórico de puntajes con '
@@ -245,8 +250,7 @@ class CaseStudyDialog extends StatelessComponent {
             'subject in a chat group, how a proficiency exam works in '
             'cafeteria hearsay. DeTodoUIS started as the place where all of '
             'it lived together, and the community filled it in: it now '
-            'carries over 5,000 reviews of professors and subjects written '
-            'by students.',
+            'carries over 6,000 professor reviews written by students.',
       ]),
       _segment('02', 'What it broadcasts', [
         'For applicants: historical cut-off scores with charts, admission '
