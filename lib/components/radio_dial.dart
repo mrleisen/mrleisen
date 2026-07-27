@@ -1507,7 +1507,7 @@ class RadioDialState extends State<RadioDial> {
     ),
     css('.brand').styles(
       fontFamily: const FontFamily.list([
-        FontFamily('Orbitron'),
+        FontFamily('Chakra Petch'),
         FontFamilies.monospace,
       ]),
       fontSize: Unit.pixels(10),
@@ -1823,10 +1823,10 @@ class RadioDialState extends State<RadioDial> {
     css('.lcd-ghost').styles(
       position: Position.absolute(),
       fontFamily: const FontFamily.list([
-        FontFamily('Orbitron'),
+        FontFamily('Chakra Petch'),
         FontFamilies.monospace,
       ]),
-      fontSize: 1.55.rem,
+      fontSize: 1.65.rem,
       fontWeight: FontWeight.w700,
       color: const Color('#000000'),
       letterSpacing: 0.08.em,
@@ -1841,13 +1841,19 @@ class RadioDialState extends State<RadioDial> {
 
     // Live digits - dark segments, no longer pure black. A faded
     // brown-black reads as aged LCD ink rather than crisp new print.
+    //
+    // 1.65rem rather than the 1.55 this sat at under Orbitron. Chakra
+    // Petch runs 0.581 em per digit against Orbitron's 0.758, so the old
+    // size would have shrunk the readout by a fifth while the LCD around
+    // it stayed the same. Measured: "101.8" is 71 px here against 76 px
+    // before, so it grew in type size and still gained clearance.
     css('.lcd-value').styles(
       position: Position.relative(),
       fontFamily: const FontFamily.list([
-        FontFamily('Orbitron'),
+        FontFamily('Chakra Petch'),
         FontFamilies.monospace,
       ]),
-      fontSize: 1.55.rem,
+      fontSize: 1.65.rem,
       fontWeight: FontWeight.w700,
       color: const Color('#2a1f10'),
       letterSpacing: 0.08.em,
@@ -1873,7 +1879,7 @@ class RadioDialState extends State<RadioDial> {
     ),
     css('.lcd-fm').styles(
       fontFamily: const FontFamily.list([
-        FontFamily('Orbitron'),
+        FontFamily('Chakra Petch'),
         FontFamilies.monospace,
       ]),
       fontSize: Unit.pixels(10),
@@ -1885,7 +1891,7 @@ class RadioDialState extends State<RadioDial> {
     css('.lcd-st', [
       css('&').styles(
         fontFamily: const FontFamily.list([
-          FontFamily('Orbitron'),
+          FontFamily('Chakra Petch'),
           FontFamilies.monospace,
         ]),
         fontSize: Unit.pixels(9),
@@ -2453,9 +2459,9 @@ class RadioDialState extends State<RadioDial> {
           'flex': 'initial',
         },
       ),
-      css('.lcd-value').styles(fontSize: 1.15.rem),
+      css('.lcd-value').styles(fontSize: 1.25.rem),
       css('.lcd-ghost').styles(
-        fontSize: 1.15.rem,
+        fontSize: 1.25.rem,
         raw: {'right': '32px'},
       ),
       css('.lcd-fm').styles(fontSize: Unit.pixels(9)),
@@ -2552,9 +2558,9 @@ class RadioDialState extends State<RadioDial> {
 
     css.media(MediaQuery.screen(maxWidth: 380.px), [
       css('.lcd').styles(height: 30.px),
-      css('.lcd-value').styles(fontSize: 1.0.rem),
+      css('.lcd-value').styles(fontSize: 1.08.rem),
       css('.lcd-ghost').styles(
-        fontSize: 1.0.rem,
+        fontSize: 1.08.rem,
         raw: {'right': '26px'},
       ),
       css('.lcd-fm').styles(fontSize: Unit.pixels(8)),

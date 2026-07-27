@@ -433,10 +433,10 @@ class CollectedStationsState extends State<CollectedStations> {
     // ── call sign ──
     // Dim amber by default (so a long row of presets reads as a
     // calm rack), brighter on hover and on the active pill. Same
-    // Orbitron/IBM-Plex pairing as the LCD readout.
+    // Chakra Petch / IBM Plex pairing as the LCD readout.
     css('.collected-call').styles(
       fontFamily: const FontFamily.list([
-        FontFamily('Orbitron'),
+        FontFamily('Chakra Petch'),
         FontFamilies.monospace,
       ]),
       // 11px floor, like every other piece of informative text. The call
