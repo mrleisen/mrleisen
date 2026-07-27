@@ -307,12 +307,18 @@ void main() {
           '100%': Styles(raw: {'left': '110%', 'opacity': '0'}),
         }),
         // Keyframe: carrier-breathe
-        // Slow ±opacity wobble on the CARRIER ABSENT label so the idle
-        // state doesn't sit completely static. The amplitude is modest -
-        // 0.55↔0.85 - so it reads as a receiver hum, not a blink.
+        // Slow ±opacity wobble on the idle readout so the state doesn't
+        // sit completely static. Reads as a receiver hum, not a blink.
+        //
+        // The amplitude used to be 0.55↔0.85, but the trough is what
+        // decides the contrast of any text carrying this animation, and
+        // 0.55 dragged `.carrier-sub` down to 1.64:1 - text that is
+        // legible for only part of each cycle is not legible text. The
+        // floor is now 0.85, which holds the dimmest carrier line at
+        // 5.50:1 through the whole loop.
         css.keyframes('carrier-breathe', {
-          '0%, 100%': Styles(opacity: 0.55),
-          '50%': Styles(opacity: 0.85),
+          '0%, 100%': Styles(opacity: 0.85),
+          '50%': Styles(opacity: 1),
         }),
         // Keyframe: dash-drift
         // Slowly drifts the large dash array horizontally so the block
@@ -438,6 +444,57 @@ void main() {
             },
           ),
         }),
+
+        // ── Reduced motion ──
+        // The whole piece is built out of flicker, tearing and jitter, so
+        // an unguarded visit is genuinely hostile to anyone sensitive to
+        // motion. This block strips every running animation while leaving
+        // the receiver fully operable: tuning, locking, saving, recalling
+        // and every link all keep working, they just stop twitching.
+        //
+        // Jaspr 0.23 has no typed helper for this feature (it covers
+        // prefers-color-scheme and prefers-contrast only), so the query is
+        // written raw.
+        //
+        // The blanket `animation: none` is the backstop. Ahead of it we
+        // also zero the two custom properties that scale distortion, since
+        // several effects are driven through `calc()` on those rather than
+        // through a keyframe: at 0 they collapse to a no-op, which kills
+        // the chromatic split on titles and the blur on incoming panels
+        // without needing to know every selector that reads them.
+        css.media(const MediaQuery.raw('(prefers-reduced-motion: reduce)'), [
+          css('*, *::before, *::after').styles(
+            raw: {
+              'animation': 'none !important',
+              'transition-duration': '0.01ms !important',
+            },
+          ),
+          // Kill the distortion maths, not just the keyframes.
+          css(':root').styles(
+            raw: {'--distortion': '0', '--tv-flicker-amp': '0'},
+          ),
+          // The CRT overlay animates via clip-path with fill-forwards, so
+          // `animation: none` alone would strand it mid-wipe. Force the
+          // two resting states explicitly instead.
+          css('.crt-screen.crt-animate-on, .crt-screen.crt-on-done').styles(
+            raw: {
+              'opacity': '0',
+              'background': 'transparent',
+              'clip-path': 'none',
+              'pointer-events': 'none',
+            },
+          ),
+          css('.crt-screen.crt-animate-off, .crt-screen').styles(
+            raw: {'clip-path': 'none'},
+          ),
+          // Panels cross-fade instead of tearing into focus.
+          css('.panel-fx').styles(raw: {'filter': 'none'}),
+          // Grain, scanlines and the phosphor mask stay as static texture:
+          // they carry the CRT look but none of them need to move to do it.
+          // The noise layer is the one exception - held still it reads as a
+          // dirty screen, so it drops out entirely.
+          css('.static-noise').styles(raw: {'opacity': '0'}),
+        ]),
       ],
       head: [
         link(rel: 'manifest', href: 'manifest.json'),

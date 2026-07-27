@@ -509,13 +509,18 @@ class StationDisplay extends StatelessComponent {
         FontFamily('IBM Plex Mono'),
         FontFamilies.monospace,
       ]),
-      fontSize: Unit.pixels(10),
+      fontSize: Unit.pixels(11),
       fontWeight: FontWeight.w500,
       letterSpacing: 0.4.em,
       textTransform: TextTransform.upperCase,
       raw: {
-        'color': 'var(--sc, #E8A035)',
-        'opacity': '0.75',
+        // Mixed toward a warm neutral rather than tinted with opacity.
+        // The station colours span a wide luminance range (#E05050 is
+        // roughly half as bright as #5BC8A0), so dimming them uniformly
+        // dropped the darkest ones under AA. Mixing lifts every station
+        // onto the same floor while keeping its hue legible: the worst
+        // case is now 6.78:1 against #050507, the best 10.73:1.
+        'color': 'color-mix(in srgb, var(--sc, #E8A035) 70%, #d8d2c4)',
         'text-shadow': '0 0 2px var(--sc-glow, rgba(232,160,53,0.35))',
       },
     ),
@@ -568,12 +573,15 @@ class StationDisplay extends StatelessComponent {
         FontFamily('IBM Plex Mono'),
         FontFamilies.monospace,
       ]),
-      fontSize: Unit.pixels(12),
+      fontSize: Unit.pixels(14),
       fontWeight: FontWeight.w400,
-      color: const Color('#c5b994'),
-      maxWidth: 400.px,
+      // Was #c5b994 at opacity 0.55, which composited to 3.67:1 against
+      // #050507 - under AA, and that was before the noise and scanline
+      // layers stacked on top. Baking the dimness into the colour rather
+      // than the alpha keeps the printed-on-plastic look at 6.51:1.
+      color: const Color('#9c9174'),
+      maxWidth: 440.px,
       raw: {
-        'opacity': '0.55',
         'line-height': '1.55',
         'letter-spacing': '0.02em',
         'margin': '0 auto',
@@ -718,10 +726,12 @@ class StationDisplay extends StatelessComponent {
       position: Position.relative(),
       raw: {'z-index': '1'},
     ),
-    // Label: dimmer than the FM version.
+    // Label: still reads dimmer than the FM version, but the dimness now
+    // comes from a heavier neutral mix instead of opacity 0.55, which put
+    // four of the six AM stations under AA.
     css('.am-label').styles(
       raw: {
-        'opacity': '0.55',
+        'color': 'color-mix(in srgb, var(--sc, #E8A035) 60%, #d8d2c4)',
         'letter-spacing': '0.3em',
       },
     ),
@@ -750,10 +760,10 @@ class StationDisplay extends StatelessComponent {
         FontFamilies.monospace,
       ]),
       fontSize: Unit.pixels(11),
-      fontWeight: FontWeight.w300,
-      color: const Color('#a89a78'),
+      fontWeight: FontWeight.w400,
+      // Was #a89a78 at 0.7 → 3.98:1. Now 5.50:1.
+      color: const Color('#8f8468'),
       raw: {
-        'opacity': '0.7',
         'letter-spacing': '0.04em',
         'text-transform': 'uppercase',
       },
@@ -763,11 +773,14 @@ class StationDisplay extends StatelessComponent {
         FontFamily('IBM Plex Mono'),
         FontFamilies.monospace,
       ]),
-      fontSize: Unit.pixels(12),
-      fontWeight: FontWeight.w300,
-      color: const Color('#b8ac90'),
+      fontSize: Unit.pixels(13),
+      fontWeight: FontWeight.w400,
+      // Was #b8ac90 at 0.72, which scraped past at 5.00:1 but only
+      // because the alpha happened to land well. Pinned to 5.69:1 with
+      // no alpha so it can't drift. Still reads dimmer than the FM body
+      // (6.51:1), preserving the deliberate AM/FM hierarchy.
+      color: const Color('#8f8770'),
       raw: {
-        'opacity': '0.72',
         'line-height': '1.55',
         'margin': '0',
         'text-align': 'center',
@@ -787,7 +800,11 @@ class StationDisplay extends StatelessComponent {
         ),
       ),
       css('.panel-title').styles(fontSize: 1.7.rem),
-      css('.panel-body').styles(fontSize: Unit.pixels(12)),
+      // Body copy holds at 13 px on phones. It used to drop to 12 px,
+      // but nothing informative goes below 11 px anywhere now, and body
+      // text in particular has no business being the smallest thing on
+      // the screen.
+      css('.panel-body').styles(fontSize: Unit.pixels(13)),
       css('.panel-shell').styles(gap: Gap(row: 12.px)),
       css('.station-panel').styles(maxWidth: 92.percent),
       // Pills wrap tighter and use a smaller hit area on phones.
@@ -801,7 +818,7 @@ class StationDisplay extends StatelessComponent {
         maxWidth: 90.percent,
       ),
       css('.am-title').styles(fontSize: 1.15.rem),
-      css('.am-body').styles(fontSize: Unit.pixels(11)),
+      css('.am-body').styles(fontSize: Unit.pixels(12)),
     ]),
   ];
 }

@@ -7,6 +7,7 @@ import 'package:universal_web/js_interop.dart';
 import 'package:universal_web/web.dart' as web;
 
 import '../models/station.dart';
+import '../utils/motion.dart';
 import 'collected_stations.dart';
 import 'radio_audio.dart' show unlockAudioContext;
 
@@ -300,6 +301,9 @@ class RadioDialState extends State<RadioDial> {
   /// Runs the one-shot opacity-flicker keyframe on the LCD. Used by
   /// [_onLcdTap] and by the power-on sequence in [didUpdateComponent].
   void _triggerLcdGlitch() {
+    // The glitch itself is a CSS keyframe that reduced-motion already
+    // suppresses; bailing here just avoids the pointless render churn.
+    if (prefersReducedMotion) return;
     _lcdTapTimer?.cancel();
     setState(() => _lcdTapNonce++);
     _lcdTapTimer = Timer(_lcdTapDuration, () {
@@ -313,7 +317,22 @@ class RadioDialState extends State<RadioDial> {
   /// intervals, then clears [_scrambleValue] so the live frequency
   /// text returns. Safe to call while a previous scramble is still
   /// running - the in-flight timer is cancelled and restarted.
+  ///
+  /// Under reduced motion the LCD skips straight to the settled value.
+  /// This one can't be handled in CSS: the scramble swaps the rendered
+  /// digits rather than animating a property, so a stylesheet has
+  /// nothing to switch off.
   void _startScramble() {
+    if (prefersReducedMotion) {
+      _scrambleTimer?.cancel();
+      if (_isScrambling || _scrambleValue != null) {
+        setState(() {
+          _isScrambling = false;
+          _scrambleValue = null;
+        });
+      }
+      return;
+    }
     _scrambleTimer?.cancel();
     _scrambleCount = 0;
     setState(() {
