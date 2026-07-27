@@ -5,11 +5,14 @@ import 'package:jaspr/jaspr.dart';
 import 'package:universal_web/web.dart' as web;
 
 import '../models/station.dart';
+import 'station_display.dart' show Lang;
 
 // Amber-LED palette - kept in sync with radio_dial.dart so the row
-// reads as the same hardware family as the LCD readout.
+// reads as the same hardware family as the LCD readout. The dim shade
+// is chosen for 4.7:1 on the pill substrate - see the rationale next to
+// the twin constant in radio_dial.dart.
 const String _lcdAmber = '#E8A035';
-const String _lcdAmberDim = '#6d4a0e';
+const String _lcdAmberDim = '#a4711b';
 
 /// Horizontal row of stations the user has discovered. Sits just above
 /// the radio panel and lets the user recall any past lock-on with a
@@ -26,6 +29,7 @@ class CollectedStations extends StatefulComponent {
     required this.activeStation,
     required this.activeBand,
     required this.isPowered,
+    required this.lang,
     required this.onRecall,
     this.onDelete,
     super.key,
@@ -46,6 +50,10 @@ class CollectedStations extends StatefulComponent {
   /// Whole row fades out when the radio is off - collected stations
   /// don't make sense as a backlit readout when the panel is dark.
   final bool isPowered;
+
+  /// Language of the visible UI, so the accessible names on the rack
+  /// are spoken in the same language as everything around them.
+  final Lang lang;
 
   /// Fired when the user taps a pill. Parent is responsible for band
   /// switching + tuning.
@@ -139,7 +147,10 @@ class CollectedStationsState extends State<CollectedStations> {
       // `role="group"` rather than a bare labelled div: `aria-label` is
       // prohibited on an element with no role, and this genuinely is a
       // group - a rack of preset buttons that belong together.
-      attributes: const {'role': 'group', 'aria-label': 'Saved stations'},
+      attributes: {
+        'role': 'group',
+        'aria-label': component.lang == Lang.es ? 'Estaciones guardadas' : 'Saved stations',
+      },
       [
         if (fmStations.isNotEmpty) _buildBandRow(Band.fm, fmStations),
         if (amStations.isNotEmpty) _buildBandRow(Band.am, amStations),
@@ -203,9 +214,11 @@ class CollectedStationsState extends State<CollectedStations> {
       attributes: {
         'role': 'button',
         'tabindex': '0',
-        'aria-label':
-            'Tune to ${s.callSign}, ${s.band.name.toUpperCase()} $freqLabel $unit. '
-            'Press and hold to clear.',
+        'aria-label': component.lang == Lang.es
+            ? 'Sintonizar ${s.callSign}, ${s.band.name.toUpperCase()} $freqLabel $unit. '
+                  'Mantén pulsado para borrar.'
+            : 'Tune to ${s.callSign}, ${s.band.name.toUpperCase()} $freqLabel $unit. '
+                  'Press and hold to clear.',
       },
       [
         span(classes: 'collected-call', [Component.text(s.callSign)]),

@@ -34,8 +34,14 @@ double _clientY(web.PointerEvent pe) => _DoublePointer(pe).clientY;
 
 // Amber-LED palette - warm Pioneer/Kenwood segment colour. Matches the
 // text-shadow values below; change both together or the glow goes off.
+//
+// The dim shade was #6d4a0e, which measured 2.5:1 on the recessed chip
+// background - below even the 3:1 large-text floor for the band pills
+// and preset call signs it labels. #a4711b keeps the same hue at 4.7:1
+// while staying clearly duller than the lit #E8A035, so the lit/unlit
+// hierarchy survives. Kept in sync with collected_stations.dart.
 const String _lcdAmber = '#E8A035';
-const String _lcdAmberDim = '#6d4a0e';
+const String _lcdAmberDim = '#a4711b';
 
 /// The radio dial panel fixed to the bottom of the screen.
 ///
@@ -668,7 +674,11 @@ class RadioDialState extends State<RadioDial> {
               },
               attributes: {
                 'role': 'switch',
-                'aria-label': 'Power',
+                // Like every accessible name on the panel, spoken in the
+                // language the visible UI is currently in - an English
+                // label inside a Spanish page forces bilingual screen
+                // reader users to switch synthesis mid-sentence.
+                'aria-label': component.lang == Lang.es ? 'Encendido' : 'Power',
                 'aria-checked': powered ? 'true' : 'false',
                 // The way into the entire experience. It was reachable
                 // by pointer only, so a keyboard-only visitor could not
@@ -715,6 +725,7 @@ class RadioDialState extends State<RadioDial> {
           activeStation: component.activeStation,
           activeBand: component.band,
           isPowered: component.isPowered,
+          lang: component.lang,
           onRecall: component.onRecallStation ?? (_) {},
           onDelete: component.onDeleteStation,
         ),
@@ -737,7 +748,7 @@ class RadioDialState extends State<RadioDial> {
               attributes: {
                 'role': 'slider',
                 'tabindex': powered ? '0' : '-1',
-                'aria-label': 'Volume',
+                'aria-label': component.lang == Lang.es ? 'Volumen' : 'Volume',
                 'aria-valuemin': '0',
                 'aria-valuemax': '100',
                 'aria-valuenow': (component.volume * 100).round().toString(),
@@ -804,7 +815,11 @@ class RadioDialState extends State<RadioDial> {
               // than displacing them, so the readout never jumps.
               if (_lockFlash)
                 div(classes: 'lcd-lock-flash', [
-                  Component.text('SIGNAL LOCKED'),
+                  // Same 13 characters in both languages, so the plate
+                  // sits identically over the digits either way.
+                  Component.text(
+                    component.lang == Lang.es ? 'SEÑAL CAPTADA' : 'SIGNAL LOCKED',
+                  ),
                 ]),
             ],
           ),
@@ -828,7 +843,7 @@ class RadioDialState extends State<RadioDial> {
                 // no band.
                 'role': 'slider',
                 'tabindex': powered ? '0' : '-1',
-                'aria-label': 'Tuning dial',
+                'aria-label': component.lang == Lang.es ? 'Dial de sintonía' : 'Tuning dial',
                 'aria-valuemin': _cfg.minFreq.toString(),
                 'aria-valuemax': _cfg.maxFreq.toString(),
                 'aria-valuenow': _freq.toString(),
@@ -986,7 +1001,9 @@ class RadioDialState extends State<RadioDial> {
           : const {},
       attributes: {
         'role': 'button',
-        'aria-label': 'Switch to ${band.name.toUpperCase()} band',
+        'aria-label': component.lang == Lang.es
+            ? 'Cambiar a la banda ${band.name.toUpperCase()}'
+            : 'Switch to ${band.name.toUpperCase()} band',
         'aria-pressed': active ? 'true' : 'false',
         if (clickable) 'tabindex': '0',
       },
@@ -1010,7 +1027,9 @@ class RadioDialState extends State<RadioDial> {
         'role': 'button',
         // Leads with the visible "MEM" so voice control can reach it by
         // the word on the button (WCAG 2.5.3).
-        'aria-label': armed ? 'MEM - save current station' : 'MEM - no station available to save',
+        'aria-label': component.lang == Lang.es
+            ? (armed ? 'MEM - guardar la estación actual' : 'MEM - ninguna estación para guardar')
+            : (armed ? 'MEM - save current station' : 'MEM - no station available to save'),
         'aria-disabled': armed ? 'false' : 'true',
         if (armed) 'tabindex': '0',
       },
@@ -1862,9 +1881,13 @@ class RadioDialState extends State<RadioDial> {
     // Tracking drops to 0.04em with it. A segment face already carries
     // its own cell spacing, and the 0.08em tuned for Orbitron pushed the
     // digits apart into separate objects.
+    // Ink colour: was #2a1f10, which sat at 3.0:1 against the unlocked
+    // backlight - the exact AA floor for large text, with no margin.
+    // #171004 reads the same aged brown-black but measures 3.5:1
+    // unlocked (and the locked shade below 4.4:1 on its brighter lamp).
     css('.lcd-value').styles(
       position: Position.relative(),
-      color: const Color('#2a1f10'),
+      color: const Color('#171004'),
       fontFamily: const FontFamily.list([
         FontFamily('DSEG7 Classic'),
         FontFamily('Chakra Petch'),
@@ -1879,7 +1902,7 @@ class RadioDialState extends State<RadioDial> {
       },
     ),
     css('.lcd-locked .lcd-value').styles(
-      color: const Color('#1f1608'),
+      color: const Color('#120c03'),
       raw: {'text-shadow': '0 1px 0 rgba(0,0,0,0.18)'},
     ),
 

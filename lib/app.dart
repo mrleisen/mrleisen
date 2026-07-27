@@ -392,8 +392,8 @@ class AppState extends State<App> {
   ///   M              save the locked station
   ///   1-9            recall the Nth saved preset
   ///
-  /// The letter and digit shortcuts do nothing while the radio is off:
-  /// silently changing band or writing a preset behind a dark screen
+  /// Every shortcut does nothing while the radio is off: silently
+  /// tuning, changing band or writing a preset behind a dark screen
   /// would be invisible, and the only meaningful action in that state is
   /// switching it on - which belongs to the focused power control, not
   /// to a global key.
@@ -417,6 +417,11 @@ class AppState extends State<App> {
       return;
     }
 
+    // Ahead of the arrow branch, not after it: an arrow press with the
+    // panel dark used to retune behind the opaque CRT overlay and -
+    // via `_tune` - retire the tune hint before it had ever been shown.
+    if (!_isPowered) return;
+
     final step = configFor(_band).step;
 
     if (ke.key == 'ArrowRight' || ke.key == 'ArrowLeft') {
@@ -427,8 +432,6 @@ class AppState extends State<App> {
       _tune(_frequency + (ke.key == 'ArrowRight' ? magnitude : -magnitude));
       return;
     }
-
-    if (!_isPowered) return;
 
     switch (ke.key.toLowerCase()) {
       case 'b':
@@ -453,6 +456,11 @@ class AppState extends State<App> {
   }
 
   void _onWheel(web.Event event) {
+    // Same rule as the keyboard shortcuts: wheel-to-tune is a
+    // powered-on affordance. Without this guard a scroll before the
+    // power switch was found retuned invisibly and retired the tune
+    // hint for good.
+    if (!_isPowered) return;
     // Only handle wheel at document level when NOT over the radio panel
     // (the panel has its own wheel handler that calls preventDefault).
     final we = event as web.WheelEvent;
@@ -514,8 +522,9 @@ class AppState extends State<App> {
     // The dial actually moved, so the visitor has worked out the core
     // gesture. Retire the tune hint for good. Guarded on a real change
     // rather than on `_markTuning`, which also fires for a click that
-    // goes nowhere.
-    _markOnboarded('tune');
+    // goes nowhere - and on power, so a programmatic or stray tune with
+    // the panel dark can never spend the hint unseen.
+    if (_isPowered) _markOnboarded('tune');
 
     setState(() {
       if (_band == Band.fm) {
@@ -787,11 +796,14 @@ class AppState extends State<App> {
         es ? 'Cero en runtime' : 'Zero at runtime',
       ),
       // Re-measure these against build/jaspr whenever the bundle moves;
-      // they drifted once already when a font was added.
+      // they drifted once already when a font was added, and once more
+      // when the figure quoted main.client.dart.js alone - dart2js also
+      // emits a deferred `*.part.js` holding the whole app, and the
+      // loader fetches it on every visit, so both files count.
       //   cat build/jaspr/*.js | wc -c        -> raw
       //   cat build/jaspr/*.js | gzip -9 | wc -c -> gzip
       //   du -ch build/jaspr/fonts/*.woff2    -> fonts
-      (es ? 'JAVASCRIPT' : 'JAVASCRIPT', '143 KB · 45 KB gzip'),
+      (es ? 'JAVASCRIPT' : 'JAVASCRIPT', '231 KB · 77 KB gzip'),
       (
         es ? 'TIPOGRAFÍAS' : 'TYPEFACES',
         es ? '72 KB · 4 familias, subset latino' : '72 KB · 4 families, latin subset',
