@@ -14,7 +14,15 @@ void main() {
 
   runApp(
     Document(
-      title: 'rchf',
+      // Crawlers and the browser tab both read this before any hydration
+      // happens, so it carries the real identity rather than the model
+      // number. `AppState` layers the tuned station on top once the
+      // client takes over.
+      title: 'Rafael Camargo - Software Engineer',
+      // Base document language. The ES/EN toggle overrides this at
+      // runtime via `Document.html`, but the served HTML has to declare
+      // something or a screen reader picks its voice by guesswork.
+      lang: 'en',
       styles: [
         // Global reset
         css('*, *::before, *::after').styles(
@@ -497,6 +505,10 @@ void main() {
         ]),
       ],
       head: [
+        // Single canonical URL. GitHub Pages also answers on
+        // mrleisen.github.io, so without this the two hostnames compete
+        // as duplicates.
+        link(rel: 'canonical', href: 'https://rafahcf.com/'),
         link(rel: 'manifest', href: 'manifest.json'),
         // SVG favicon (modern browsers) + .ico fallback for legacy clients.
         link(rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg'),
@@ -543,6 +555,26 @@ void main() {
               'Software engineer with 10+ years of experience. I build things - like this. An interactive radio-frequency experience, built entirely in Dart using the Jaspr framework. No JavaScript. No external libraries.',
         ),
         meta(name: 'twitter:image', content: 'https://rafahcf.com/og-image.png'),
+        // Structured data. The page is one interactive canvas with no
+        // crawlable prose beyond the station panels, so an explicit
+        // Person graph is the only way search engines learn who this is
+        // and which profiles belong to the same person.
+        script(
+          attributes: {'type': 'application/ld+json'},
+          content:
+              '{'
+              '"@context":"https://schema.org",'
+              '"@type":"Person",'
+              '"name":"Rafael Camargo",'
+              '"jobTitle":"Software Engineer",'
+              '"url":"https://rafahcf.com/",'
+              '"sameAs":['
+              '"https://github.com/mrleisen",'
+              '"https://www.linkedin.com/in/rafael-c-a6132982/",'
+              '"https://www.youtube.com/@InThisNewWorld",'
+              '"https://www.instagram.com/tropelorio"'
+              ']}',
+        ),
       ],
       body: App(),
     ),

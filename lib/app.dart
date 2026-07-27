@@ -350,6 +350,29 @@ class AppState extends State<App> {
     _markTuning();
   }
 
+  // --- document metadata ---
+
+  /// The single `<h1>` for the document, translated with the UI.
+  ///
+  /// Deliberately not the station panel titles: six of those are in the
+  /// DOM at once (hidden ones sit at `visibility: hidden` so switching
+  /// stations never reflows), so promoting them would emit six competing
+  /// headings. They stay `<h2>`, nested under this.
+  String get _pageHeading =>
+      _lang == Lang.es ? 'Rafael Camargo - Ingeniero de Software' : 'Rafael Camargo - Software Engineer';
+
+  /// Tab title. Falls back to the identity line whenever the dial isn't
+  /// sitting on a station, so a bookmark taken from dead air still says
+  /// something useful.
+  String get _documentTitle {
+    final s = _activeStation;
+    if (!_isPowered || s == null) return _pageHeading;
+    final unit = s.band == Band.fm ? 'MHz' : 'kHz';
+    final freq = s.band == Band.fm ? s.frequency.toStringAsFixed(1) : s.frequency.toInt().toString();
+    return '${s.band.name.toUpperCase()} $freq $unit ${s.callSign} '
+        '- Rafael Camargo';
+  }
+
   // --- build ---
 
   @override
@@ -389,6 +412,24 @@ class AppState extends State<App> {
     };
 
     return div(classes: rootClass, [
+      // Keeps <html lang> honest as the user flips ES/EN. Without it a
+      // screen reader keeps reading Spanish copy with an English voice,
+      // which ranges from comic to unintelligible.
+      Document.html(attributes: {'lang': _lang == Lang.es ? 'es' : 'en'}),
+
+      // The tab title follows the dial. Idle it stays the identity line
+      // that the server rendered; locked onto a station it reports what
+      // the receiver is actually carrying, the way a tuner's display
+      // would. Only the SSR title matters for crawlers, so this is pure
+      // flourish and can't hurt indexing.
+      Document.head(title: _documentTitle),
+
+      // The document needs exactly one h1, and this page has no visible
+      // prose to promote - the "hero" is a faceplate. So the heading is
+      // real, translated and screen-reader visible, but clipped out of
+      // the visual layout rather than styled to look like nothing.
+      h1(classes: 'visually-hidden', [Component.text(_pageHeading)]),
+
       // Audio engine (renders no visible DOM).
       RadioAudio(
         frequency: _frequency,
@@ -556,6 +597,24 @@ class AppState extends State<App> {
 
   @css
   static List<StyleRule> get styles => [
+    // Removes an element from the visual layout while leaving it in the
+    // accessibility tree. `display: none` and `visibility: hidden` would
+    // both hide it from screen readers too, which defeats the point of
+    // having a heading at all.
+    css('.visually-hidden').styles(
+      position: Position.absolute(),
+      width: 1.px,
+      height: 1.px,
+      overflow: Overflow.hidden,
+      margin: Margin.all((-1).px),
+      padding: Padding.all(Unit.zero),
+      raw: {
+        'clip': 'rect(0, 0, 0, 0)',
+        'clip-path': 'inset(50%)',
+        'white-space': 'nowrap',
+        'border': '0',
+      },
+    ),
     css('.signal-app').styles(
       position: Position.relative(),
       width: 100.percent,
