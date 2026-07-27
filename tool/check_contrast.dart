@@ -123,6 +123,13 @@ void main() {
   check('.power-hint', '#c99a4e', px: 11);
   check('.tune-hint', '#d9c9a4', px: 11);
 
+  section('Transmission data block');
+  check('.tx-key', '#938d81', px: 11);
+  // Value colour is mixed from the station colour, so the darkest
+  // station is the worst case.
+  check('.tx-val (AWS, darkest)', mix('#E05050', '#d8d2c4', 0.45), px: 11);
+  check('.tx-val (NUM, brightest)', mix('#5BC8A0', '#d8d2c4', 0.45), px: 11);
+
   section('MEM preset rack');
   // Sits on the LCD-style pill face (#0d0b08-ish), close enough to page
   // black that checking against `bg` is the conservative reading.
