@@ -53,6 +53,66 @@ void main() {
         // bottom, so with the bar visible the panel's lower edge - the
         // power switch, the knobs - sits underneath it.
         css('html, body').styles(raw: {'height': '100dvh'}),
+
+        // ── material system ──
+        //
+        // Three decisions that every surface in the piece now answers to.
+        // Before this they were each made locally, which is why the
+        // hardware read as a good drawing rather than as an object: a
+        // drawing can have light coming from four directions at once and
+        // nothing complains.
+        //
+        // **1. One light source: upper left.**
+        // The convention, applied everywhere:
+        //   - raised things carry their highlight on the top-left inner
+        //     edge (`inset 1px 1px …` in white) and their shade on the
+        //     bottom-right (`inset -1px -1px …` in black);
+        //   - recessed things carry exactly the inverse, because the rim
+        //     nearest the lamp is what casts into the well;
+        //   - crisp cast shadows are *directional* and fall down-right
+        //     (`2px 4px …`); big soft ones are ambient occlusion and stay
+        //     centred, since ambient light has no direction to obey;
+        //   - engraved type is dark up-left, lit down-right. Raised type
+        //     is the reverse.
+        // The knob caps were already lit from 38%/32% and the dial slit
+        // already had black top/left borders against grey bottom/right,
+        // so upper-left was the direction the piece was half-committed to
+        // already. This finishes the commitment instead of picking a new
+        // one.
+        //
+        // **2. Spacing scale: 4 / 8 / 12 / 16 / 24.**
+        // Layout gaps and padding snap to it. Bevel geometry (1px, 2px,
+        // 3px hairlines, borders, insets) is exempt: those are material
+        // thickness, not spacing, and rounding a 1px bevel to 4px would
+        // destroy the thing the scale is meant to tidy. The plan proposed
+        // 18 rather than 16 for the fourth step; 16 is what most of the
+        // existing values already sat on, so it wins on churn.
+        //
+        // **3. Motion speed follows material.**
+        // Everything used to move at some flavour of `ease` between 0.15s
+        // and 0.6s, which is why pressing a plastic button and watching a
+        // lamp come up felt like the same event. Now:
+        //   - plastic snaps and settles, fast, with a slight ease-out
+        //     overshoot in the curve;
+        //   - metal is rigid: no overshoot at all, symmetric;
+        //   - phosphor and LEDs have persistence, so they are deliberately
+        //     *asymmetric* - a lamp reaches full brightness almost
+        //     instantly and then takes half a second to die. Attack lives
+        //     on the lit rule, decay on the base rule, which is how CSS
+        //     transitions already work.
+        //   - the LCD backlight is a lamp warming, slower than either.
+        css(':root').styles(
+          raw: {
+            '--ease-plastic': 'cubic-bezier(0.2, 0.85, 0.3, 1)',
+            '--dur-plastic': '0.12s',
+            '--ease-metal': 'cubic-bezier(0.4, 0, 0.5, 1)',
+            '--dur-metal': '0.2s',
+            '--ease-phosphor': 'cubic-bezier(0.05, 0.8, 0.2, 1)',
+            '--dur-glow-on': '0.09s',
+            '--dur-glow-off': '0.45s',
+            '--dur-lamp': '0.4s',
+          },
+        ),
         // Keyframe: fine-grain layer translation (very rapid step jumps).
         css.keyframes('tv-grain-shift', {
           '0%': Styles(
@@ -284,28 +344,28 @@ void main() {
             raw: {
               'box-shadow':
                   '0 0 0 0 rgba(232,160,53,0.0), '
-                  'inset 0 1px 1px rgba(0,0,0,0.6)',
+                  'inset 1px 1px 1px rgba(0,0,0,0.6)',
             },
           ),
           '20%': Styles(
             raw: {
               'box-shadow':
                   '0 0 8px 2px rgba(232,160,53,0.65), '
-                  'inset 0 1px 1px rgba(0,0,0,0.6)',
+                  'inset 1px 1px 1px rgba(0,0,0,0.6)',
             },
           ),
           '60%': Styles(
             raw: {
               'box-shadow':
                   '0 0 14px 4px rgba(232,160,53,0.35), '
-                  'inset 0 1px 1px rgba(0,0,0,0.6)',
+                  'inset 1px 1px 1px rgba(0,0,0,0.6)',
             },
           ),
           '100%': Styles(
             raw: {
               'box-shadow':
                   '0 0 0 0 rgba(232,160,53,0.0), '
-                  'inset 0 1px 1px rgba(0,0,0,0.6)',
+                  'inset 1px 1px 1px rgba(0,0,0,0.6)',
             },
           ),
         }),
@@ -356,8 +416,8 @@ void main() {
           '0%, 100%': Styles(
             raw: {
               'box-shadow':
-                  'inset 0 1px 3px rgba(0,0,0,0.75), '
-                  '0 1px 0 rgba(255,255,255,0.05), '
+                  'inset 2px 2px 3px rgba(0,0,0,0.75), '
+                  'inset -1px -1px 0 rgba(255,255,255,0.05), '
                   '0 0 0 0 rgba(232,160,53,0.0)',
               'border-color': 'rgba(255,255,255,0.12)',
             },
@@ -365,8 +425,8 @@ void main() {
           '50%': Styles(
             raw: {
               'box-shadow':
-                  'inset 0 1px 3px rgba(0,0,0,0.75), '
-                  '0 1px 0 rgba(255,255,255,0.05), '
+                  'inset 2px 2px 3px rgba(0,0,0,0.75), '
+                  'inset -1px -1px 0 rgba(255,255,255,0.05), '
                   '0 0 9px 2px rgba(232,160,53,0.42)',
               'border-color': 'rgba(232,160,53,0.55)',
             },
@@ -576,7 +636,7 @@ void main() {
           '.ind:focus-visible, '
           '.collected-pill:focus-visible, '
           '.pill:focus-visible, '
-          '.tech-close:focus-visible',
+          '.rx-close:focus-visible',
         ).styles(
           raw: {
             'outline': '2px solid rgba(232,160,53,0.9)',
@@ -595,7 +655,7 @@ void main() {
           '.ind:focus:not(:focus-visible), '
           '.collected-pill:focus:not(:focus-visible), '
           '.pill:focus:not(:focus-visible), '
-          '.tech-close:focus:not(:focus-visible)',
+          '.rx-close:focus:not(:focus-visible)',
         ).styles(raw: {'outline': 'none'}),
 
         // ── Reduced motion ──
@@ -648,8 +708,8 @@ void main() {
           css('.power-rocker.power-attract').styles(
             raw: {
               'box-shadow':
-                  'inset 0 1px 3px rgba(0,0,0,0.75), '
-                  '0 1px 0 rgba(255,255,255,0.05), '
+                  'inset 2px 2px 3px rgba(0,0,0,0.75), '
+                  'inset -1px -1px 0 rgba(255,255,255,0.05), '
                   '0 0 9px 2px rgba(232,160,53,0.42)',
               'border-color': 'rgba(232,160,53,0.55)',
             },

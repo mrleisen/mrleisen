@@ -5,6 +5,7 @@ import 'package:jaspr/jaspr.dart';
 import 'package:universal_web/js_interop.dart';
 import 'package:universal_web/web.dart' as web;
 
+import 'components/case_study.dart';
 import 'components/phosphor_mask.dart';
 import 'components/radio_audio.dart';
 import 'components/radio_dial.dart';
@@ -130,18 +131,23 @@ class AppState extends State<App> {
   // height. See [_observePanelHeight].
   web.ResizeObserver? _panelObserver;
 
-  // Technical-transmission dialog, opened from the WHO station.
+  // Long-form panels the receiver can print, or null when none is open.
   //
-  // The "how was this built" story is the strongest thing this site has
-  // going for a technical jury, and until now it lived only in the
-  // GitHub README - somewhere a judge is never going to click through
-  // to. This puts it one press away without leaving the receiver.
-  bool _techOpen = false;
+  //   'tech' → how this site was built, opened from WHO
+  //   'case' → the DeTodoUIS extended transmission, opened from DTU
+  //
+  // Both are the same object with different contents, so they share one
+  // piece of state, one id, one focus trap and one Escape handler. A
+  // second parallel set of all of that is how the two would drift apart.
+  String? _openDialog;
 
-  /// Id of the control that opened the dialog, so focus can be handed
-  /// back to exactly where it came from on close.
+  /// Id of the control that opened the current dialog, so focus goes back
+  /// to exactly where it came from on close.
+  String? _dialogTriggerId;
+
   static const String _techTriggerId = 'tech-trigger';
-  static const String _techDialogId = 'tech-dialog';
+  static const String _caseTriggerId = 'case-trigger';
+  static const String _dialogId = 'rx-dialog';
 
   @override
   void initState() {
@@ -314,13 +320,13 @@ class AppState extends State<App> {
     // friends belong to the user agent, not to us.
     if (ke.ctrlKey || ke.metaKey || ke.altKey) return;
 
-    // While the technical dialog is up it owns the keyboard: Escape
-    // closes it, Tab cycles inside it, and nothing reaches the dial
-    // behind it. A modal you can tune through is not a modal.
-    if (_techOpen) {
+    // While a printout is up it owns the keyboard: Escape closes it, Tab
+    // cycles inside it, and nothing reaches the dial behind it. A modal
+    // you can tune through is not a modal.
+    if (_openDialog != null) {
       if (ke.key == 'Escape') {
         ke.preventDefault();
-        _closeTech();
+        _closeDialog();
       } else if (ke.key == 'Tab') {
         _trapTabInDialog(ke);
       }
@@ -674,39 +680,39 @@ class AppState extends State<App> {
               'framework ships to the browser.';
 
     return div(
-      classes: 'tech-overlay',
+      classes: 'rx-overlay',
       events: {
         // Backdrop press closes. Guarded on the target being the
         // backdrop itself so a press inside the panel doesn't dismiss it.
         'click': (web.Event e) {
           final t = e.target;
-          if (t is web.Element && t.classList.contains('tech-overlay')) {
-            _closeTech();
+          if (t is web.Element && t.classList.contains('rx-overlay')) {
+            _closeDialog();
           }
         },
       },
       [
         div(
-          classes: 'tech-panel',
+          classes: 'rx-panel',
           attributes: {
-            'id': _techDialogId,
+            'id': _dialogId,
             'role': 'dialog',
             'aria-modal': 'true',
             'aria-labelledby': 'tech-title',
             'tabindex': '-1',
           },
           [
-            div(classes: 'tech-head', [
-              div(classes: 'tech-label', [
+            div(classes: 'rx-head', [
+              div(classes: 'rx-label', [
                 Component.text(
                   es ? 'TRANSMISIÓN TÉCNICA' : 'TECHNICAL TRANSMISSION',
                 ),
               ]),
               div(
-                classes: 'tech-close',
+                classes: 'rx-close',
                 events: {
-                  'click': (_) => _closeTech(),
-                  'keydown': onActivateKey((_) => _closeTech()),
+                  'click': (_) => _closeDialog(),
+                  'keydown': onActivateKey((_) => _closeDialog()),
                 },
                 attributes: {
                   'role': 'button',
@@ -716,18 +722,18 @@ class AppState extends State<App> {
                 [Component.text('×')],
               ),
             ]),
-            h2(classes: 'tech-title', id: 'tech-title', [
+            h2(classes: 'rx-title', id: 'tech-title', [
               Component.text(es ? 'Cómo está hecho' : 'How this was built'),
             ]),
-            p(classes: 'tech-body', [Component.text(intro)]),
-            div(classes: 'tech-data', [
+            p(classes: 'rx-body', [Component.text(intro)]),
+            div(classes: 'rx-data', [
               for (final (k, v) in rows) ...[
-                div(classes: 'tech-key', [Component.text(k)]),
-                div(classes: 'tech-val', [Component.text(v)]),
+                div(classes: 'rx-key', [Component.text(k)]),
+                div(classes: 'rx-val', [Component.text(v)]),
               ],
             ]),
-            p(classes: 'tech-body', [Component.text(outro)]),
-            div(classes: 'tech-hint', [
+            p(classes: 'rx-body', [Component.text(outro)]),
+            div(classes: 'rx-hint', [
               Component.text(es ? 'ESC para cerrar' : 'ESC to close'),
             ]),
           ],
@@ -959,15 +965,23 @@ class AppState extends State<App> {
         band: _band,
         lang: _lang,
         isPowered: _isPowered,
-        onOpenTech: _openTech,
+        onOpenTech: () => _openDialogFor('tech', _techTriggerId),
         techTriggerId: _techTriggerId,
+        onOpenCase: () => _openDialogFor('case', _caseTriggerId),
+        caseTriggerId: _caseTriggerId,
       ),
 
-      // Technical transmission. Sits above every content layer but below
-      // the faceplate, so the receiver stays visible around it - the
+      // Long-form printouts. They sit above every content layer but below
+      // the faceplate, so the receiver stays visible around them - each
       // panel reads as something the radio decoded, not as a web modal
       // that took over the page.
-      if (_techOpen) _techDialog(),
+      if (_openDialog == 'tech') _techDialog(),
+      if (_openDialog == 'case')
+        CaseStudyDialog(
+          lang: _lang,
+          dialogId: _dialogId,
+          onClose: _closeDialog,
+        ),
 
       // Radio dial. The collected-stations row is rendered inside
       // the faceplate (between header and main row), so its data is
@@ -1017,7 +1031,7 @@ class AppState extends State<App> {
   /// reach - which is worse than no keyboard support, because it looks
   /// like the page has broken.
   void _trapTabInDialog(web.KeyboardEvent ke) {
-    final dialog = web.document.querySelector('#$_techDialogId');
+    final dialog = web.document.querySelector('#$_dialogId');
     if (dialog == null) return;
     final nodes = dialog.querySelectorAll(
       'a[href], button, [tabindex]:not([tabindex="-1"])',
@@ -1041,29 +1055,38 @@ class AppState extends State<App> {
     }
   }
 
-  void _openTech() {
-    if (_techOpen) return;
-    setState(() => _techOpen = true);
+  /// Opens one of the long-form printouts and remembers which control
+  /// asked for it.
+  void _openDialogFor(String kind, String triggerId) {
+    if (_openDialog != null) return;
+    setState(() {
+      _openDialog = kind;
+      _dialogTriggerId = triggerId;
+    });
     if (!kIsWeb) return;
     // Move focus into the dialog once it exists, otherwise a keyboard
     // user opens a panel and their focus stays behind it on the page.
     Timer(Duration.zero, () {
       if (!mounted) return;
-      final el = web.document.querySelector('#$_techDialogId');
+      final el = web.document.querySelector('#$_dialogId');
       if (el is web.HTMLElement) el.focus();
     });
   }
 
-  void _closeTech() {
-    if (!_techOpen) return;
-    setState(() => _techOpen = false);
-    if (!kIsWeb) return;
+  void _closeDialog() {
+    if (_openDialog == null) return;
+    final trigger = _dialogTriggerId;
+    setState(() {
+      _openDialog = null;
+      _dialogTriggerId = null;
+    });
+    if (!kIsWeb || trigger == null) return;
     // Hand focus back to the control that opened it. Dropping focus to
     // the top of the document instead would make a keyboard user tab
     // all the way back to where they were.
     Timer(Duration.zero, () {
       if (!mounted) return;
-      final el = web.document.querySelector('#$_techTriggerId');
+      final el = web.document.querySelector('#$trigger');
       if (el is web.HTMLElement) el.focus();
     });
   }
@@ -1197,7 +1220,7 @@ class AppState extends State<App> {
     // on a grey scrim: it is a printout the receiver produced, so it
     // gets the same dark plastic, hairline borders and instrument
     // microtype as the rest of the hardware.
-    css('.tech-overlay').styles(
+    css('.rx-overlay').styles(
       position: Position.fixed(
         top: Unit.zero,
         left: Unit.zero,
@@ -1218,29 +1241,35 @@ class AppState extends State<App> {
         'animation': 'hint-fade-in 0.2s ease-out both',
       },
     ),
-    css('.tech-panel').styles(
+    css('.rx-panel').styles(
       position: Position.relative(),
       width: 100.percent,
       maxWidth: 560.px,
       maxHeight: Unit.expression('calc(100% - 40px)'),
       overflow: Overflow.auto,
-      padding: Padding.symmetric(horizontal: 26.px, vertical: 22.px),
+      padding: Padding.symmetric(horizontal: 24.px, vertical: 24.px),
       raw: {
-        'background': 'linear-gradient(180deg, #101016 0%, #0a0a10 100%)',
+        'background': 'linear-gradient(160deg, #111118 0%, #0a0a10 100%)',
         'border': '1px solid rgba(255,255,255,0.10)',
         'border-radius': '4px',
-        'box-shadow': 'inset 0 1px 0 rgba(255,255,255,0.06), 0 20px 60px rgba(0,0,0,0.7)',
+        // Lit top-left edge, shaded bottom-right, and a large mostly
+        // ambient shadow with just enough offset to say which way it is
+        // leaning.
+        'box-shadow':
+            'inset 1px 1px 0 rgba(255,255,255,0.07), '
+            'inset -1px -1px 0 rgba(0,0,0,0.5), '
+            '4px 20px 60px rgba(0,0,0,0.7)',
         'outline': 'none',
       },
     ),
-    css('.tech-head').styles(
+    css('.rx-head').styles(
       display: Display.flex,
       flexDirection: FlexDirection.row,
       alignItems: AlignItems.center,
       justifyContent: JustifyContent.spaceBetween,
       raw: {'margin-bottom': '10px'},
     ),
-    css('.tech-label').styles(
+    css('.rx-label').styles(
       fontFamily: const FontFamily.list([
         FontFamily('IBM Plex Mono'),
         FontFamilies.monospace,
@@ -1251,7 +1280,7 @@ class AppState extends State<App> {
       textTransform: TextTransform.upperCase,
       color: const Color('#d3a35a'),
     ),
-    css('.tech-close', [
+    css('.rx-close', [
       css('&').styles(
         width: 32.px,
         height: 32.px,
@@ -1266,7 +1295,9 @@ class AppState extends State<App> {
           'line-height': '1',
           'border': '1px solid rgba(255,255,255,0.10)',
           'background': 'rgba(255,255,255,0.03)',
-          'transition': 'color 0.15s ease, border-color 0.15s ease',
+          'transition':
+              'color var(--dur-plastic) var(--ease-plastic), '
+              'border-color var(--dur-plastic) var(--ease-plastic)',
           'flex-shrink': '0',
         },
       ),
@@ -1275,7 +1306,7 @@ class AppState extends State<App> {
         raw: {'border-color': 'rgba(255,255,255,0.28)'},
       ),
     ]),
-    css('.tech-title').styles(
+    css('.rx-title').styles(
       fontFamily: const FontFamily.list([
         FontFamily('Space Grotesk'),
         FontFamilies.sansSerif,
@@ -1290,7 +1321,7 @@ class AppState extends State<App> {
         'text-shadow': '0 0 8px rgba(232,160,53,0.28)',
       },
     ),
-    css('.tech-body').styles(
+    css('.rx-body').styles(
       fontFamily: const FontFamily.list([
         FontFamily('IBM Plex Mono'),
         FontFamilies.monospace,
@@ -1299,7 +1330,7 @@ class AppState extends State<App> {
       color: const Color('#9c9174'),
       raw: {'line-height': '1.6', 'margin': '0 0 16px'},
     ),
-    css('.tech-data').styles(
+    css('.rx-data').styles(
       display: Display.grid,
       gap: Gap(row: 6.px, column: 16.px),
       raw: {
@@ -1310,7 +1341,7 @@ class AppState extends State<App> {
         'border-bottom': '1px solid rgba(255,255,255,0.07)',
       },
     ),
-    css('.tech-key').styles(
+    css('.rx-key').styles(
       fontFamily: const FontFamily.list([
         FontFamily('IBM Plex Mono'),
         FontFamilies.monospace,
@@ -1321,7 +1352,7 @@ class AppState extends State<App> {
       color: const Color('#938d81'),
       raw: {'line-height': '1.45', 'white-space': 'nowrap'},
     ),
-    css('.tech-val').styles(
+    css('.rx-val').styles(
       fontFamily: const FontFamily.list([
         FontFamily('IBM Plex Mono'),
         FontFamilies.monospace,
@@ -1331,7 +1362,7 @@ class AppState extends State<App> {
       color: const Color('#d8c9a4'),
       raw: {'line-height': '1.45'},
     ),
-    css('.tech-hint').styles(
+    css('.rx-hint').styles(
       fontFamily: const FontFamily.list([
         FontFamily('IBM Plex Mono'),
         FontFamilies.monospace,
@@ -1339,14 +1370,19 @@ class AppState extends State<App> {
       fontSize: Unit.pixels(11),
       letterSpacing: 0.3.em,
       textTransform: TextTransform.upperCase,
-      color: const Color('#7a7a84'),
+      // Was #7a7a84, which measured 4.46:1 against the old panel and 4.43
+      // once the panel's top edge was lifted for the light source: under
+      // AA either way, and it had simply never been measured. This is the
+      // only place the keyboard affordance is stated, so it holds the
+      // floor at 4.94:1.
+      color: const Color('#82828c'),
       textAlign: TextAlign.right,
     ),
     css.media(MediaQuery.screen(maxWidth: 600.px), [
-      css('.tech-panel').styles(
+      css('.rx-panel').styles(
         padding: Padding.symmetric(horizontal: 18.px, vertical: 18.px),
       ),
-      css('.tech-label').styles(letterSpacing: 0.2.em),
+      css('.rx-label').styles(letterSpacing: 0.2.em),
     ]),
 
     // Language toggle pill - fixed top-right.
@@ -1398,7 +1434,7 @@ class AppState extends State<App> {
       display: Display.flex,
       flexDirection: FlexDirection.column,
       alignItems: AlignItems.center,
-      gap: Gap(row: 18.px),
+      gap: Gap(row: 16.px),
     ),
 
     // ── dash array ──
@@ -1411,7 +1447,7 @@ class AppState extends State<App> {
       flexDirection: FlexDirection.row,
       alignItems: AlignItems.center,
       justifyContent: JustifyContent.center,
-      gap: Gap(column: 18.px),
+      gap: Gap(column: 16.px),
       raw: {
         'animation': 'dash-drift 6s ease-in-out infinite',
         'color': '#b0b0ba',
@@ -1443,7 +1479,7 @@ class AppState extends State<App> {
       flexDirection: FlexDirection.row,
       alignItems: AlignItems.center,
       justifyContent: JustifyContent.center,
-      gap: Gap(column: 14.px),
+      gap: Gap(column: 12.px),
     ),
     css('.carrier-dot').styles(
       width: 5.px,

@@ -72,8 +72,24 @@ class SignalBars extends StatefulComponent {
       width: 3.px,
       backgroundColor: const Color('#2a2a32'),
       radius: BorderRadius.all(Radius.circular(1.px)),
+      // Decay side. A meter segment goes out slowly, the same way every
+      // other lamp on this receiver does.
       raw: {
-        'transition': 'background 0.25s ease, box-shadow 0.25s ease, opacity 0.25s ease',
+        'transition':
+            'background var(--dur-glow-off) var(--ease-phosphor), '
+            'box-shadow var(--dur-glow-off) var(--ease-phosphor), '
+            'opacity var(--dur-glow-off) var(--ease-phosphor)',
+      },
+    ),
+    // Attack side. Signal arriving should register immediately - this is
+    // the meter that tells you something is out there, and a quarter
+    // second of ramp is long enough to miss while sweeping.
+    css('.signal-bar.is-lit').styles(
+      raw: {
+        'transition':
+            'background var(--dur-glow-on) var(--ease-phosphor), '
+            'box-shadow var(--dur-glow-on) var(--ease-phosphor), '
+            'opacity var(--dur-glow-on) var(--ease-phosphor)',
       },
     ),
     // Scanning state - amber pulse with staggered per-bar delay
