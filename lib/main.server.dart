@@ -525,7 +525,8 @@ void main() {
           '.vol-knob:focus-visible, '
           '.ind:focus-visible, '
           '.collected-pill:focus-visible, '
-          '.pill:focus-visible',
+          '.pill:focus-visible, '
+          '.tech-close:focus-visible',
         ).styles(
           raw: {
             'outline': '2px solid rgba(232,160,53,0.9)',
@@ -543,7 +544,8 @@ void main() {
           '.vol-knob:focus:not(:focus-visible), '
           '.ind:focus:not(:focus-visible), '
           '.collected-pill:focus:not(:focus-visible), '
-          '.pill:focus:not(:focus-visible)',
+          '.pill:focus:not(:focus-visible), '
+          '.tech-close:focus:not(:focus-visible)',
         ).styles(raw: {'outline': 'none'}),
 
         // ── Reduced motion ──

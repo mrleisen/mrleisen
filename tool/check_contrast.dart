@@ -123,6 +123,18 @@ void main() {
   check('.power-hint', '#c99a4e', px: 11);
   check('.tune-hint', '#d9c9a4', px: 11);
 
+  section('Technical transmission dialog');
+  // Panel face is #101016 to #0a0a10, close enough to page black that
+  // measuring against `bg` is the conservative reading.
+  check('.tech-label', '#d3a35a', px: 11);
+  check('.tech-title', '#E8A035', px: 24);
+  check('.tech-body', '#9c9174', px: 13);
+  check('.tech-key', '#938d81', px: 11);
+  check('.tech-val', '#d8c9a4', px: 11);
+  check('.tech-hint', '#7a7a84', px: 11);
+  check('.tech-close', '#9a9aa6', px: 20);
+  check('.pill-action', '#E8A035', px: 11);
+
   section('Transmission data block');
   check('.tx-key', '#938d81', px: 11);
   // Value colour is mixed from the station colour, so the darkest
