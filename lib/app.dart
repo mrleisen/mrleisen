@@ -265,7 +265,7 @@ class AppState extends State<App> {
       if (panel == null) return;
 
       _panelObserver = web.ResizeObserver(
-        ((JSObject _, JSObject __) {
+        ((JSObject _, JSObject _) {
           _measurePanel();
         }).toJS,
       );
@@ -458,14 +458,15 @@ class AppState extends State<App> {
     final we = event as web.WheelEvent;
     // Check if the event target is inside .radio-panel.
     final target = we.target;
-    if (target is web.Element) {
-      if (target.closest('.radio-panel') != null) return; // handled by panel
+    if (target.isA<web.Element>()) {
+      final el = target as web.Element;
+      if (el.closest('.radio-panel') != null) return; // handled by panel
       // Anything the user can actually scroll keeps its wheel. This
       // handler calls preventDefault unconditionally, which meant a wheel
       // over the technical transmission or over a station panel taller
       // than the screen tuned the dial *and* swallowed the scroll, so the
       // long printouts could not be read with a mouse at all.
-      if (_scrollableUnder(target) != null) return;
+      if (_scrollableUnder(el) != null) return;
     }
     we.preventDefault();
     final step = configFor(_band).step;
@@ -828,7 +829,7 @@ class AppState extends State<App> {
         // backdrop itself so a press inside the panel doesn't dismiss it.
         'click': (web.Event e) {
           final t = e.target;
-          if (t is web.Element && t.classList.contains('rx-overlay')) {
+          if (t.isA<web.Element>() && (t as web.Element).classList.contains('rx-overlay')) {
             _closeDialog();
           }
         },
@@ -1203,7 +1204,7 @@ class AppState extends State<App> {
     setState(() {
       _openDialog = kind;
       _dialogTriggerId = triggerId;
-      _dialogStation = owner == null ? null : stations.where((s) => s.callSign == owner).firstOrNull;
+      _dialogStation = owner == null ? null : stations.where((st) => st.callSign == owner).firstOrNull;
     });
     if (!kIsWeb) return;
     // Move focus into the dialog once it exists, otherwise a keyboard
@@ -1211,7 +1212,7 @@ class AppState extends State<App> {
     Timer(Duration.zero, () {
       if (!mounted) return;
       final el = web.document.querySelector('#$_dialogId');
-      if (el is web.HTMLElement) el.focus();
+      if (el.isA<web.HTMLElement>()) (el as web.HTMLElement).focus();
     });
   }
 
@@ -1230,7 +1231,7 @@ class AppState extends State<App> {
     Timer(Duration.zero, () {
       if (!mounted) return;
       final el = web.document.querySelector('#$trigger');
-      if (el is web.HTMLElement) el.focus();
+      if (el.isA<web.HTMLElement>()) (el as web.HTMLElement).focus();
     });
   }
 
@@ -1278,9 +1279,9 @@ class AppState extends State<App> {
       position: Position.absolute(),
       width: 1.px,
       height: 1.px,
-      overflow: Overflow.hidden,
-      margin: Margin.all((-1).px),
       padding: Padding.all(Unit.zero),
+      margin: Margin.all((-1).px),
+      overflow: Overflow.hidden,
       raw: {
         'clip': 'rect(0, 0, 0, 0)',
         'clip-path': 'inset(50%)',
@@ -1335,9 +1336,9 @@ class AppState extends State<App> {
           bottom: Unit.zero,
         ),
         zIndex: ZIndex(5),
+        opacity: 1,
         pointerEvents: PointerEvents.auto,
         backgroundColor: const Color('#000000'),
-        opacity: 1,
       ),
       css('&.crt-animate-on').styles(
         raw: {
@@ -1350,8 +1351,8 @@ class AppState extends State<App> {
         },
       ),
       css('&.crt-on-done').styles(
-        pointerEvents: PointerEvents.none,
         opacity: 0,
+        pointerEvents: PointerEvents.none,
         raw: {'background': 'transparent'},
       ),
     ]),
@@ -1376,6 +1377,7 @@ class AppState extends State<App> {
     // gets the same dark plastic, hairline borders and instrument
     // microtype as the rest of the hardware.
     css('.rx-overlay').styles(
+      display: Display.flex,
       position: Position.fixed(
         top: Unit.zero,
         left: Unit.zero,
@@ -1385,9 +1387,8 @@ class AppState extends State<App> {
       // Above the content layers, below the faceplate (z 50), so the
       // receiver stays framing the panel rather than being covered by it.
       zIndex: ZIndex(45),
-      display: Display.flex,
-      alignItems: AlignItems.center,
       justifyContent: JustifyContent.center,
+      alignItems: AlignItems.center,
       raw: {
         // Sized to the viewport the browser is really showing, not to the
         // one `inset: 0` implies. On a phone those differ by the height
@@ -1423,8 +1424,8 @@ class AppState extends State<App> {
       // padding a second time and gave away 40px of reading height for
       // nothing.
       maxHeight: 100.percent,
-      overflow: Overflow.auto,
       padding: Padding.symmetric(horizontal: 24.px, vertical: 24.px),
+      overflow: Overflow.auto,
       raw: {
         'background': 'linear-gradient(160deg, #111118 0%, #0a0a10 100%)',
         'border': '1px solid rgba(255,255,255,0.10)',
@@ -1446,32 +1447,32 @@ class AppState extends State<App> {
     css('.rx-head').styles(
       display: Display.flex,
       flexDirection: FlexDirection.row,
-      alignItems: AlignItems.center,
       justifyContent: JustifyContent.spaceBetween,
+      alignItems: AlignItems.center,
       raw: {'margin-bottom': '10px'},
     ),
     css('.rx-label').styles(
+      color: const Color('#d3a35a'),
       fontFamily: const FontFamily.list([
         FontFamily('IBM Plex Mono'),
         FontFamilies.monospace,
       ]),
       fontSize: Unit.pixels(11),
       fontWeight: FontWeight.w500,
-      letterSpacing: 0.34.em,
       textTransform: TextTransform.upperCase,
-      color: const Color('#d3a35a'),
+      letterSpacing: 0.34.em,
     ),
     css('.rx-close', [
       css('&').styles(
+        display: Display.flex,
         width: 32.px,
         height: 32.px,
-        display: Display.flex,
-        alignItems: AlignItems.center,
-        justifyContent: JustifyContent.center,
-        cursor: Cursor.pointer,
-        fontSize: Unit.pixels(20),
-        color: const Color('#9a9aa6'),
         radius: BorderRadius.all(Radius.circular(3.px)),
+        cursor: Cursor.pointer,
+        justifyContent: JustifyContent.center,
+        alignItems: AlignItems.center,
+        color: const Color('#9a9aa6'),
+        fontSize: Unit.pixels(20),
         raw: {
           'line-height': '1',
           'border': '1px solid rgba(255,255,255,0.10)',
@@ -1486,13 +1487,13 @@ class AppState extends State<App> {
       ),
     ]),
     css('.rx-title').styles(
+      color: const Color('#E8A035'),
       fontFamily: const FontFamily.list([
         FontFamily('Space Grotesk'),
         FontFamilies.sansSerif,
       ]),
       fontWeight: FontWeight.w700,
       letterSpacing: 0.02.em,
-      color: const Color('#E8A035'),
       raw: {
         'font-size': 'clamp(1.35rem, 3.2vw, 2rem)',
         'margin': '0 0 14px',
@@ -1501,12 +1502,12 @@ class AppState extends State<App> {
       },
     ),
     css('.rx-body').styles(
+      color: const Color('#9c9174'),
       fontFamily: const FontFamily.list([
         FontFamily('IBM Plex Mono'),
         FontFamilies.monospace,
       ]),
       fontSize: Unit.pixels(13),
-      color: const Color('#9c9174'),
       raw: {'line-height': '1.6', 'margin': '0 0 16px'},
     ),
     css('.rx-data').styles(
@@ -1521,6 +1522,7 @@ class AppState extends State<App> {
       },
     ),
     css('.rx-key').styles(
+      color: const Color('#938d81'),
       fontFamily: const FontFamily.list([
         FontFamily('IBM Plex Mono'),
         FontFamilies.monospace,
@@ -1528,27 +1530,19 @@ class AppState extends State<App> {
       fontSize: Unit.pixels(11),
       fontWeight: FontWeight.w500,
       letterSpacing: 0.16.em,
-      color: const Color('#938d81'),
       raw: {'line-height': '1.45', 'white-space': 'nowrap'},
     ),
     css('.rx-val').styles(
+      color: const Color('#d8c9a4'),
       fontFamily: const FontFamily.list([
         FontFamily('IBM Plex Mono'),
         FontFamilies.monospace,
       ]),
       fontSize: Unit.pixels(11),
       fontWeight: FontWeight.w500,
-      color: const Color('#d8c9a4'),
       raw: {'line-height': '1.45'},
     ),
     css('.rx-hint').styles(
-      fontFamily: const FontFamily.list([
-        FontFamily('IBM Plex Mono'),
-        FontFamilies.monospace,
-      ]),
-      fontSize: Unit.pixels(11),
-      letterSpacing: 0.3.em,
-      textTransform: TextTransform.upperCase,
       // Was #7a7a84, which measured 4.46:1 against the old panel and 4.43
       // once the panel's top edge was lifted for the light source: under
       // AA either way, and it had simply never been measured. This is the
@@ -1556,6 +1550,13 @@ class AppState extends State<App> {
       // floor at 4.94:1.
       color: const Color('#82828c'),
       textAlign: TextAlign.right,
+      fontFamily: const FontFamily.list([
+        FontFamily('IBM Plex Mono'),
+        FontFamilies.monospace,
+      ]),
+      fontSize: Unit.pixels(11),
+      textTransform: TextTransform.upperCase,
+      letterSpacing: 0.3.em,
     ),
     css.media(MediaQuery.screen(maxWidth: 600.px), [
       css('.rx-panel').styles(
@@ -1569,14 +1570,14 @@ class AppState extends State<App> {
       css('&').styles(
         position: Position.fixed(top: 16.px, right: 16.px),
         zIndex: ZIndex(20),
+        padding: Padding.symmetric(horizontal: 10.px, vertical: 5.px),
+        radius: BorderRadius.all(Radius.circular(99.px)),
+        cursor: Cursor.pointer,
+        color: const Color('#c8c8cc'),
         fontFamily: const FontFamily.list([FontFamilies.monospace]),
         fontSize: Unit.pixels(11),
         fontWeight: FontWeight.w500,
         letterSpacing: 0.2.em,
-        color: const Color('#c8c8cc'),
-        cursor: Cursor.pointer,
-        padding: Padding.symmetric(horizontal: 10.px, vertical: 5.px),
-        radius: BorderRadius.all(Radius.circular(99.px)),
         raw: {
           'border': '1px solid rgba(255,255,255,0.12)',
           'background': 'rgba(0,0,0,0.35)',
@@ -1616,6 +1617,7 @@ class AppState extends State<App> {
     // sub-caption - all share a single vertical flow so the block
     // reads top-down like a real monitoring panel.
     css('.carrier-monitor').styles(
+      display: Display.flex,
       position: Position.absolute(
         // Centre of the free space above the faceplate, measured rather
         // than derived. `100% - var(--panel-h)` was the same idea done as
@@ -1623,15 +1625,14 @@ class AppState extends State<App> {
         top: Unit.expression('calc(var(--free-h) / 2)'),
         left: 50.percent,
       ),
-      textAlign: TextAlign.center,
       zIndex: ZIndex(30),
-      pointerEvents: PointerEvents.none,
       width: 100.percent,
       maxWidth: 480.px,
-      display: Display.flex,
+      pointerEvents: PointerEvents.none,
       flexDirection: FlexDirection.column,
       alignItems: AlignItems.center,
       gap: Gap(row: 16.px),
+      textAlign: TextAlign.center,
       raw: {
         // Centring lives in `translate`, not in `transform`, and that is
         // the entire reason this block used to end up off the side of a
@@ -1662,8 +1663,8 @@ class AppState extends State<App> {
     css('.carrier-dashes').styles(
       display: Display.flex,
       flexDirection: FlexDirection.row,
-      alignItems: AlignItems.center,
       justifyContent: JustifyContent.center,
+      alignItems: AlignItems.center,
       gap: Gap(column: 16.px),
       raw: {
         'animation': 'dash-drift 6s ease-in-out infinite',
@@ -1694,8 +1695,8 @@ class AppState extends State<App> {
     css('.carrier-state').styles(
       display: Display.flex,
       flexDirection: FlexDirection.row,
-      alignItems: AlignItems.center,
       justifyContent: JustifyContent.center,
+      alignItems: AlignItems.center,
       gap: Gap(column: 12.px),
     ),
     css('.carrier-dot').styles(
@@ -1710,15 +1711,15 @@ class AppState extends State<App> {
       },
     ),
     css('.carrier-state-text').styles(
+      color: const Color('#d4d4dc'),
       fontFamily: const FontFamily.list([
         FontFamily('IBM Plex Mono'),
         FontFamilies.monospace,
       ]),
       fontSize: Unit.pixels(13),
       fontWeight: FontWeight.w500,
-      letterSpacing: 0.5.em,
       textTransform: TextTransform.upperCase,
-      color: const Color('#d4d4dc'),
+      letterSpacing: 0.5.em,
       raw: {
         'text-shadow':
             '0 0 6px rgba(212,212,220,0.35), '
@@ -1736,27 +1737,27 @@ class AppState extends State<App> {
     css('.carrier-band').styles(
       display: Display.flex,
       flexDirection: FlexDirection.row,
-      alignItems: AlignItems.baseline,
       justifyContent: JustifyContent.center,
+      alignItems: AlignItems.baseline,
       gap: Gap(column: 10.px),
       fontFamily: const FontFamily.list([
         FontFamily('IBM Plex Mono'),
         FontFamilies.monospace,
       ]),
       fontSize: Unit.pixels(11),
-      letterSpacing: 0.25.em,
       textTransform: TextTransform.upperCase,
+      letterSpacing: 0.25.em,
     ),
     css('.carrier-band-band').styles(
-      fontWeight: FontWeight.w600,
       color: const Color('#E8A035'),
+      fontWeight: FontWeight.w600,
       raw: {
         'text-shadow': '0 0 4px rgba(232,160,53,0.6), 0 0 10px rgba(232,160,53,0.25)',
       },
     ),
     css('.carrier-band-range').styles(
-      fontWeight: FontWeight.w500,
       color: const Color('#a6a6b0'),
+      fontWeight: FontWeight.w500,
       raw: {'letter-spacing': '0.15em'},
     ),
     // Purely a visual divider between the band, range and unit, so it
@@ -1768,11 +1769,11 @@ class AppState extends State<App> {
       raw: {'font-weight': '700', 'transform': 'translateY(-1px)'},
     ),
     css('.carrier-band-unit').styles(
-      fontWeight: FontWeight.w500,
       // Was #66666f → 3.58:1. Now 6.36:1. The unit ("MHZ" / "KHZ") is
       // what tells you which band you are reading, so it has to survive
       // the noise layer.
       color: const Color('#8f8f99'),
+      fontWeight: FontWeight.w500,
     ),
 
     // ── sweep ribbon ──
@@ -1815,19 +1816,19 @@ class AppState extends State<App> {
     // kind of runtime-status text you'd find printed just above
     // a signal-presence indicator on a rack-mounted receiver.
     css('.carrier-sub').styles(
+      // Was #5a5a62 at 9 px, i.e. 2.98:1 before carrier-breathe even
+      // touched it. This is real status copy ("SCANNING BAND"), not
+      // ornament, so it gets a real contrast budget: 7.32:1 at the top
+      // of the breathe cycle and 5.50:1 at the trough.
+      color: const Color('#9a9aa6'),
       fontFamily: const FontFamily.list([
         FontFamily('IBM Plex Mono'),
         FontFamilies.monospace,
       ]),
       fontSize: Unit.pixels(11),
       fontWeight: FontWeight.w500,
-      letterSpacing: 0.55.em,
       textTransform: TextTransform.upperCase,
-      // Was #5a5a62 at 9 px, i.e. 2.98:1 before carrier-breathe even
-      // touched it. This is real status copy ("SCANNING BAND"), not
-      // ornament, so it gets a real contrast budget: 7.32:1 at the top
-      // of the breathe cycle and 5.50:1 at the trough.
-      color: const Color('#9a9aa6'),
+      letterSpacing: 0.55.em,
       raw: {
         'animation': 'carrier-breathe 4s ease-in-out infinite',
         'text-indent': '0.55em', // compensate trailing letter-spacing
@@ -1837,9 +1838,9 @@ class AppState extends State<App> {
     css.media(MediaQuery.screen(maxWidth: 600.px), [
       // Compact lang toggle so it doesn't crowd the top edge.
       css('.lang-toggle').styles(
-        fontSize: Unit.pixels(11),
-        padding: Padding.symmetric(horizontal: 10.px, vertical: 6.px),
         position: Position.fixed(top: 10.px, right: 10.px),
+        padding: Padding.symmetric(horizontal: 10.px, vertical: 6.px),
+        fontSize: Unit.pixels(11),
       ),
       // Matches the shorter mobile faceplate. The vertical position
       // follows automatically from here.
@@ -1856,9 +1857,9 @@ class AppState extends State<App> {
         letterSpacing: 0.28.em,
       ),
       css('.carrier-band').styles(
+        gap: Gap(column: 6.px),
         fontSize: Unit.pixels(11),
         letterSpacing: 0.12.em,
-        gap: Gap(column: 6.px),
       ),
       css('.carrier-sweep').styles(width: 180.px),
       css('.carrier-sub').styles(

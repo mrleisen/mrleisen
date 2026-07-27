@@ -21,10 +21,10 @@ class Vignette extends StatelessComponent {
   static List<StyleRule> get styles => [
     css('.vignette').styles(
       position: Position.fixed(top: Unit.zero, left: Unit.zero),
+      zIndex: ZIndex(15),
       width: 100.percent,
       height: 100.percent,
       pointerEvents: PointerEvents.none,
-      zIndex: ZIndex(15),
       raw: {
         'background':
             'radial-gradient(ellipse at center, '

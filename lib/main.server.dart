@@ -26,8 +26,8 @@ void main() {
       styles: [
         // Global reset
         css('*, *::before, *::after').styles(
-          margin: .zero,
           padding: .zero,
+          margin: .zero,
           boxSizing: .borderBox,
         ),
         // Base styles
@@ -35,9 +35,9 @@ void main() {
           width: 100.percent,
           height: 100.vh,
           overflow: Overflow.hidden,
-          backgroundColor: const Color('#050507'),
-          fontFamily: const FontFamily.list([FontFamilies.monospace]),
           color: const Color('#e0e0e0'),
+          fontFamily: const FontFamily.list([FontFamilies.monospace]),
+          backgroundColor: const Color('#050507'),
           raw: {
             // Mobile browsers bounce the page on an over-scroll and some
             // fire pull-to-refresh, both of which read as the receiver
