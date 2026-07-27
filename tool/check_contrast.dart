@@ -123,6 +123,10 @@ void main() {
   check('.power-hint', '#c99a4e', px: 11);
   check('.tune-hint', '#d9c9a4', px: 11);
 
+  section('Dial engravings');
+  // On the dial slit (#02020a), effectively page black.
+  check('.tick-label', '#d6a355', px: 10);
+
   section('Technical transmission dialog');
   // Panel face is #101016 to #0a0a10, close enough to page black that
   // measuring against `bg` is the conservative reading.

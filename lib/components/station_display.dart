@@ -926,14 +926,26 @@ class StationDisplay extends StatelessComponent {
         FontFamily('Orbitron'),
         FontFamilies.sansSerif,
       ]),
-      fontSize: 2.2.rem,
       fontWeight: FontWeight.w700,
-      letterSpacing: 0.05.em,
       raw: {
+        // The single biggest thing holding Design back was that nothing
+        // on this page was ever *large*. Every element lived between 8px
+        // and 35px, so there was no focal point and no hierarchy - just
+        // a uniform field of small type. The station name is the one
+        // thing that earns scale, so it gets it.
+        //
+        // Fluid rather than stepped: `clamp` covers 360px to ultrawide
+        // in one declaration and removes the separate mobile override
+        // that used to drift out of sync with this value.
+        'font-size': 'clamp(1.75rem, 5vw, 3.2rem)',
+        // Tracking comes *down* as size goes up. Letter-spacing set for
+        // 35px type opens far too wide at 51px, and "In This New World"
+        // at 0.05em would run past the panel.
+        'letter-spacing': '0.01em',
         'color': 'var(--sc, #E8A035)',
         'opacity': '0.92',
         'margin': '0',
-        'line-height': '1.15',
+        'line-height': '1.05',
         'text-shadow':
             '0 0 6px var(--sc-glow, rgba(232,160,53,0.3)), '
             '0 0 16px var(--sc-glow-dim, rgba(232,160,53,0.15)), '
@@ -1211,14 +1223,17 @@ class StationDisplay extends StatelessComponent {
         FontFamily('IBM Plex Mono'),
         FontFamilies.monospace,
       ]),
-      fontSize: 1.4.rem,
       fontWeight: FontWeight.w500,
       letterSpacing: 0.02.em,
       raw: {
+        // Scales with the FM titles but stays deliberately smaller: AM
+        // is the draft band, and its panels should never shout as loudly
+        // as a finished project.
+        'font-size': 'clamp(1.2rem, 3vw, 1.85rem)',
         'color': 'color-mix(in srgb, var(--sc, #E8A035) 85%, #cfc9b8)',
         'opacity': '0.9',
         'margin': '0',
-        'line-height': '1.2',
+        'line-height': '1.15',
         'text-shadow': '0 0 4px color-mix(in srgb, var(--sc, #E8A035) 40%, transparent)',
       },
     ),
@@ -1257,7 +1272,9 @@ class StationDisplay extends StatelessComponent {
 
     // Mobile sizing.
     css.media(MediaQuery.screen(maxWidth: 600.px), [
-      css('.panel-title').styles(fontSize: 1.7.rem),
+      // No `.panel-title` / `.am-title` size override here: both are
+      // `clamp()`ed, so a second value at this breakpoint would only be
+      // something to forget to update later.
       // Body copy holds at 13 px on phones. It used to drop to 12 px,
       // but nothing informative goes below 11 px anywhere now, and body
       // text in particular has no business being the smallest thing on
@@ -1283,7 +1300,6 @@ class StationDisplay extends StatelessComponent {
         padding: Padding.symmetric(horizontal: 16.px, vertical: 14.px),
         maxWidth: 90.percent,
       ),
-      css('.am-title').styles(fontSize: 1.15.rem),
       css('.am-body').styles(fontSize: Unit.pixels(12)),
     ]),
   ];
