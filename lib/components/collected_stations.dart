@@ -407,12 +407,6 @@ class CollectedStationsState extends State<CollectedStations> {
           'transition': 'width 0.15s ease-out',
         },
       ),
-      css('&:hover').styles(
-        raw: {
-          'border-color': '#2a1a08',
-          'background': 'linear-gradient(160deg, #100904, #050202)',
-        },
-      ),
       css('&:active').styles(raw: {'transform': 'translateY(1px)'}),
       // Keeps the inner amber glow as a secondary cue, but no longer
       // sets `outline: none` - that was suppressing the shared focus
@@ -476,12 +470,6 @@ class CollectedStationsState extends State<CollectedStations> {
         'transition': 'color 0.18s ease, text-shadow 0.18s ease',
       },
     ),
-    css('.collected-pill:hover .collected-call').styles(
-      color: const Color(_lcdAmber),
-      raw: {
-        'text-shadow': '0 0 3px rgba(232,160,53,0.55), 0 0 6px rgba(232,160,53,0.22)',
-      },
-    ),
     css('.collected-pill-active .collected-call').styles(
       color: const Color(_lcdAmber),
       raw: {
@@ -510,10 +498,37 @@ class CollectedStationsState extends State<CollectedStations> {
         'transition': 'color 0.18s ease',
       },
     ),
-    css(
-      '.collected-pill:hover .collected-freq, '
-      '.collected-pill-active .collected-freq',
-    ).styles(color: const Color('#9a6a2a')),
+    css('.collected-pill-active .collected-freq').styles(color: const Color('#9a6a2a')),
+
+    // ── hover, and only where hovering exists ──
+    //
+    // WebKit turns the first tap on a non-native control that has :hover
+    // styles into a hover reveal, and only the second tap counts as a
+    // click. Every control in this piece is a span or div with role=button
+    // rather than a real <button> - deliberately, since a native button
+    // drags user-agent chrome that fights the hardware - so every one of
+    // them was inheriting that behaviour: on an iPhone the whole faceplate
+    // needed pressing twice.
+    //
+    // Gating the hover styles on a pointer that can actually hover fixes
+    // it, and is what the rules meant anyway. It also disposes of sticky
+    // hover, where a tapped control keeps its hover look until you press
+    // something else.
+    css.media(const MediaQuery.raw('(hover: hover)'), [
+      css('.collected-pill:hover').styles(
+        raw: {
+          'border-color': '#2a1a08',
+          'background': 'linear-gradient(160deg, #100904, #050202)',
+        },
+      ),
+      css('.collected-pill:hover .collected-call').styles(
+        color: const Color(_lcdAmber),
+        raw: {
+          'text-shadow': '0 0 3px rgba(232,160,53,0.55), 0 0 6px rgba(232,160,53,0.22)',
+        },
+      ),
+      css('.collected-pill:hover .collected-freq').styles(color: const Color('#9a6a2a')),
+    ]),
 
     // ── responsive ──
     css.media(MediaQuery.screen(maxWidth: 600.px), [

@@ -371,16 +371,24 @@ List<StyleRule> get rxChromeStyles => [
             'box-shadow var(--dur-plastic) var(--ease-plastic)',
         'user-select': 'none',
         '-webkit-user-select': 'none',
-      },
-    ),
-    css('&:hover').styles(
-      raw: {
-        'border-color': 'rgba(232,160,53,0.6)',
-        'box-shadow': 'inset 2px 2px 3px rgba(0,0,0,0.7)',
+        'touch-action': 'manipulation',
+        '-webkit-tap-highlight-color': 'transparent',
       },
     ),
     css('&:active').styles(
       raw: {'box-shadow': 'inset 3px 3px 4px rgba(0,0,0,0.85)'},
+    ),
+  ]),
+
+  // Hover only where hovering exists - see the note in
+  // `station_display.dart`. On WebKit these rules are what made the first
+  // tap a hover reveal instead of a press.
+  css.media(const MediaQuery.raw('(hover: hover)'), [
+    css('.rx-lost-action:hover').styles(
+      raw: {
+        'border-color': 'rgba(232,160,53,0.6)',
+        'box-shadow': 'inset 2px 2px 3px rgba(0,0,0,0.7)',
+      },
     ),
   ]),
 

@@ -1480,11 +1480,9 @@ class AppState extends State<App> {
               'color var(--dur-plastic) var(--ease-plastic), '
               'border-color var(--dur-plastic) var(--ease-plastic)',
           'flex-shrink': '0',
+          'touch-action': 'manipulation',
+          '-webkit-tap-highlight-color': 'transparent',
         },
-      ),
-      css('&:hover').styles(
-        color: const Color('#ffffff'),
-        raw: {'border-color': 'rgba(255,255,255,0.28)'},
       ),
     ]),
     css('.rx-title').styles(
@@ -1586,14 +1584,31 @@ class AppState extends State<App> {
           '-webkit-backdrop-filter': 'blur(4px)',
           'transition': 'border-color 0.2s ease, color 0.2s ease',
           'user-select': 'none',
+          'touch-action': 'manipulation',
+          '-webkit-tap-highlight-color': 'transparent',
           '-webkit-user-select': 'none',
         },
       ),
-      css('&:hover').styles(
+    ]),
+    // ── hover, and only where hovering exists ──
+    //
+    // WebKit turns the first tap on a non-native control that has :hover
+    // styles into a hover reveal, and only the second tap counts as a
+    // click. Every control here is a span or div with role=button rather
+    // than a real <button>, so all of them inherited that: on an iPhone
+    // the faceplate had to be pressed twice. See the same block in
+    // `station_display.dart`.
+    css.media(const MediaQuery.raw('(hover: hover)'), [
+      css('.rx-close:hover').styles(
+        color: const Color('#ffffff'),
+        raw: {'border-color': 'rgba(255,255,255,0.28)'},
+      ),
+      css('.lang-toggle:hover').styles(
         color: const Color('#ffffff'),
         raw: {'border-color': 'rgba(255,255,255,0.32)'},
       ),
     ]),
+
     // ── idle "carrier monitor" readout ──
     // Sits in the same vertical slot as the old hero title, but
     // structured as a receiver's between-stations display. The five
