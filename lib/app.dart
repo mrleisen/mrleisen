@@ -863,9 +863,7 @@ class AppState extends State<App> {
               ],
             ]),
             p(classes: 'rx-body', [Component.text(outro)]),
-            div(classes: 'rx-hint', [
-              Component.text(es ? 'ESC para cerrar' : 'ESC to close'),
-            ]),
+            rxHint(_lang),
           ],
         ),
       ],

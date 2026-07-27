@@ -133,9 +133,7 @@ class CaseStudyDialog extends StatelessComponent {
 
             _data(es),
 
-            div(classes: 'rx-hint', [
-              Component.text(es ? 'ESC para cerrar' : 'ESC to close'),
-            ]),
+            rxHint(lang),
           ],
         ),
       ],

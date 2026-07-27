@@ -156,6 +156,31 @@ Component rxLostPlate({
   );
 }
 
+/// How to get out of here, phrased for the input you actually have.
+///
+/// "ESC to close" is a keyboard instruction printed on a device with no
+/// keyboard, which reads as boilerplate copied from somewhere else - the
+/// one impression this piece cannot afford.
+///
+/// Both phrasings are rendered and CSS picks one on `(hover: hover) and
+/// (pointer: fine)`, the same way the tuning hint does it. Resolving it
+/// in CSS rather than sniffing the pointer in Dart keeps the server
+/// output and the hydrated output identical. The touch wording is the
+/// default, so a device that reports no capabilities at all still gets an
+/// instruction it can follow: tapping the backdrop works everywhere,
+/// including on the desktop where the keyboard hint shows instead.
+Component rxHint(Lang lang) {
+  final es = lang == Lang.es;
+  return div(classes: 'rx-hint', [
+    span(classes: 'rx-hint-fine', [
+      Component.text(es ? 'ESC para cerrar' : 'ESC to close'),
+    ]),
+    span(classes: 'rx-hint-coarse', [
+      Component.text(es ? 'Toca fuera para cerrar' : 'Tap outside to close'),
+    ]),
+  ]);
+}
+
 // ── styles ──
 //
 // Only the loss-of-signal chrome lives here. The rest of the `.rx-*`
@@ -359,6 +384,14 @@ List<StyleRule> get rxChromeStyles => [
     ),
   ]),
 
+  // Pointer-dependent phrasing for the way out. Default to touch and let
+  // a real hover-capable pointer opt into the keyboard version.
+  css('.rx-hint-fine').styles(display: Display.none),
+  css.media(const MediaQuery.raw('(hover: hover) and (pointer: fine)'), [
+    css('.rx-hint-fine').styles(display: Display.inline),
+    css('.rx-hint-coarse').styles(display: Display.none),
+  ]),
+
   css.media(MediaQuery.screen(maxWidth: 600.px), [
     // The head has three things in it on a phone and the middle one is
     // the newcomer, so it gives up its bars first.
@@ -371,6 +404,9 @@ List<StyleRule> get rxChromeStyles => [
       padding: Padding.symmetric(horizontal: 12.px, vertical: 12.px),
     ),
     css('.rx-lost-title').styles(fontSize: Unit.pixels(14), letterSpacing: 0.16.em),
+    // The touch wording is twice the length of "ESC to close", so the
+    // tracking comes in to keep it on one line at 360px.
+    css('.rx-hint').styles(letterSpacing: 0.12.em),
   ]),
 
   // Reduced motion: the meaning has to survive, the movement does not.
