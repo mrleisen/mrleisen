@@ -106,8 +106,18 @@ class AppState extends State<App> {
   Timer? _tuneHintTimer;
   static const Duration _tuneHintDelay = Duration(milliseconds: 1200);
 
-  /// The radio has never been switched on: pulse the rocker and label it.
-  bool get _showPowerHint => !_isPowered && !_onboarded.contains('power');
+  /// Label the power switch whenever the radio is off.
+  ///
+  /// Not gated on onboarding: an off receiver is a black screen, so the
+  /// way back on has to be legible every single time, not only on a
+  /// first visit. Someone who switches off to see what happens should
+  /// not have to hunt for the way back.
+  bool get _showPowerHint => !_isPowered;
+
+  /// The animated pull, on the other hand, stays a first-visit cue. Once
+  /// you know where the switch is, a permanently pulsing control is just
+  /// something twitching in the corner of your eye.
+  bool get _showPowerAttract => !_isPowered && !_onboarded.contains('power');
 
   /// Powered up, warm, and the dial has never been moved.
   bool get _showTuneHint => _isPowered && _tuneHintArmed && !_onboarded.contains('tune');
@@ -968,6 +978,7 @@ class AppState extends State<App> {
         onSaveStation: _saveCurrentStation,
         lang: _lang,
         showPowerHint: _showPowerHint,
+        showPowerAttract: _showPowerAttract,
         showTuneHint: _showTuneHint,
       ),
     ]);
