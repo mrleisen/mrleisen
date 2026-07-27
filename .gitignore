@@ -44,3 +44,8 @@ app.*.map.json
 
 # Claude Code local files
 .claude/
+
+# Working notes stay on disk. The repo is public because GitHub Pages
+# needs it to be, and a running commentary on the work is not part of
+# what is being published.
+docs/
