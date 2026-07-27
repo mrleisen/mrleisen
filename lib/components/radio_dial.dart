@@ -1823,13 +1823,14 @@ class RadioDialState extends State<RadioDial> {
     css('.lcd-ghost').styles(
       position: Position.absolute(),
       fontFamily: const FontFamily.list([
+        FontFamily('DSEG7 Classic'),
         FontFamily('Chakra Petch'),
         FontFamilies.monospace,
       ]),
-      fontSize: 1.65.rem,
+      fontSize: 1.38.rem,
       fontWeight: FontWeight.w700,
       color: const Color('#000000'),
-      letterSpacing: 0.08.em,
+      letterSpacing: 0.04.em,
       raw: {
         'right': '42px',
         'top': '50%',
@@ -1842,21 +1843,34 @@ class RadioDialState extends State<RadioDial> {
     // Live digits - dark segments, no longer pure black. A faded
     // brown-black reads as aged LCD ink rather than crisp new print.
     //
-    // 1.65rem rather than the 1.55 this sat at under Orbitron. Chakra
-    // Petch runs 0.581 em per digit against Orbitron's 0.758, so the old
-    // size would have shrunk the readout by a fifth while the LCD around
-    // it stayed the same. Measured: "101.8" is 71 px here against 76 px
-    // before, so it grew in type size and still gained clearance.
+    // Set in an actual seven-segment face rather than in one that alludes
+    // to segments. This is the readout the whole faceplate is built
+    // around, and it is the one element where the literal answer beats
+    // the tasteful one: the ghost digits behind the live value stop being
+    // a trick of opacity and become the cells that simply are not driven.
+    //
+    // The size looks like a big drop from Chakra Petch's 1.65rem and is
+    // not: DSEG7's glyphs fill the entire em box (cap height 1.0 against
+    // 0.70), so at 1.38rem the digits stand 22 px tall where they stood
+    // 18.5 px before. Width is what forced the number down - 0.816 em per
+    // digit is the widest of every face measured - and 1.38rem lands
+    // "101.8" at 77 px, inside the 84 px the LCD leaves beside the
+    // badges.
+    //
+    // Tracking drops to 0.04em with it. A segment face already carries
+    // its own cell spacing, and the 0.08em tuned for Orbitron pushed the
+    // digits apart into separate objects.
     css('.lcd-value').styles(
       position: Position.relative(),
       fontFamily: const FontFamily.list([
+        FontFamily('DSEG7 Classic'),
         FontFamily('Chakra Petch'),
         FontFamilies.monospace,
       ]),
-      fontSize: 1.65.rem,
+      fontSize: 1.38.rem,
       fontWeight: FontWeight.w700,
       color: const Color('#2a1f10'),
-      letterSpacing: 0.08.em,
+      letterSpacing: 0.04.em,
       raw: {
         'text-shadow': '0 1px 0 rgba(0,0,0,0.12)',
         'transition': 'color 0.3s ease, text-shadow 0.3s ease',
@@ -2459,9 +2473,11 @@ class RadioDialState extends State<RadioDial> {
           'flex': 'initial',
         },
       ),
-      css('.lcd-value').styles(fontSize: 1.25.rem),
+      // The LCD is 34 px tall here and the digits now stand as tall as
+      // their type size, so height binds instead of width.
+      css('.lcd-value').styles(fontSize: 1.15.rem),
       css('.lcd-ghost').styles(
-        fontSize: 1.25.rem,
+        fontSize: 1.15.rem,
         raw: {'right': '32px'},
       ),
       css('.lcd-fm').styles(fontSize: Unit.pixels(9)),
@@ -2558,9 +2574,9 @@ class RadioDialState extends State<RadioDial> {
 
     css.media(MediaQuery.screen(maxWidth: 380.px), [
       css('.lcd').styles(height: 30.px),
-      css('.lcd-value').styles(fontSize: 1.08.rem),
+      css('.lcd-value').styles(fontSize: 1.rem),
       css('.lcd-ghost').styles(
-        fontSize: 1.08.rem,
+        fontSize: 1.rem,
         raw: {'right': '26px'},
       ),
       css('.lcd-fm').styles(fontSize: Unit.pixels(8)),

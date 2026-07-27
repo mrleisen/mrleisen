@@ -1,12 +1,16 @@
-/* Self-hosted Space Grotesk + Chakra Petch + IBM Plex Mono (latin subset).
-   Served locally to avoid a runtime dependency on fonts.googleapis.com.
-   All three are SIL Open Font License, so redistribution is fine.
+/* Self-hosted Space Grotesk + DSEG7 Classic + Chakra Petch + IBM Plex
+   Mono (latin subset). Served locally to avoid a runtime dependency on
+   fonts.googleapis.com. All four are SIL Open Font License, so
+   redistribution is fine. DSEG is by Keshikan (github.com/keshikan/DSEG).
 
-   The three faces have distinct jobs and should not be swapped around:
+   The four faces have distinct jobs and should not be swapped around:
      Space Grotesk - display. Station names, dialog titles, the idle
                      dash array. The voice of the content.
-     Chakra Petch  - instrument. The LCD readout, the model plate, the
-                     preset call signs. Anything the *hardware* prints.
+     DSEG7 Classic - the frequency digits, and nothing else. It is an
+                     actual seven-segment face, not an imitation of one.
+     Chakra Petch  - the rest of the instrument role: the model plate, the
+                     FM/ST badges, the preset call signs, the segment
+                     numbers. Anything the *hardware* prints in letters.
      IBM Plex Mono - everything else: body copy, labels, telemetry.
 
    Chakra Petch replaced Orbitron in the instrument role. Orbitron paired
@@ -29,6 +33,25 @@
   font-display: swap;
   src: url('fonts/spacegrotesk-700.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* The readout is a seven-segment display, so it is set in a seven-segment
+   font rather than in a face that alludes to one. The unlit "ghost"
+   digits behind the live value stop being a trick of opacity and become
+   what they always claimed to be: the cells that are not driven.
+
+   Digits, the decimal point and little else - which is the whole reason
+   it cannot carry the rest of the instrument role. Any glyph it lacks
+   falls through to Chakra Petch, and the only strings set in it are
+   frequencies. Every digit shares one advance width, so the readout does
+   not shift a pixel going from 99.9 to 100.0. */
+@font-face {
+  font-family: 'DSEG7 Classic';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('fonts/dseg7classic-700.woff2') format('woff2');
+  unicode-range: U+0020, U+002D-002E, U+0030-0039;
 }
 
 /* 700 only. Nothing in the instrument role is set lighter, and the old
