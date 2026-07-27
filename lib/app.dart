@@ -1268,13 +1268,13 @@ class AppState extends State<App> {
         FontFamily('Orbitron'),
         FontFamilies.sansSerif,
       ]),
-      fontSize: 1.5.rem,
       fontWeight: FontWeight.w700,
-      letterSpacing: 0.03.em,
+      letterSpacing: 0.02.em,
       color: const Color('#E8A035'),
       raw: {
+        'font-size': 'clamp(1.35rem, 3.2vw, 2rem)',
         'margin': '0 0 14px',
-        'line-height': '1.2',
+        'line-height': '1.15',
         'text-shadow': '0 0 8px rgba(232,160,53,0.28)',
       },
     ),
@@ -1334,7 +1334,6 @@ class AppState extends State<App> {
       css('.tech-panel').styles(
         padding: Padding.symmetric(horizontal: 18.px, vertical: 18.px),
       ),
-      css('.tech-title').styles(fontSize: 1.25.rem),
       css('.tech-label').styles(letterSpacing: 0.2.em),
     ]),
 

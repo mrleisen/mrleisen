@@ -173,6 +173,14 @@ class RadioDialState extends State<RadioDial> {
   Timer? _memFlashTimer;
   static const Duration _memFlashDuration = Duration(milliseconds: 550);
 
+  // --- band change ---
+  // Drives the dial's re-rack animation. Held as a nonce rather than a
+  // bool so two band flips in quick succession restart the keyframe
+  // instead of the second one being swallowed.
+  int _bandSweepNonce = 0;
+  Timer? _bandSweepTimer;
+  static const Duration _bandSweepDuration = Duration(milliseconds: 620);
+
   // --- lock acknowledgement ---
   // Brief "SIGNAL LOCKED" takeover of the LCD the instant a station is
   // captured. See [_flashLocked].
@@ -497,6 +505,21 @@ class RadioDialState extends State<RadioDial> {
     });
   }
 
+  /// Runs the dial's band-change re-rack.
+  ///
+  /// Skipped under reduced motion: the whole point is a violent sideways
+  /// lurch, and there is no gentler version of it that still means
+  /// anything. The LCD still reports the new band, so nothing is lost
+  /// but the theatre.
+  void _sweepBand() {
+    if (prefersReducedMotion) return;
+    _bandSweepTimer?.cancel();
+    setState(() => _bandSweepNonce++);
+    _bandSweepTimer = Timer(_bandSweepDuration, () {
+      if (mounted) setState(() => _bandSweepNonce = 0);
+    });
+  }
+
   /// Flashes `SIGNAL LOCKED` across the LCD for [_lockFlashDuration].
   ///
   /// The moment a station is captured had no acknowledgement of its own:
@@ -549,10 +572,11 @@ class RadioDialState extends State<RadioDial> {
         });
       }
     } else if (isPowered && oldComponent.band != component.band) {
-      // Band flip: scramble the LCD with the new band's values to sell
-      // the hand-off.
+      // Band flip: scramble the LCD with the new band's values and
+      // re-rack the dial to sell the hand-off.
       _triggerLcdGlitch();
       _startScramble();
+      _sweepBand();
     }
   }
 
@@ -563,6 +587,7 @@ class RadioDialState extends State<RadioDial> {
     _scramblePowerOnTimer?.cancel();
     _memFlashTimer?.cancel();
     _lockFlashTimer?.cancel();
+    _bandSweepTimer?.cancel();
     super.dispose();
   }
 
@@ -797,9 +822,32 @@ class RadioDialState extends State<RadioDial> {
                   styles: Styles(
                     width: _stripWidth.px,
                     transform: Transform.translate(x: _stripOffset.px),
+                    raw: _bandSweepNonce > 0
+                        ? {
+                            // The nonce lands in the delay so a second
+                            // flip restarts the keyframe rather than
+                            // being ignored as an identical value.
+                            'animation':
+                                'band-sweep 0.62s cubic-bezier(0.2, 0, 0.1, 1) '
+                                '${(_bandSweepNonce * 0.0001).toStringAsFixed(4)}s',
+                          }
+                        : null,
                   ),
                   _buildStripChildren(),
                 ),
+                if (_bandSweepNonce > 0)
+                  div(
+                    classes: 'band-flash',
+                    attributes: {'aria-hidden': 'true'},
+                    styles: Styles(
+                      raw: {
+                        'animation':
+                            'band-flash 0.45s ease-out '
+                            '${(_bandSweepNonce * 0.0001).toStringAsFixed(4)}s both',
+                      },
+                    ),
+                    [],
+                  ),
                 div(classes: 'needle', []),
                 div(classes: 'dial-glass', []),
                 // Tuning instruction, laid over the dial slit itself -
@@ -1098,6 +1146,15 @@ class RadioDialState extends State<RadioDial> {
     // Slow amber swell while the radio has never been switched on.
     css('.power-rocker.power-attract').styles(
       raw: {'animation': 'power-attract 2.4s ease-in-out infinite'},
+    ),
+    // The rocker physically travels. A switch that does not move under
+    // the finger is the one control most likely to read as fake, and
+    // this is the first thing anyone touches.
+    css('.power-rocker:active').styles(
+      raw: {
+        'transform': 'translateY(1px)',
+        'box-shadow': 'inset 0 2px 4px rgba(0,0,0,0.85)',
+      },
     ),
     // The rocker draws at 52x22 because that is what the hardware wants
     // to look like, but 22px tall is well under a comfortable touch
@@ -1452,6 +1509,7 @@ class RadioDialState extends State<RadioDial> {
       css('&.ind-mem-armed:active').styles(
         raw: {
           'transform': 'translateY(1px)',
+          'box-shadow': 'inset 0 2px 3px rgba(0,0,0,0.7)',
         },
       ),
       css('&.ind-mem-flash').styles(
@@ -1818,16 +1876,51 @@ class RadioDialState extends State<RadioDial> {
         backgroundColor: const Color('#3a3a48'),
       ),
     ]),
+    // Dial engravings. Bumped from 9px and given a touch more weight:
+    // these are the only thing telling you *where* on the band you are
+    // while sweeping, and at 9px in a dim amber they were the hardest
+    // working type on the panel and the least legible.
     css('.tick-label').styles(
       position: Position.absolute(top: 26.px),
-      fontSize: Unit.pixels(9),
+      fontSize: Unit.pixels(10),
+      fontWeight: FontWeight.w500,
       fontFamily: const FontFamily.list([FontFamilies.monospace]),
-      color: const Color('#c8964a'),
-      letterSpacing: 0.05.em,
+      color: const Color('#d6a355'),
+      letterSpacing: 0.04.em,
       raw: {
         'transform': 'translateX(-50%)',
         'white-space': 'nowrap',
         'text-shadow': '0 0 3px rgba(255,177,58,0.4)',
+      },
+    ),
+
+    // Pressed state for the FM / AM pills.
+    //
+    // Written as a top-level selector rather than nested under `.ind`:
+    // grouping it with MEM's `&.ind-mem-armed:active` in one
+    // comma-separated rule resolved the `&` against `.ind-mem`, emitting
+    // `.ind-mem.ind-band-clickable:active` - a selector no element can
+    // ever match, so the band pills silently stayed dead under the
+    // finger while MEM moved.
+    css('.ind.ind-band-clickable:active').styles(
+      raw: {
+        'transform': 'translateY(1px)',
+        'box-shadow': 'inset 0 2px 3px rgba(0,0,0,0.7)',
+      },
+    ),
+
+    // The white bar that rips across the slit on a band change.
+    css('.band-flash').styles(
+      position: Position.absolute(top: Unit.zero, left: Unit.zero),
+      width: 100.percent,
+      height: 100.percent,
+      pointerEvents: PointerEvents.none,
+      zIndex: ZIndex(6),
+      raw: {
+        'background':
+            'linear-gradient(90deg, transparent 0%, rgba(255,246,230,0.75) 35%, '
+            'rgba(255,255,255,0.95) 50%, rgba(255,246,230,0.75) 65%, transparent 100%)',
+        'mix-blend-mode': 'screen',
       },
     ),
 

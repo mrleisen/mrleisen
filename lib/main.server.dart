@@ -372,6 +372,45 @@ void main() {
             },
           ),
         }),
+        // Keyframe: band-sweep
+        // Crossing between FM and AM. Previously this was the LCD digits
+        // scrambling and nothing else - the biggest structural move in
+        // the whole piece, and it read as a value change.
+        //
+        // Now the dial physically re-racks: the strip slams sideways and
+        // decompresses, the way a real receiver's dial cord snaps to the
+        // other end of its travel. Paired with a hard white flash across
+        // the slit on the cut, so the band change registers as an event
+        // rather than as a repaint.
+        css.keyframes('band-sweep', {
+          '0%': Styles(
+            raw: {'transform': 'translateX(0) scaleX(1)', 'filter': 'none'},
+          ),
+          '28%': Styles(
+            raw: {
+              'transform': 'translateX(-14%) scaleX(1.6)',
+              'filter': 'blur(3px) brightness(1.5)',
+            },
+          ),
+          '48%': Styles(
+            raw: {
+              'transform': 'translateX(9%) scaleX(0.72)',
+              'filter': 'blur(2px) brightness(1.2)',
+            },
+          ),
+          '100%': Styles(
+            raw: {'transform': 'translateX(0) scaleX(1)', 'filter': 'none'},
+          ),
+        }),
+        // Keyframe: band-flash
+        // The white bar that rips across the dial slit at the moment of
+        // the cut. Short and asymmetric - fast in, slower out - so it
+        // reads as a discharge rather than a pulse.
+        css.keyframes('band-flash', {
+          '0%': Styles(raw: {'opacity': '0', 'transform': 'scaleX(0.2)'}),
+          '12%': Styles(raw: {'opacity': '0.9', 'transform': 'scaleX(1)'}),
+          '100%': Styles(raw: {'opacity': '0', 'transform': 'scaleX(1)'}),
+        }),
         // Keyframe: lock-flash
         // The capture beat. Snaps on hard - a lock is instantaneous, not
         // a fade - holds long enough to read, then clears. The brief
