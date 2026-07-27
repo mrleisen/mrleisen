@@ -842,17 +842,35 @@ class RadioDialState extends State<RadioDial> {
                   classes: 'dial-strip',
                   styles: Styles(
                     width: _stripWidth.px,
-                    transform: Transform.translate(x: _stripOffset.px),
-                    raw: _bandSweepNonce > 0
-                        ? {
-                            // The nonce lands in the delay so a second
-                            // flip restarts the keyframe rather than
-                            // being ignored as an identical value.
-                            'animation':
-                                'band-sweep 0.62s cubic-bezier(0.2, 0, 0.1, 1) '
-                                '${(_bandSweepNonce * 0.0001).toStringAsFixed(4)}s',
-                          }
-                        : null,
+                    raw: {
+                      // The tuning offset lives in `translate`, not in
+                      // `transform`, so the band-change keyframe can
+                      // compose with it instead of replacing it.
+                      //
+                      // `band-sweep` animates `transform`, and an
+                      // animation owns that property outright. While it
+                      // ran, the strip's own offset simply stopped
+                      // existing: the dial snapped to the bottom of the
+                      // band, lurched there, and snapped back to the
+                      // tuned frequency when the animation ended. The
+                      // lurch was the intended part; the two snaps
+                      // around it were not.
+                      //
+                      // Individual `translate` is applied before
+                      // `transform`, so the strip now stays parked on the
+                      // tuned frequency and the keyframe slams and
+                      // decompresses *from there* - the same movement the
+                      // effect was written for, minus the jump either
+                      // side of it.
+                      'translate': '${_stripOffset.toStringAsFixed(1)}px',
+                      // The nonce lands in the delay so a second flip
+                      // restarts the keyframe rather than being ignored
+                      // as an identical value.
+                      if (_bandSweepNonce > 0)
+                        'animation':
+                            'band-sweep 0.62s cubic-bezier(0.2, 0, 0.1, 1) '
+                            '${(_bandSweepNonce * 0.0001).toStringAsFixed(4)}s',
+                    },
                   ),
                   _buildStripChildren(),
                 ),
