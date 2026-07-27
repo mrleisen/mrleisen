@@ -128,8 +128,14 @@ class CollectedStationsState extends State<CollectedStations> {
         if (s.band == Band.am) s,
     ];
     final visible = component.isPowered && component.stations.isNotEmpty;
+    // How many band rows will actually render. The rack claims height for
+    // exactly that many and nothing more: none at all when the radio is
+    // off or nothing has been saved, one row's worth after the first FM
+    // preset, two once AM has one too.
+    final rows = visible ? (fmStations.isEmpty ? 0 : 1) + (amStations.isEmpty ? 0 : 1) : 0;
     return div(
       classes: 'collected-rack${visible ? '' : ' collected-rack-hidden'}',
+      styles: Styles(raw: {'--rows': '$rows'}),
       // `role="group"` rather than a bare labelled div: `aria-label` is
       // prohibited on an element with no role, and this genuinely is a
       // group - a rack of preset buttons that belong together.
@@ -225,7 +231,26 @@ class CollectedStationsState extends State<CollectedStations> {
       padding: Padding.symmetric(horizontal: Unit.zero, vertical: 4.px),
       opacity: 1,
       raw: {
-        'max-height': '70px',
+        // Height allowance for one row. The cap is `--rows` of these, so
+        // the rack takes exactly the room the rows it renders need and
+        // collapses to nothing when it renders none.
+        '--row-slot': '32px',
+        // `max-height` exists here only so the rack can animate open and
+        // shut - it was never meant to be a design constraint. Pinned to a
+        // constant it quietly became one: overflow on a flex item does not
+        // push the next row down, it paints *under* it, so the second
+        // band's presets ended up hidden behind the LCD with nothing in
+        // the layout to show for it. That is what happened on phones the
+        // moment a visitor saved a station on both bands.
+        //
+        // A clipped box also measures its clipped size, so the faceplate
+        // was under-reporting its height to the `ResizeObserver` and
+        // everything above it was being centred against a number that was
+        // too small as well. Deriving the cap from the row count fixes
+        // both, and it can never go stale: overshooting is harmless
+        // because the real height is content-driven and max-height only
+        // caps it.
+        'max-height': 'calc(var(--rows, 0) * var(--row-slot))',
         'margin-bottom': '4px',
         'transition':
             'opacity 0.35s ease, max-height 0.35s ease, '
@@ -496,7 +521,9 @@ class CollectedStationsState extends State<CollectedStations> {
         gap: Gap(row: 2.px),
         padding: Padding.symmetric(horizontal: Unit.zero, vertical: 2.px),
         raw: {
-          'max-height': '56px',
+          // Phone pills carry a 36 px minimum height, so a row needs a
+          // bigger slot than on the desktop faceplate.
+          '--row-slot': '44px',
           'margin-bottom': '3px',
         },
       ),
