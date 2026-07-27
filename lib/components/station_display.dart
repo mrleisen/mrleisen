@@ -218,11 +218,23 @@ class StationDisplay extends StatelessComponent {
     return (d - cfg.lockRange) / (cfg.tolerance - cfg.lockRange);
   }
 
-  /// Glyphs the title decays into while the signal is unresolved.
-  /// Block and hatch characters rather than random letters: the point is
-  /// that the receiver has *not decoded* a character yet, not that it
-  /// decoded the wrong one.
-  static const String _noiseGlyphs = '▚▞▓▒░█▌▐╳╱╲┼';
+  /// What an unresolved character decays into, ordered light to dense.
+  ///
+  /// This started as block and hatch characters, on the theory that a
+  /// receiver has *not decoded* a character rather than decoded the wrong
+  /// one. The theory was fine and the execution was not: **none of those
+  /// glyphs exist in any of the three fonts this site ships**, so every
+  /// one of them rendered from a system fallback, at a different weight
+  /// and width, in the middle of a word. They did not read as an
+  /// undecoded signal, they read as a font that failed to load.
+  ///
+  /// These four are all inside the latin subset of all three faces, so
+  /// they are drawn by the same typeface as the letters around them, and
+  /// they carry the state instead of only obscuring it: density rises
+  /// with the distortion, so a nearly-resolved title is faintly dotted
+  /// and a lost one is solid. The signal strength is legible in the
+  /// texture itself.
+  static const String _noiseRamp = '·-=#';
 
   /// Renders [text] with a share of its characters replaced by noise,
   /// proportional to how far off station the dial is.
@@ -251,7 +263,11 @@ class StationDisplay extends StatelessComponent {
       // Cheap deterministic hash of (character position, tuning bucket).
       final h = (i * 2654435761 + bucket * 40503) & 0x7fffffff;
       if ((h % 1000) / 1000.0 < distortion) {
-        out.write(_noiseGlyphs[h % _noiseGlyphs.length]);
+        // Density tracks the signal, with a step of per-character jitter
+        // so the run never collapses into one repeated character.
+        final level = (distortion * (_noiseRamp.length - 1)).round();
+        final jitter = (h ~/ 1000) % 3 - 1;
+        out.write(_noiseRamp[(level + jitter).clamp(0, _noiseRamp.length - 1)]);
       } else {
         out.write(ch);
       }
@@ -836,10 +852,8 @@ class StationDisplay extends StatelessComponent {
   /// served HTML as noise - the station names are most of the indexable
   /// prose this page has.
   ///
-  /// Note the noise glyphs live outside the latin subset the display face
-  /// ships, so they render from a system fallback. That is fine, and
-  /// arguably right: an undecoded cell has no business matching the type
-  /// around it.
+  /// The noise marks are drawn by the same face as the letters they
+  /// replace - see [_noiseRamp] for why that had to be fixed.
   Component _title(String cls, String text, Station station) {
     final d = _distortionFor(station);
     if (d <= 0.06) return h2(classes: cls, [Component.text(text)]);
