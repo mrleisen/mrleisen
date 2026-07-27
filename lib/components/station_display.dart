@@ -276,9 +276,9 @@ class StationDisplay extends StatelessComponent {
     return Component.text(out.toString());
   }
 
-  /// Uniform station label ("FM 95.7 - decoded transmission" /
-  /// "AM 620 - decoded transmission") derived from the station's band
-  /// and frequency. Keeps per-panel boilerplate minimal and ensures
+  /// Uniform station label ("FM 97.7 MHz - decoded transmission" /
+  /// "AM 660 kHz - decoded transmission") derived from the station's
+  /// band and frequency. Keeps per-panel boilerplate minimal and ensures
   /// labels update automatically if a station moves on the band plan.
   String _stationLabel(Station s, Lang lang) {
     final unit = s.band == Band.fm ? 'MHz' : 'kHz';
@@ -854,7 +854,7 @@ class StationDisplay extends StatelessComponent {
   /// prose this page has.
   ///
   /// The noise marks are drawn by the same face as the letters they
-  /// replace - see [_noiseRamp] for why that had to be fixed.
+  /// replace - see [_noiseMark] for why that had to be fixed.
   Component _title(String cls, String text, Station station) {
     final d = _distortionFor(station);
     if (d <= 0.06) return h2(classes: cls, [Component.text(text)]);
