@@ -682,9 +682,21 @@ void main() {
               'transition-duration': '0.01ms !important',
             },
           ),
-          // Kill the distortion maths, not just the keyframes.
+          // Kill the distortion maths, not just the keyframes. The
+          // :root reset covers everything that merely inherits the
+          // properties, but the panels and the noise host set them
+          // inline on every render, and an inline custom property wins
+          // over an inherited one for its whole subtree - so those
+          // elements get an !important rule of their own, which is the
+          // one thing that outranks an inline style.
           css(':root').styles(
             raw: {'--distortion': '0', '--tv-flicker-amp': '0'},
+          ),
+          css('.station-panel, .rx-panel, .tv-flicker-host').styles(
+            raw: {
+              '--distortion': '0 !important',
+              '--tv-flicker-amp': '0 !important',
+            },
           ),
           // The CRT overlay animates via clip-path with fill-forwards, so
           // `animation: none` alone would strand it mid-wipe. Force the
@@ -719,8 +731,11 @@ void main() {
           // Grain, scanlines and the phosphor mask stay as static texture:
           // they carry the CRT look but none of them need to move to do it.
           // The noise layer is the one exception - held still it reads as a
-          // dirty screen, so it drops out entirely.
-          css('.static-noise').styles(raw: {'opacity': '0'}),
+          // dirty screen, so it drops out entirely. `.tv-flicker-host` is
+          // the root class StaticNoise actually renders; an earlier
+          // version of this rule targeted a `.static-noise` class that no
+          // element carries, so the frozen snow stayed visible.
+          css('.tv-flicker-host').styles(raw: {'opacity': '0 !important'}),
         ]),
       ],
       head: [
@@ -732,6 +747,17 @@ void main() {
         // SVG favicon (modern browsers) + .ico fallback for legacy clients.
         link(rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg'),
         link(rel: 'icon', type: 'image/x-icon', href: '/favicon.ico'),
+        // iOS ignores the manifest icons for home-screen bookmarks and
+        // falls back to a page screenshot without this. Same 192px PWA
+        // icon the manifest already ships; Safari scales it down.
+        link(
+          rel: 'apple-touch-icon',
+          href: '/icons/Icon-192.png',
+          attributes: {'sizes': '192x192'},
+        ),
+        // Tints the browser chrome (Android address bar, Safari tab bar)
+        // to the page background. Same value as manifest.json.
+        meta(name: 'theme-color', content: '#050507'),
         // Chakra Petch (instrument) + Space Grotesk (display) + IBM Plex Mono.
         // Self-hosted: no runtime dependency on Google Fonts.
         link(rel: 'stylesheet', href: 'fonts.css'),
@@ -764,6 +790,20 @@ void main() {
             'content': 'https://rafahcf.com/og-image.png',
           },
         ),
+        meta(attributes: {'property': 'og:image:width', 'content': '1200'}),
+        meta(attributes: {'property': 'og:image:height', 'content': '630'}),
+        meta(
+          attributes: {
+            'property': 'og:image:alt',
+            'content':
+                'Retro radio faceplate with an FM dial scale and the wordmark RADIO, captioned Rafael Camargo - Software Engineer, rafahcf.com',
+          },
+        ),
+        meta(attributes: {'property': 'og:site_name', 'content': 'rafahcf.com'}),
+        // SSR is English; Spanish exists as a client-side toggle only,
+        // so it is declared as an alternate rather than a separate URL.
+        meta(attributes: {'property': 'og:locale', 'content': 'en_US'}),
+        meta(attributes: {'property': 'og:locale:alternate', 'content': 'es_ES'}),
         // Twitter
         meta(name: 'twitter:card', content: 'summary_large_image'),
         meta(name: 'twitter:url', content: 'https://rafahcf.com/'),
@@ -774,6 +814,11 @@ void main() {
               'Software engineer with 10+ years of experience. I build things - like this. An interactive radio-frequency experience, built entirely in Dart using the Jaspr framework. No JavaScript frameworks. No external libraries.',
         ),
         meta(name: 'twitter:image', content: 'https://rafahcf.com/og-image.png'),
+        meta(
+          name: 'twitter:image:alt',
+          content:
+              'Retro radio faceplate with an FM dial scale and the wordmark RADIO, captioned Rafael Camargo - Software Engineer, rafahcf.com',
+        ),
         // Structured data. The page is one interactive canvas with no
         // crawlable prose beyond the station panels, so an explicit
         // Person graph is the only way search engines learn who this is

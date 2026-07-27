@@ -119,16 +119,16 @@ It's a small demonstration of what I build: procedural audio, CSS-only visuals, 
 
 <p align="center">
   <strong>FM</strong> - featured long-form content<br>
-  <code>89.5 &nbsp;·&nbsp; 93.6 &nbsp;·&nbsp; 97.7 &nbsp;·&nbsp; 101.8 &nbsp;·&nbsp; 105.9</code>
+  <code>89.5 &nbsp;·&nbsp; 91.6 &nbsp;·&nbsp; 93.6 &nbsp;·&nbsp; 97.7 &nbsp;·&nbsp; 101.8 &nbsp;·&nbsp; 105.9</code>
 </p>
 
 <p align="center">
   <strong>AM</strong> - idea-stage project cards<br>
-  <code>640 &nbsp;·&nbsp; 960 &nbsp;·&nbsp; 1280 &nbsp;·&nbsp; 1600</code>
+  <code>660 &nbsp;·&nbsp; 820 &nbsp;·&nbsp; 960 &nbsp;·&nbsp; 1120 &nbsp;·&nbsp; 1280 &nbsp;·&nbsp; 1600</code>
 </p>
 
 <p align="center">
-  <sub>Nine stations across two bands. Each one carries a different signal.<br>Flip the power switch and tune in.</sub>
+  <sub>Twelve stations across two bands. Each one carries a different signal.<br>Flip the power switch and tune in.</sub>
 </p>
 
 <p align="center">
@@ -148,17 +148,23 @@ It's a small demonstration of what I build: procedural audio, CSS-only visuals, 
 ### Local development
 
 ```bash
+# One-time: the Jaspr CLI is a global activation, not a dev dependency
+dart pub global activate jaspr_cli
+
 # Install dependencies
 dart pub get
 
 # Serve with hot reload
-dart run jaspr serve
+jaspr serve
 
 # Build static output
-dart run jaspr build
+jaspr build
 
 # Regenerate the OG image
 dart run tool/generate_og_image.dart
+
+# Audit text contrast (WCAG AA)
+dart run tool/check_contrast.dart
 
 # Lint and format
 dart analyze
@@ -181,15 +187,21 @@ radio/
 │   │   ├── radio_audio.dart        # Web Audio graph and mobile-safe unlock
 │   │   ├── radio_dial.dart         # Tuning dial, pointer capture, LCD scramble, MEM button
 │   │   ├── station_display.dart    # Active-station content panels
+│   │   ├── case_study.dart         # Long-form case-study printout dialog
+│   │   ├── rx_chrome.dart          # Shared dialog chrome + carrier-lost degradation
 │   │   ├── signal_bars.dart        # Reception bars with power-on scan sweep
 │   │   ├── collected_stations.dart # Preset rack: tap-to-recall, hold-to-delete
 │   │   ├── static_noise.dart       # CSS static layer
 │   │   ├── scanlines.dart          # CRT scanline overlay
 │   │   ├── phosphor_mask.dart      # RGB phosphor subpixel mask
 │   │   └── vignette.dart           # Ambient illumination
-│   └── models/
-│       └── station.dart       # Stations, bands, proximity math
+│   ├── models/
+│   │   └── station.dart       # Stations, bands, proximity math
+│   └── utils/
+│       ├── keyboard.dart      # Enter/Space activation for role=button controls
+│       └── motion.dart        # prefers-reduced-motion detection
 ├── tool/
+│   ├── check_contrast.dart    # WCAG AA contrast audit (exits non-zero on failure)
 │   └── generate_og_image.dart # Regenerates web/og-image.png
 ├── web/                       # Static assets (favicon, manifest, icons, OG)
 ├── .github/
