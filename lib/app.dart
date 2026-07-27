@@ -765,7 +765,10 @@ class AppState extends State<App> {
     final es = _lang == Lang.es;
     final rows = <(String, String)>[
       (es ? 'LENGUAJE' : 'LANGUAGE', 'Dart 3.10+'),
-      (es ? 'FRAMEWORK' : 'FRAMEWORK', 'Jaspr · SSR + hidratación'),
+      (
+        es ? 'FRAMEWORK' : 'FRAMEWORK',
+        es ? 'Jaspr · SSR + hidratación' : 'Jaspr · SSR + hydration',
+      ),
       (es ? 'AUDIO' : 'AUDIO', 'Web Audio API'),
       (
         es ? 'SÍNTESIS' : 'SYNTHESIS',
@@ -788,7 +791,7 @@ class AppState extends State<App> {
       //   cat build/jaspr/*.js | wc -c        -> raw
       //   cat build/jaspr/*.js | gzip -9 | wc -c -> gzip
       //   du -ch build/jaspr/fonts/*.woff2    -> fonts
-      (es ? 'JAVASCRIPT' : 'JAVASCRIPT', '215 KB · 70 KB gzip'),
+      (es ? 'JAVASCRIPT' : 'JAVASCRIPT', '143 KB · 45 KB gzip'),
       (
         es ? 'TIPOGRAFÍAS' : 'TYPEFACES',
         es ? '72 KB · 4 familias, subset latino' : '72 KB · 4 families, latin subset',
