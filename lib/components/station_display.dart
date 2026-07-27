@@ -31,6 +31,8 @@ class StationDisplay extends StatelessComponent {
     this.isPowered = true,
     this.onOpenTech,
     this.techTriggerId = 'tech-trigger',
+    this.onOpenCase,
+    this.caseTriggerId = 'case-trigger',
     super.key,
   });
 
@@ -49,6 +51,13 @@ class StationDisplay extends StatelessComponent {
 
   /// Id stamped on the trigger so the dialog can hand focus back to it.
   final String techTriggerId;
+
+  /// Opens the DeTodoUIS extended transmission, the one station told at
+  /// length. Owned by `AppState` for the same reasons as [onOpenTech].
+  final VoidCallback? onOpenCase;
+
+  /// Id stamped on that trigger, so focus returns to it on close.
+  final String caseTriggerId;
 
   /// Identify which (if any) station's panel should be active on the
   /// active band. Stations within a band sit far enough apart that at
@@ -172,7 +181,7 @@ class StationDisplay extends StatelessComponent {
     switch (s.callSign) {
       case 'WHO':
         return _aboutPanel(s, lang);
-      case 'UIS':
+      case 'DTU':
         return _detodouisPanel(s, lang);
       case 'NET':
         return _connectPanel(s, lang);
@@ -326,47 +335,57 @@ class StationDisplay extends StatelessComponent {
     ]);
   }
 
-  /// Opens the technical-transmission dialog. Rendered as a button
-  /// rather than a link: it navigates nowhere, so it must not claim to.
-  Component _techPill(Lang lang) {
+  /// Pill that opens a long-form printout. Rendered as a button rather
+  /// than a link: it navigates nowhere, so it must not claim to.
+  Component _actionPill(String label, {required String id, VoidCallback? onTap}) {
     return span(
       classes: 'pill pill-action',
-      id: techTriggerId,
-      events: onOpenTech == null
+      id: id,
+      events: onTap == null
           ? const {}
           : {
-              'click': (_) => onOpenTech!(),
-              'keydown': onActivateKey((_) => onOpenTech!()),
+              'click': (_) => onTap(),
+              'keydown': onActivateKey((_) => onTap()),
             },
       attributes: {
         'role': 'button',
         'tabindex': '0',
         'aria-haspopup': 'dialog',
       },
-      [
-        Component.text(
-          lang == Lang.es ? 'Transmisión técnica' : 'Technical transmission',
-        ),
-      ],
+      [Component.text(label)],
     );
   }
 
+  Component _techPill(Lang lang) => _actionPill(
+    lang == Lang.es ? 'Transmisión técnica' : 'Technical transmission',
+    id: techTriggerId,
+    onTap: onOpenTech,
+  );
+
   Component _detodouisPanel(Station s, Lang lang) {
     final subtitle = lang == Lang.es ? 'App de comunidad universitaria' : 'University community app';
+    // The single mention of UIS anywhere on the site, and it says exactly
+    // one thing: who the app is for. This is an independent project and
+    // always has been, so nothing here may read as institutional - no
+    // full university name, no crest-adjacent phrasing, no implied
+    // endorsement. "Independent" is stated outright rather than left to
+    // be inferred, because an app named after a community is precisely
+    // the case where a reader would otherwise assume affiliation.
     final body = lang == Lang.es
-        ? 'La app de la comunidad UIS desde 2015. Puntajes de corte, '
-              'profesores, materias, el Oráculo y más. Nació de la '
-              'necesidad de centralizar información que estaba dispersa '
-              'entre foros, grupos de chat y el boca a boca. La comunidad '
-              'ha aportado más de 5.000 reseñas de profesores y materias, '
-              'que es lo que permite armar horario sin sorpresas.'
-        : 'The UIS community app since 2015. Cut scores, professors, '
-              'subjects, the Oracle and more. It started because the '
-              'information students actually needed was scattered across '
-              'forums, chat groups and word of mouth. The community has '
-              'contributed over 5,000 reviews of professors and subjects, '
-              'which is what makes it possible to build a timetable with '
-              'no surprises.';
+        ? 'Un proyecto independiente hecho para la comunidad UIS desde '
+              '2015. Puntajes de corte, profesores, materias, el Oráculo y '
+              'más. Nació de la necesidad de centralizar información que '
+              'estaba dispersa entre foros, grupos de chat y el boca a '
+              'boca. La comunidad ha aportado más de 5.000 reseñas de '
+              'profesores y materias, que es lo que permite armar horario '
+              'sin sorpresas.'
+        : 'An independent project built for the UIS community since 2015. '
+              'Cut scores, professors, subjects, the Oracle and more. It '
+              'started because the information students actually needed '
+              'was scattered across forums, chat groups and word of '
+              'mouth. The community has contributed over 5,000 reviews of '
+              'professors and subjects, which is what makes it possible to '
+              'build a timetable with no surprises.';
     return _panelShell(
       color: s.color,
       label: _stationLabel(s, lang),
@@ -392,6 +411,16 @@ class StationDisplay extends StatelessComponent {
           (_key(lang, 'status'), _status(lang, 'active')),
         ]),
         div(classes: 'pill-row', [
+          // The one station that carries a long-form broadcast. Every
+          // other panel stops at its data card on purpose; this project
+          // has ten years and real users behind it, and a portfolio where
+          // nothing can be read in depth reads as a visual experiment
+          // rather than as work.
+          _actionPill(
+            lang == Lang.es ? 'Transmisión extendida' : 'Extended transmission',
+            id: caseTriggerId,
+            onTap: onOpenCase,
+          ),
           _pill('Web', href: 'https://detodouis.com'),
           _pill(
             'App Store',
@@ -893,7 +922,7 @@ class StationDisplay extends StatelessComponent {
       display: Display.flex,
       flexDirection: FlexDirection.column,
       alignItems: AlignItems.center,
-      gap: Gap(row: 18.px),
+      gap: Gap(row: 16.px),
       padding: Padding.symmetric(horizontal: 24.px),
     ),
 
@@ -1012,7 +1041,7 @@ class StationDisplay extends StatelessComponent {
     css('.tx-data').styles(
       display: Display.grid,
       justifyContent: JustifyContent.center,
-      gap: Gap(row: 6.px, column: 16.px),
+      gap: Gap(row: 8.px, column: 16.px),
       maxWidth: 440.px,
       raw: {
         // Label column sizes to its content, value column takes what is
@@ -1095,17 +1124,22 @@ class StationDisplay extends StatelessComponent {
           'gap': '8px',
           'border': '1px solid rgba(255,255,255,0.09)',
           'border-radius': '99px',
-          // Raised-plastic faceplate: soft dark gradient body, tiny
-          // light highlight up top, dark drop below.
-          'background': 'linear-gradient(180deg, #1a1a1f 0%, #111115 100%)',
+          // Raised plastic, lit from the upper left: highlight on the
+          // top-left inner edge, shade on the bottom-right, and a short
+          // cast shadow falling down and to the right.
+          'background': 'linear-gradient(160deg, #1c1c22 0%, #111115 100%)',
           'box-shadow':
-              'inset 0 1px 0 rgba(255,255,255,0.06), '
-              '0 1px 0 rgba(0,0,0,0.6), '
-              '0 2px 6px rgba(0,0,0,0.35)',
+              'inset 1px 1px 0 rgba(255,255,255,0.07), '
+              'inset -1px -1px 0 rgba(0,0,0,0.55), '
+              '1px 2px 6px rgba(0,0,0,0.38)',
           'text-shadow': '0 0 3px var(--sc-glow, rgba(232,160,53,0.3))',
+          // Plastic: quick, settled. The colour is a lamp behind it, so
+          // it keeps the phosphor decay.
           'transition':
-              'border-color 0.15s ease, background 0.15s ease, '
-              'box-shadow 0.15s ease, color 0.15s ease',
+              'border-color var(--dur-plastic) var(--ease-plastic), '
+              'background var(--dur-plastic) var(--ease-plastic), '
+              'box-shadow var(--dur-plastic) var(--ease-plastic), '
+              'color var(--dur-glow-off) var(--ease-phosphor)',
         },
       ),
       // Tiny LED dot ::before - lit in the station colour with glow.
@@ -1126,18 +1160,18 @@ class StationDisplay extends StatelessComponent {
       // darkens the face slightly.
       css('&:hover').styles(
         raw: {
-          'background': 'linear-gradient(180deg, #121216 0%, #0d0d10 100%)',
+          'background': 'linear-gradient(160deg, #121216 0%, #0d0d10 100%)',
           'border-color': 'rgba(255,255,255,0.18)',
           'box-shadow':
-              'inset 0 1px 3px rgba(0,0,0,0.7), '
-              'inset 0 -1px 0 rgba(255,255,255,0.04)',
+              'inset 2px 2px 3px rgba(0,0,0,0.7), '
+              'inset -1px -1px 0 rgba(255,255,255,0.04)',
         },
       ),
       css('&:active').styles(
         raw: {
           'box-shadow':
-              'inset 0 2px 4px rgba(0,0,0,0.85), '
-              'inset 0 -1px 0 rgba(255,255,255,0.04)',
+              'inset 3px 3px 4px rgba(0,0,0,0.85), '
+              'inset -1px -1px 0 rgba(255,255,255,0.04)',
         },
       ),
     ]),
@@ -1178,8 +1212,8 @@ class StationDisplay extends StatelessComponent {
       display: Display.flex,
       flexDirection: FlexDirection.column,
       alignItems: AlignItems.center,
-      gap: Gap(row: 10.px),
-      padding: Padding.symmetric(horizontal: 22.px, vertical: 18.px),
+      gap: Gap(row: 12.px),
+      padding: Padding.symmetric(horizontal: 16.px, vertical: 16.px),
       maxWidth: 420.px,
       raw: {
         'margin': '0 auto',
@@ -1304,7 +1338,7 @@ class StationDisplay extends StatelessComponent {
       ),
       // AM panels tighten a touch on small screens.
       css('.am-shell').styles(
-        padding: Padding.symmetric(horizontal: 16.px, vertical: 14.px),
+        padding: Padding.symmetric(horizontal: 12.px, vertical: 12.px),
         maxWidth: 90.percent,
       ),
       css('.am-body').styles(fontSize: Unit.pixels(12)),

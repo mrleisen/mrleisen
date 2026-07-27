@@ -221,8 +221,8 @@ class CollectedStationsState extends State<CollectedStations> {
       display: Display.flex,
       flexDirection: FlexDirection.column,
       alignItems: AlignItems.stretch,
-      gap: Gap(row: 3.px),
-      padding: Padding.symmetric(horizontal: Unit.zero, vertical: 3.px),
+      gap: Gap(row: 4.px),
+      padding: Padding.symmetric(horizontal: Unit.zero, vertical: 4.px),
       opacity: 1,
       raw: {
         'max-height': '70px',
@@ -251,7 +251,7 @@ class CollectedStationsState extends State<CollectedStations> {
       display: Display.flex,
       flexDirection: FlexDirection.row,
       alignItems: AlignItems.center,
-      gap: Gap(column: 7.px),
+      gap: Gap(column: 8.px),
     ),
     // Pill scroller. Hidden scrollbar; pointer-events re-enabled on
     // pills themselves.
@@ -260,7 +260,7 @@ class CollectedStationsState extends State<CollectedStations> {
         display: Display.flex,
         flexDirection: FlexDirection.row,
         alignItems: AlignItems.center,
-        gap: Gap(column: 5.px),
+        gap: Gap(column: 4.px),
         raw: {
           'flex': '1',
           'min-width': '0',
@@ -293,21 +293,31 @@ class CollectedStationsState extends State<CollectedStations> {
         'text-align': 'center',
         'user-select': 'none',
         '-webkit-user-select': 'none',
-        'background': 'linear-gradient(to bottom, #0a0a10, #050508)',
+        'background': 'linear-gradient(160deg, #0a0a10, #050508)',
         'border': '1px solid #1c1c26',
-        'box-shadow': 'inset 0 1px 1px rgba(0,0,0,0.6)',
-        'text-shadow': '0 1px 0 rgba(0,0,0,0.55)',
+        'box-shadow':
+            'inset 1px 1px 1px rgba(0,0,0,0.6), '
+            'inset -1px -1px 0 rgba(255,255,255,0.025)',
+        'text-shadow': '-1px -1px 0 rgba(0,0,0,0.55), 1px 1px 0 rgba(255,255,255,0.04)',
         'transition':
-            'background 0.25s ease, color 0.25s ease, '
-            'border-color 0.25s ease, text-shadow 0.25s ease',
+            'background var(--dur-plastic) var(--ease-plastic), '
+            'border-color var(--dur-plastic) var(--ease-plastic), '
+            'color var(--dur-glow-off) var(--ease-phosphor), '
+            'text-shadow var(--dur-glow-off) var(--ease-phosphor)',
       },
     ),
     css('.collected-row-active .collected-row-label').styles(
       color: const Color(_lcdAmber),
       raw: {
-        'background': 'linear-gradient(to bottom, #100904, #050202)',
+        'background': 'linear-gradient(160deg, #100904, #050202)',
         'border': '1px solid #2a1a08',
         'text-shadow': '0 0 4px rgba(255,177,58,0.85), 0 0 8px rgba(255,177,58,0.4)',
+        // Attack side of the lamp; the decay stays on the base rule.
+        'transition':
+            'background var(--dur-plastic) var(--ease-plastic), '
+            'border-color var(--dur-plastic) var(--ease-plastic), '
+            'color var(--dur-glow-on) var(--ease-phosphor), '
+            'text-shadow var(--dur-glow-on) var(--ease-phosphor)',
       },
     ),
 
@@ -338,12 +348,16 @@ class CollectedStationsState extends State<CollectedStations> {
           'flex-shrink': '0',
           'pointer-events': 'auto',
           'overflow': 'hidden',
-          'background': 'linear-gradient(to bottom, #0a0a10, #050508)',
+          'background': 'linear-gradient(160deg, #0a0a10, #050508)',
           'border': '1px solid #1c1c26',
-          'box-shadow': 'inset 0 1px 1px rgba(0,0,0,0.6)',
+          'box-shadow':
+              'inset 1px 1px 1px rgba(0,0,0,0.6), '
+              'inset -1px -1px 0 rgba(255,255,255,0.025)',
           'transition':
-              'background 0.18s ease, border-color 0.18s ease, '
-              'box-shadow 0.18s ease, transform 0.12s ease',
+              'background var(--dur-plastic) var(--ease-plastic), '
+              'border-color var(--dur-plastic) var(--ease-plastic), '
+              'box-shadow var(--dur-plastic) var(--ease-plastic), '
+              'transform var(--dur-plastic) var(--ease-plastic)',
           'user-select': 'none',
           '-webkit-user-select': 'none',
           '-webkit-tap-highlight-color': 'transparent',
@@ -371,7 +385,7 @@ class CollectedStationsState extends State<CollectedStations> {
       css('&:hover').styles(
         raw: {
           'border-color': '#2a1a08',
-          'background': 'linear-gradient(to bottom, #100904, #050202)',
+          'background': 'linear-gradient(160deg, #100904, #050202)',
         },
       ),
       css('&:active').styles(raw: {'transform': 'translateY(1px)'}),
@@ -382,7 +396,7 @@ class CollectedStationsState extends State<CollectedStations> {
         raw: {
           'border-color': '#3a2a14',
           'box-shadow':
-              'inset 0 1px 1px rgba(0,0,0,0.6), '
+              'inset 1px 1px 1px rgba(0,0,0,0.6), '
               '0 0 0 1px rgba(232,160,53,0.45)',
         },
       ),
@@ -394,7 +408,7 @@ class CollectedStationsState extends State<CollectedStations> {
     css('.collected-pill-holding').styles(
       raw: {
         'border-color': 'rgba(200,70,70,0.55)',
-        'box-shadow': 'inset 0 1px 1px rgba(0,0,0,0.6), 0 0 6px rgba(200,70,70,0.25)',
+        'box-shadow': 'inset 1px 1px 1px rgba(0,0,0,0.6), 0 0 6px rgba(200,70,70,0.25)',
       },
     ),
     css('.collected-pill-holding::after').styles(
@@ -408,10 +422,10 @@ class CollectedStationsState extends State<CollectedStations> {
     // it reads as part of the faceplate, not a separate light source.
     css('.collected-pill-active').styles(
       raw: {
-        'background': 'linear-gradient(to bottom, #100904, #050202)',
+        'background': 'linear-gradient(160deg, #100904, #050202)',
         'border': '1px solid #2a1a08',
         'box-shadow':
-            'inset 0 1px 1px rgba(0,0,0,0.6), '
+            'inset 1px 1px 1px rgba(0,0,0,0.6), '
             '0 0 6px rgba(232,160,53,0.18)',
       },
     ),

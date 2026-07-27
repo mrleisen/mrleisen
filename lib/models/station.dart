@@ -86,7 +86,7 @@ const stations = <Station>[
   Station(band: Band.fm, frequency: 91.6, callSign: 'BBL', color: '#D4A843'),
   Station(band: Band.fm, frequency: 93.6, callSign: 'NET', color: '#B085E0'),
   Station(band: Band.fm, frequency: 97.7, callSign: 'WHO', color: '#5BA4D9'),
-  Station(band: Band.fm, frequency: 101.8, callSign: 'UIS', color: '#E8944A'),
+  Station(band: Band.fm, frequency: 101.8, callSign: 'DTU', color: '#E8944A'),
   Station(band: Band.fm, frequency: 105.9, callSign: 'TRP', color: '#E86A8A'),
   // ── AM: idea-stage projects, one per station. ──
   Station(band: Band.am, frequency: 660.0, callSign: 'NUM', color: '#5BC8A0'),
