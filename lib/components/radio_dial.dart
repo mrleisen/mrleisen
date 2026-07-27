@@ -1616,14 +1616,6 @@ class RadioDialState extends State<RadioDial> {
         },
       ),
       css('&.ind-band-clickable').styles(raw: {'cursor': 'pointer'}),
-      css('&.ind-band-clickable:hover').styles(
-        color: const Color('#a87a30'),
-        raw: {
-          'background': 'linear-gradient(160deg, #0d0a06, #060403)',
-          'border': '1px solid #241a0d',
-          'text-shadow': '0 0 3px rgba(232,160,53,0.5), 0 1px 0 rgba(0,0,0,0.55)',
-        },
-      ),
       // Focus ring deliberately not defined here. It used to be a 1px
       // outline local to this one control, which outranked the shared
       // rule in `main.server.dart` on specificity and left the band
@@ -1661,15 +1653,6 @@ class RadioDialState extends State<RadioDial> {
               'box-shadow var(--dur-plastic) var(--ease-plastic), '
               'color var(--dur-glow-on) var(--ease-phosphor), '
               'text-shadow var(--dur-glow-on) var(--ease-phosphor)',
-        },
-      ),
-      css('&.ind-mem-armed:hover').styles(
-        raw: {
-          'background': 'linear-gradient(160deg, #1a1006, #0a0504)',
-          'border-color': '#3a2410',
-          'box-shadow':
-              'inset 1px 1px 1px rgba(0,0,0,0.6), '
-              '0 0 6px rgba(232,160,53,0.35)',
         },
       ),
       css('&.ind-mem-armed:active').styles(
@@ -2405,6 +2388,40 @@ class RadioDialState extends State<RadioDial> {
           'transition':
               'background-color var(--dur-glow-on) var(--ease-phosphor), '
               'box-shadow var(--dur-glow-on) var(--ease-phosphor)',
+        },
+      ),
+    ]),
+
+    // ── hover, and only where hovering exists ──
+    //
+    // WebKit turns the first tap on a non-native control that has :hover
+    // styles into a hover reveal, and only the second tap counts as a
+    // click. Every control in this piece is a span or div with role=button
+    // rather than a real <button> - deliberately, since a native button
+    // drags user-agent chrome that fights the hardware - so every one of
+    // them was inheriting that behaviour: on an iPhone the whole faceplate
+    // needed pressing twice.
+    //
+    // Gating the hover styles on a pointer that can actually hover fixes
+    // it, and is what the rules meant anyway. It also disposes of sticky
+    // hover, where a tapped control keeps its hover look until you press
+    // something else.
+    css.media(const MediaQuery.raw('(hover: hover)'), [
+      css('.ind.ind-band-clickable:hover').styles(
+        color: const Color('#a87a30'),
+        raw: {
+          'background': 'linear-gradient(160deg, #0d0a06, #060403)',
+          'border': '1px solid #241a0d',
+          'text-shadow': '0 0 3px rgba(232,160,53,0.5), 0 1px 0 rgba(0,0,0,0.55)',
+        },
+      ),
+      css('.ind.ind-mem-armed:hover').styles(
+        raw: {
+          'background': 'linear-gradient(160deg, #1a1006, #0a0504)',
+          'border-color': '#3a2410',
+          'box-shadow':
+              'inset 1px 1px 1px rgba(0,0,0,0.6), '
+              '0 0 6px rgba(232,160,53,0.35)',
         },
       ),
     ]),

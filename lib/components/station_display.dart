@@ -1218,6 +1218,11 @@ class StationDisplay extends StatelessComponent {
               'inset -1px -1px 0 rgba(0,0,0,0.55), '
               '1px 2px 6px rgba(0,0,0,0.38)',
           'text-shadow': '0 0 3px var(--sc-glow, rgba(232,160,53,0.3))',
+          // iOS waits ~300ms on a tap in case a second one arrives to
+          // zoom. These are the only outbound links in the piece and they
+          // are never a zoom target.
+          'touch-action': 'manipulation',
+          '-webkit-tap-highlight-color': 'transparent',
           // Plastic: quick, settled. The colour is a lamp behind it, so
           // it keeps the phosphor decay.
           'transition':
@@ -1241,17 +1246,9 @@ class StationDisplay extends StatelessComponent {
               '0 0 1px rgba(0,0,0,0.8)',
         },
       ),
-      // Pressed-in state on hover / active - inverts the bevel and
-      // darkens the face slightly.
-      css('&:hover').styles(
-        raw: {
-          'background': 'linear-gradient(160deg, #121216 0%, #0d0d10 100%)',
-          'border-color': 'rgba(255,255,255,0.18)',
-          'box-shadow':
-              'inset 2px 2px 3px rgba(0,0,0,0.7), '
-              'inset -1px -1px 0 rgba(255,255,255,0.04)',
-        },
-      ),
+      // Pressed-in state, inverting the bevel and darkening the face.
+      // The hover half lives in the `(hover: hover)` block at the end of
+      // this list; see the note there.
       css('&:active').styles(
         raw: {
           'box-shadow':
@@ -1277,9 +1274,6 @@ class StationDisplay extends StatelessComponent {
           'background': '#E8A035',
           'box-shadow': '0 0 5px #E8A035, 0 0 1px rgba(0,0,0,0.8)',
         },
-      ),
-      css('&:hover').styles(
-        raw: {'border-color': 'rgba(232,160,53,0.55)'},
       ),
     ]),
 
@@ -1395,6 +1389,35 @@ class StationDisplay extends StatelessComponent {
         'text-align': 'center',
       },
     ),
+
+    // ── hover, and only where hovering exists ──
+    //
+    // WebKit turns the first tap on a non-native control that has :hover
+    // styles into a hover reveal, and only the second tap counts as a
+    // click. Every control in this piece is a span or div with role=button
+    // rather than a real <button> - deliberately, since a native button
+    // drags user-agent chrome that fights the hardware - so every one of
+    // them was inheriting that behaviour: on an iPhone the whole faceplate
+    // needed pressing twice.
+    //
+    // Gating the hover styles on a pointer that can actually hover fixes
+    // it, and is what the rules meant anyway. It also disposes of sticky
+    // hover, where a tapped control keeps its hover look until you press
+    // something else.
+    css.media(const MediaQuery.raw('(hover: hover)'), [
+      css('.pill:hover').styles(
+        raw: {
+          'background': 'linear-gradient(160deg, #121216 0%, #0d0d10 100%)',
+          'border-color': 'rgba(255,255,255,0.18)',
+          'box-shadow':
+              'inset 2px 2px 3px rgba(0,0,0,0.7), '
+              'inset -1px -1px 0 rgba(255,255,255,0.04)',
+        },
+      ),
+      css('.pill.pill-action:hover').styles(
+        raw: {'border-color': 'rgba(232,160,53,0.55)'},
+      ),
+    ]),
 
     // Mobile sizing.
     css.media(MediaQuery.screen(maxWidth: 600.px), [
