@@ -45,16 +45,16 @@ class SignalBars extends StatefulComponent {
   @css
   static List<StyleRule> get styles => [
     css('.signal-bars').styles(
+      display: Display.flex,
       position: Position.fixed(top: 16.px, left: 16.px),
       zIndex: ZIndex(25),
-      display: Display.flex,
+      padding: Padding.symmetric(horizontal: 8.px, vertical: 6.px),
+      radius: BorderRadius.all(Radius.circular(6.px)),
+      opacity: 1,
+      pointerEvents: PointerEvents.none,
       flexDirection: FlexDirection.row,
       alignItems: AlignItems.end,
       gap: Gap(column: 3.px),
-      padding: Padding.symmetric(horizontal: 8.px, vertical: 6.px),
-      radius: BorderRadius.all(Radius.circular(6.px)),
-      pointerEvents: PointerEvents.none,
-      opacity: 1,
       raw: {
         'background': 'rgba(0,0,0,0.35)',
         'border': '1px solid rgba(255,255,255,0.08)',
@@ -70,8 +70,8 @@ class SignalBars extends StatefulComponent {
     ),
     css('.signal-bar').styles(
       width: 3.px,
-      backgroundColor: const Color('#2a2a32'),
       radius: BorderRadius.all(Radius.circular(1.px)),
+      backgroundColor: const Color('#2a2a32'),
       // Decay side. A meter segment goes out slowly, the same way every
       // other lamp on this receiver does.
       raw: {

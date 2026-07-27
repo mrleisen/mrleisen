@@ -105,11 +105,11 @@ class StaticNoise extends StatelessComponent {
     // Flicker wrapper - fixed full-screen, holds the overall flicker animation.
     css('.tv-flicker-host').styles(
       position: Position.fixed(top: Unit.zero, left: Unit.zero),
+      zIndex: ZIndex(10),
       width: 100.percent,
       height: 100.percent,
       overflow: Overflow.hidden,
       pointerEvents: PointerEvents.none,
-      zIndex: ZIndex(10),
     ),
 
     // ── Layer 1: fine grain ──

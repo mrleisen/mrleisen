@@ -237,18 +237,18 @@ List<StyleRule> get rxChromeStyles => [
   // ── signal meter in the head ──
   css('.rx-sig').styles(
     display: Display.flex,
+    margin: Margin.only(left: Unit.auto, right: 12.px),
     flexDirection: FlexDirection.row,
     alignItems: AlignItems.center,
     gap: Gap(column: 8.px),
-    margin: Margin.only(left: Unit.auto, right: 12.px),
     raw: {'flex-shrink': '0'},
   ),
   css('.rx-sig-bars').styles(
     display: Display.flex,
+    height: 12.px,
     flexDirection: FlexDirection.row,
     alignItems: AlignItems.end,
     gap: Gap(column: 2.px),
-    height: 12.px,
   ),
   css('.rx-sig-bar').styles(
     width: 3.px,
@@ -267,16 +267,16 @@ List<StyleRule> get rxChromeStyles => [
     },
   ),
   css('.rx-sig-text').styles(
+    // 5.9:1 on the panel. This is a status readout, not a decoration.
+    color: const Color('#c99a4e'),
     fontFamily: const FontFamily.list([
       FontFamily('IBM Plex Mono'),
       FontFamilies.monospace,
     ]),
     fontSize: Unit.pixels(11),
     fontWeight: FontWeight.w600,
-    letterSpacing: 0.16.em,
     textTransform: TextTransform.upperCase,
-    // 5.9:1 on the panel. This is a status readout, not a decoration.
-    color: const Color('#c99a4e'),
+    letterSpacing: 0.16.em,
     raw: {'white-space': 'nowrap'},
   ),
   // Red, and slowly pulsing. The pulse is the only animated part of the
@@ -291,15 +291,15 @@ List<StyleRule> get rxChromeStyles => [
 
   // ── lost plate ──
   css('.rx-lost').styles(
+    display: Display.flex,
     position: Position.relative(),
     zIndex: ZIndex(2),
-    display: Display.flex,
-    flexDirection: FlexDirection.column,
-    alignItems: AlignItems.start,
-    gap: Gap(row: 8.px),
     padding: Padding.symmetric(horizontal: 16.px, vertical: 16.px),
     margin: Margin.only(bottom: 16.px),
     radius: BorderRadius.all(Radius.circular(3.px)),
+    flexDirection: FlexDirection.column,
+    alignItems: AlignItems.start,
+    gap: Gap(row: 8.px),
     raw: {
       'background': 'linear-gradient(160deg, rgba(38,12,12,0.96) 0%, rgba(20,8,8,0.96) 100%)',
       'border': '1px solid rgba(224,80,80,0.35)',
@@ -310,6 +310,7 @@ List<StyleRule> get rxChromeStyles => [
     },
   ),
   css('.rx-lost-title').styles(
+    color: const Color('#f0a0a0'),
     fontFamily: const FontFamily.list([
       FontFamily('Chakra Petch'),
       FontFamilies.sansSerif,
@@ -317,47 +318,46 @@ List<StyleRule> get rxChromeStyles => [
     fontSize: Unit.pixels(16),
     fontWeight: FontWeight.w700,
     letterSpacing: 0.22.em,
-    color: const Color('#f0a0a0'),
     raw: {'text-shadow': '0 0 10px rgba(224,80,80,0.35)'},
   ),
   css('.rx-lost-reason').styles(
+    color: const Color('#c99a9a'),
     fontFamily: const FontFamily.list([
       FontFamily('IBM Plex Mono'),
       FontFamilies.monospace,
     ]),
     fontSize: Unit.pixels(11),
     fontWeight: FontWeight.w500,
-    letterSpacing: 0.16.em,
     textTransform: TextTransform.upperCase,
-    color: const Color('#c99a9a'),
+    letterSpacing: 0.16.em,
   ),
   css('.rx-lost-body').styles(
+    color: const Color('#a89a94'),
     fontFamily: const FontFamily.list([
       FontFamily('IBM Plex Mono'),
       FontFamilies.monospace,
     ]),
     fontSize: Unit.pixels(13),
-    color: const Color('#a89a94'),
     raw: {'line-height': '1.55', 'margin': '0', 'max-width': '46ch'},
   ),
   // Same physical pill as everywhere else, in the fault colour.
   css('.rx-lost-action', [
     css('&').styles(
+      display: Display.inlineFlex,
+      minHeight: 44.px,
+      padding: Padding.symmetric(horizontal: 16.px, vertical: 10.px),
+      radius: BorderRadius.all(Radius.circular(99.px)),
+      cursor: Cursor.pointer,
+      alignItems: AlignItems.center,
+      color: const Color('#f0c0a0'),
       fontFamily: const FontFamily.list([
         FontFamily('IBM Plex Mono'),
         FontFamilies.monospace,
       ]),
       fontSize: Unit.pixels(11),
       fontWeight: FontWeight.w600,
-      letterSpacing: 0.15.em,
       textTransform: TextTransform.upperCase,
-      padding: Padding.symmetric(horizontal: 16.px, vertical: 10.px),
-      minHeight: 44.px,
-      cursor: Cursor.pointer,
-      display: Display.inlineFlex,
-      alignItems: AlignItems.center,
-      color: const Color('#f0c0a0'),
-      radius: BorderRadius.all(Radius.circular(99.px)),
+      letterSpacing: 0.15.em,
       raw: {
         'border': '1px solid rgba(232,160,53,0.35)',
         'background': 'linear-gradient(160deg, #1c1616 0%, #110d0d 100%)',

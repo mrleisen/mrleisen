@@ -63,8 +63,8 @@ class PhosphorMask extends StatelessComponent {
         right: Unit.zero,
         bottom: Unit.zero,
       ),
-      pointerEvents: PointerEvents.none,
       zIndex: ZIndex(17),
+      pointerEvents: PointerEvents.none,
       raw: {
         'mix-blend-mode': 'screen',
         'transition': 'opacity 0.35s ease',

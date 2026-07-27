@@ -24,11 +24,11 @@ class Scanlines extends StatelessComponent {
         top: Unit.zero,
         left: Unit.zero,
       ),
+      zIndex: ZIndex(20),
       width: 100.percent,
       height: 100.percent,
-      pointerEvents: PointerEvents.none,
-      zIndex: ZIndex(20),
       opacity: 0.12,
+      pointerEvents: PointerEvents.none,
       raw: {
         'background':
             'repeating-linear-gradient('

@@ -223,13 +223,13 @@ class CollectedStationsState extends State<CollectedStations> {
     // Collapses to zero when empty / powered off so the panel layout
     // matches the pre-feature 210 px exactly.
     css('.collected-rack').styles(
-      position: Position.relative(),
       display: Display.flex,
+      position: Position.relative(),
+      padding: Padding.symmetric(horizontal: Unit.zero, vertical: 4.px),
+      opacity: 1,
       flexDirection: FlexDirection.column,
       alignItems: AlignItems.stretch,
       gap: Gap(row: 4.px),
-      padding: Padding.symmetric(horizontal: Unit.zero, vertical: 4.px),
-      opacity: 1,
       raw: {
         // Height allowance for one row. The cap is `--rows` of these, so
         // the rack takes exactly the room the rows it renders need and
@@ -258,8 +258,8 @@ class CollectedStationsState extends State<CollectedStations> {
       },
     ),
     css('.collected-rack-hidden').styles(
-      opacity: 0,
       padding: Padding.zero,
+      opacity: 0,
       raw: {
         'max-height': '0',
         'margin-bottom': '0',
@@ -305,13 +305,13 @@ class CollectedStationsState extends State<CollectedStations> {
     // off-state; `.collected-row-active` swaps in the lit amber look
     // so the user can read the current band straight off the rack.
     css('.collected-row-label').styles(
+      padding: Padding.symmetric(horizontal: 5.px, vertical: 2.px),
+      radius: BorderRadius.all(Radius.circular(2.px)),
+      color: const Color(_lcdAmberDim),
       fontFamily: const FontFamily.list([FontFamilies.monospace]),
       fontSize: Unit.pixels(8),
       fontWeight: FontWeight.bold,
       letterSpacing: 0.15.em,
-      padding: Padding.symmetric(horizontal: 5.px, vertical: 2.px),
-      color: const Color(_lcdAmberDim),
-      radius: BorderRadius.all(Radius.circular(2.px)),
       raw: {
         'flex': '0 0 auto',
         'text-transform': 'uppercase',
@@ -360,14 +360,14 @@ class CollectedStationsState extends State<CollectedStations> {
     // to 100% over the hold duration, matching the JS-side timer.
     css('.collected-pill', [
       css('&').styles(
-        position: Position.relative(),
         display: Display.flex,
-        flexDirection: FlexDirection.row,
-        alignItems: AlignItems.baseline,
-        justifyContent: JustifyContent.center,
-        cursor: Cursor.pointer,
+        position: Position.relative(),
         padding: Padding.symmetric(horizontal: 7.px, vertical: 2.px),
         radius: BorderRadius.all(Radius.circular(2.px)),
+        cursor: Cursor.pointer,
+        flexDirection: FlexDirection.row,
+        justifyContent: JustifyContent.center,
+        alignItems: AlignItems.baseline,
         raw: {
           'gap': '6px',
           'flex-shrink': '0',
@@ -454,6 +454,7 @@ class CollectedStationsState extends State<CollectedStations> {
     // calm rack), brighter on hover and on the active pill. Same
     // Chakra Petch / IBM Plex pairing as the LCD readout.
     css('.collected-call').styles(
+      color: const Color(_lcdAmberDim),
       fontFamily: const FontFamily.list([
         FontFamily('Chakra Petch'),
         FontFamilies.monospace,
@@ -464,7 +465,6 @@ class CollectedStationsState extends State<CollectedStations> {
       fontSize: Unit.pixels(11),
       fontWeight: FontWeight.w700,
       letterSpacing: 0.14.em,
-      color: const Color(_lcdAmberDim),
       raw: {
         'line-height': '1',
         'transition': 'color 0.18s ease, text-shadow 0.18s ease',
@@ -482,6 +482,10 @@ class CollectedStationsState extends State<CollectedStations> {
     // needs the call sign and the frequency. The freq stays in a
     // dimmer tone so the call sign carries the visual weight.
     css('.collected-freq').styles(
+      // Was #5a4220, which is 1.9:1 - effectively unreadable. Still
+      // dimmer than the call sign so the hierarchy in the pill survives,
+      // but now legible at 5.1:1.
+      color: const Color('#9a7c4a'),
       fontFamily: const FontFamily.list([
         FontFamily('IBM Plex Mono'),
         FontFamilies.monospace,
@@ -489,10 +493,6 @@ class CollectedStationsState extends State<CollectedStations> {
       fontSize: Unit.pixels(11),
       fontWeight: FontWeight.w500,
       letterSpacing: 0.06.em,
-      // Was #5a4220, which is 1.9:1 - effectively unreadable. Still
-      // dimmer than the call sign so the hierarchy in the pill survives,
-      // but now legible at 5.1:1.
-      color: const Color('#9a7c4a'),
       raw: {
         'line-height': '1',
         'transition': 'color 0.18s ease',
@@ -533,8 +533,8 @@ class CollectedStationsState extends State<CollectedStations> {
     // ── responsive ──
     css.media(MediaQuery.screen(maxWidth: 600.px), [
       css('.collected-rack').styles(
-        gap: Gap(row: 2.px),
         padding: Padding.symmetric(horizontal: Unit.zero, vertical: 2.px),
+        gap: Gap(row: 2.px),
         raw: {
           // Phone pills carry a 36 px minimum height, so a row needs a
           // bigger slot than on the desktop faceplate.
@@ -545,9 +545,9 @@ class CollectedStationsState extends State<CollectedStations> {
       css('.collected-row').styles(gap: Gap(column: 5.px)),
       css('.collected-row-pills').styles(gap: Gap(column: 4.px)),
       css('.collected-row-label').styles(
+        padding: Padding.symmetric(horizontal: 4.px, vertical: 1.px),
         fontSize: Unit.pixels(7),
         letterSpacing: 0.12.em,
-        padding: Padding.symmetric(horizontal: 4.px, vertical: 1.px),
       ),
       // The rack is a row of real controls, so on a phone the pills get
       // a 36px minimum height rather than shrinking with everything

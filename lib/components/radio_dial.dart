@@ -18,8 +18,9 @@ import 'station_display.dart' show Lang;
 ///
 /// `package:web` types these as `int`, but JavaScript actually hands
 /// fractional pixel values back on touch / hi-DPI devices, so reading
-/// the typed `int` getter throws `TypeError: <double> is not a subtype
-/// of int` at runtime. An extension-type wrapper with `external double`
+/// the typed `int` getter throws a `TypeError` at runtime, complaining
+/// that a `double` is not a subtype of `int`. An extension-type wrapper
+/// with `external double`
 /// getters dispatches to the same underlying JS property reads but
 /// without the spurious int conversion check.
 extension type _DoublePointer._(JSObject _) implements JSObject {
@@ -1117,17 +1118,17 @@ class RadioDialState extends State<RadioDial> {
     // Empty / powered-off → row collapses to zero, panel matches the
     // pre-feature 210 px exactly.
     css('.radio-panel').styles(
+      display: Display.flex,
       position: Position.fixed(
         bottom: Unit.zero,
         left: Unit.zero,
         right: Unit.zero,
       ),
-      minHeight: 210.px,
       zIndex: ZIndex(50),
-      display: Display.flex,
+      minHeight: 210.px,
+      padding: Padding.symmetric(horizontal: 16.px, vertical: 12.px),
       flexDirection: FlexDirection.column,
       alignItems: AlignItems.stretch,
-      padding: Padding.symmetric(horizontal: 16.px, vertical: 12.px),
       raw: {
         // Brushed dark plastic, now lit rather than evenly shaded. Layers,
         // top to bottom:
@@ -1183,8 +1184,8 @@ class RadioDialState extends State<RadioDial> {
     css('.panel-header').styles(
       display: Display.flex,
       flexDirection: FlexDirection.row,
-      alignItems: AlignItems.center,
       justifyContent: JustifyContent.spaceBetween,
+      alignItems: AlignItems.center,
       gap: Gap(column: 12.px),
       raw: {'margin-bottom': '12px'},
     ),
@@ -1198,12 +1199,12 @@ class RadioDialState extends State<RadioDial> {
     // indicator pills.
     css('.power-rocker', [
       css('&').styles(
+        display: Display.flex,
         position: Position.relative(),
         width: 52.px,
         height: 22.px,
         radius: BorderRadius.all(Radius.circular(4.px)),
         cursor: Cursor.pointer,
-        display: Display.flex,
         flexDirection: FlexDirection.row,
         alignItems: AlignItems.stretch,
         // Deliberately NOT `overflow: hidden`. It used to clip the two
@@ -1274,9 +1275,11 @@ class RadioDialState extends State<RadioDial> {
     css('.power-hint', [
       css('&').styles(
         display: Display.flex,
+        pointerEvents: PointerEvents.none,
         flexDirection: FlexDirection.row,
         alignItems: AlignItems.center,
         gap: Gap(column: 4.px),
+        color: const Color('#c99a4e'),
         fontFamily: const FontFamily.list([
           FontFamily('IBM Plex Mono'),
           FontFamilies.monospace,
@@ -1289,8 +1292,6 @@ class RadioDialState extends State<RadioDial> {
         fontSize: Unit.pixels(11),
         fontWeight: FontWeight.w600,
         letterSpacing: 0.16.em,
-        color: const Color('#c99a4e'),
-        pointerEvents: PointerEvents.none,
         raw: {
           'text-transform': 'uppercase',
           'white-space': 'nowrap',
@@ -1311,12 +1312,12 @@ class RadioDialState extends State<RadioDial> {
     css('.rocker-half', [
       css('&').styles(
         display: Display.flex,
-        alignItems: AlignItems.center,
         justifyContent: JustifyContent.center,
+        alignItems: AlignItems.center,
+        color: const Color('#444'),
         fontFamily: const FontFamily.list([FontFamilies.monospace]),
         fontSize: Unit.pixels(7),
         fontWeight: FontWeight.bold,
-        color: const Color('#444'),
         raw: {
           'flex': '1',
           'letter-spacing': '0.5px',
@@ -1524,6 +1525,7 @@ class RadioDialState extends State<RadioDial> {
       },
     ),
     css('.brand').styles(
+      color: const Color('#9a9aa8'),
       fontFamily: const FontFamily.list([
         FontFamily('Chakra Petch'),
         FontFamilies.monospace,
@@ -1531,7 +1533,6 @@ class RadioDialState extends State<RadioDial> {
       fontSize: Unit.pixels(10),
       fontWeight: FontWeight.w700,
       letterSpacing: 0.28.em,
-      color: const Color('#9a9aa8'),
       raw: {
         // Engraved, lit from the upper left: the wall the lamp cannot
         // reach (up and left of each stroke) goes dark, and the opposite
@@ -1542,6 +1543,7 @@ class RadioDialState extends State<RadioDial> {
       },
     ),
     css('.brand-sub').styles(
+      color: const Color('#4a4a55'),
       fontFamily: const FontFamily.list([
         FontFamily('IBM Plex Mono'),
         FontFamilies.monospace,
@@ -1549,7 +1551,6 @@ class RadioDialState extends State<RadioDial> {
       fontSize: Unit.pixels(6),
       fontWeight: FontWeight.w500,
       letterSpacing: 0.45.em,
-      color: const Color('#4a4a55'),
       raw: {
         'text-transform': 'uppercase',
         'text-shadow': '-1px -1px 0 rgba(0,0,0,0.5), 1px 1px 0 rgba(255,255,255,0.04)',
@@ -1562,13 +1563,13 @@ class RadioDialState extends State<RadioDial> {
     ),
     css('.ind', [
       css('&').styles(
+        padding: Padding.symmetric(horizontal: 5.px, vertical: 2.px),
+        radius: BorderRadius.all(Radius.circular(2.px)),
+        color: const Color(_lcdAmberDim),
         fontFamily: const FontFamily.list([FontFamilies.monospace]),
         fontSize: Unit.pixels(8),
         fontWeight: FontWeight.bold,
         letterSpacing: 0.15.em,
-        padding: Padding.symmetric(horizontal: 5.px, vertical: 2.px),
-        color: const Color(_lcdAmberDim),
-        radius: BorderRadius.all(Radius.circular(2.px)),
         raw: {
           'background': 'linear-gradient(160deg, #0a0a10, #050508)',
           'border': '1px solid #1c1c26',
@@ -1711,17 +1712,17 @@ class RadioDialState extends State<RadioDial> {
     //      years.
     css('.lcd', [
       css('&').styles(
-        position: Position.relative(),
         display: Display.flex,
-        flexDirection: FlexDirection.row,
-        alignItems: AlignItems.center,
-        justifyContent: JustifyContent.end,
-        gap: Gap(column: 8.px),
+        position: Position.relative(),
         width: 140.px,
         height: 56.px,
         padding: Padding.symmetric(horizontal: 12.px, vertical: 4.px),
         radius: BorderRadius.all(Radius.circular(3.px)),
         overflow: Overflow.hidden,
+        flexDirection: FlexDirection.row,
+        justifyContent: JustifyContent.end,
+        alignItems: AlignItems.center,
+        gap: Gap(column: 8.px),
         raw: {
           'background':
               // 1) Wear / micro-scratch noise.
@@ -1823,6 +1824,7 @@ class RadioDialState extends State<RadioDial> {
     // segments).
     css('.lcd-ghost').styles(
       position: Position.absolute(),
+      color: const Color('#000000'),
       fontFamily: const FontFamily.list([
         FontFamily('DSEG7 Classic'),
         FontFamily('Chakra Petch'),
@@ -1830,7 +1832,6 @@ class RadioDialState extends State<RadioDial> {
       ]),
       fontSize: 1.38.rem,
       fontWeight: FontWeight.w700,
-      color: const Color('#000000'),
       letterSpacing: 0.04.em,
       raw: {
         'right': '42px',
@@ -1863,6 +1864,7 @@ class RadioDialState extends State<RadioDial> {
     // digits apart into separate objects.
     css('.lcd-value').styles(
       position: Position.relative(),
+      color: const Color('#2a1f10'),
       fontFamily: const FontFamily.list([
         FontFamily('DSEG7 Classic'),
         FontFamily('Chakra Petch'),
@@ -1870,7 +1872,6 @@ class RadioDialState extends State<RadioDial> {
       ]),
       fontSize: 1.38.rem,
       fontWeight: FontWeight.w700,
-      color: const Color('#2a1f10'),
       letterSpacing: 0.04.em,
       raw: {
         'text-shadow': '0 1px 0 rgba(0,0,0,0.12)',
@@ -1886,13 +1887,14 @@ class RadioDialState extends State<RadioDial> {
     // green LED on lock (with a softer glow to match the tired
     // panel).
     css('.lcd-badges').styles(
-      position: Position.relative(),
       display: Display.flex,
+      position: Position.relative(),
       flexDirection: FlexDirection.column,
       alignItems: AlignItems.start,
       raw: {'gap': '2px'},
     ),
     css('.lcd-fm').styles(
+      color: const Color('#2a1f10'),
       fontFamily: const FontFamily.list([
         FontFamily('Chakra Petch'),
         FontFamilies.monospace,
@@ -1900,11 +1902,11 @@ class RadioDialState extends State<RadioDial> {
       fontSize: Unit.pixels(10),
       fontWeight: FontWeight.w700,
       letterSpacing: 0.2.em,
-      color: const Color('#2a1f10'),
       raw: {'opacity': '0.5'},
     ),
     css('.lcd-st', [
       css('&').styles(
+        color: const Color('#2a1f10'),
         fontFamily: const FontFamily.list([
           FontFamily('Chakra Petch'),
           FontFamilies.monospace,
@@ -1912,7 +1914,6 @@ class RadioDialState extends State<RadioDial> {
         fontSize: Unit.pixels(9),
         fontWeight: FontWeight.w700,
         letterSpacing: 0.2.em,
-        color: const Color('#2a1f10'),
         raw: {
           'opacity': '0.22',
           'transition':
@@ -1955,9 +1956,9 @@ class RadioDialState extends State<RadioDial> {
       position: Position.relative(),
       width: 100.percent,
       height: 56.px,
+      radius: BorderRadius.all(Radius.circular(3.px)),
       overflow: Overflow.hidden,
       cursor: Cursor.grab,
-      radius: BorderRadius.all(Radius.circular(3.px)),
       raw: {
         'background': 'linear-gradient(to bottom, #02020a 0%, #050512 50%, #02020a 100%)',
         'border-top': '1px solid #000',
@@ -1978,15 +1979,19 @@ class RadioDialState extends State<RadioDial> {
     // copy stays readable over the tick marks without hiding them.
     css('.tune-hint', [
       css('&').styles(
+        display: Display.flex,
         position: Position.absolute(
           top: Unit.zero,
           left: Unit.zero,
           right: Unit.zero,
           bottom: Unit.zero,
         ),
-        display: Display.flex,
-        alignItems: AlignItems.center,
+        zIndex: ZIndex(4),
+        // Must never swallow the drag it is asking the user to perform.
+        pointerEvents: PointerEvents.none,
         justifyContent: JustifyContent.center,
+        alignItems: AlignItems.center,
+        color: const Color('#d9c9a4'),
         fontFamily: const FontFamily.list([
           FontFamily('IBM Plex Mono'),
           FontFamilies.monospace,
@@ -1994,10 +1999,6 @@ class RadioDialState extends State<RadioDial> {
         fontSize: Unit.pixels(11),
         fontWeight: FontWeight.w600,
         letterSpacing: 0.22.em,
-        color: const Color('#d9c9a4'),
-        // Must never swallow the drag it is asking the user to perform.
-        pointerEvents: PointerEvents.none,
-        zIndex: ZIndex(4),
         raw: {
           'text-transform': 'uppercase',
           'white-space': 'nowrap',
@@ -2089,10 +2090,10 @@ class RadioDialState extends State<RadioDial> {
     // working type on the panel and the least legible.
     css('.tick-label').styles(
       position: Position.absolute(top: 26.px),
+      color: const Color('#d6a355'),
+      fontFamily: const FontFamily.list([FontFamilies.monospace]),
       fontSize: Unit.pixels(10),
       fontWeight: FontWeight.w500,
-      fontFamily: const FontFamily.list([FontFamilies.monospace]),
-      color: const Color('#d6a355'),
       letterSpacing: 0.04.em,
       raw: {
         'transform': 'translateX(-50%)',
@@ -2119,10 +2120,10 @@ class RadioDialState extends State<RadioDial> {
     // The white bar that rips across the slit on a band change.
     css('.band-flash').styles(
       position: Position.absolute(top: Unit.zero, left: Unit.zero),
+      zIndex: ZIndex(6),
       width: 100.percent,
       height: 100.percent,
       pointerEvents: PointerEvents.none,
-      zIndex: ZIndex(6),
       raw: {
         'background':
             'linear-gradient(90deg, transparent 0%, rgba(255,246,230,0.75) 35%, '
@@ -2154,15 +2155,18 @@ class RadioDialState extends State<RadioDial> {
     // Takes over the LCD face briefly on capture. Absolutely positioned
     // so the digits underneath never shift.
     css('.lcd-lock-flash').styles(
+      display: Display.flex,
       position: Position.absolute(
         top: Unit.zero,
         left: Unit.zero,
         right: Unit.zero,
         bottom: Unit.zero,
       ),
-      display: Display.flex,
-      alignItems: AlignItems.center,
+      zIndex: ZIndex(6),
+      pointerEvents: PointerEvents.none,
       justifyContent: JustifyContent.center,
+      alignItems: AlignItems.center,
+      color: const Color('#1a1206'),
       fontFamily: const FontFamily.list([
         FontFamily('IBM Plex Mono'),
         FontFamilies.monospace,
@@ -2170,9 +2174,6 @@ class RadioDialState extends State<RadioDial> {
       fontSize: Unit.pixels(11),
       fontWeight: FontWeight.w600,
       letterSpacing: 0.22.em,
-      color: const Color('#1a1206'),
-      pointerEvents: PointerEvents.none,
-      zIndex: ZIndex(6),
       raw: {
         // Inverted: dark type on a lit amber face, the way a segment
         // display reads when every cell behind the text is driven.
@@ -2185,11 +2186,11 @@ class RadioDialState extends State<RadioDial> {
     // ── needle ──
     css('.needle').styles(
       position: Position.absolute(top: Unit.zero, left: 50.percent),
+      zIndex: ZIndex(5),
       width: 2.px,
       height: 100.percent,
-      backgroundColor: const Color('#ff2828'),
-      zIndex: ZIndex(5),
       pointerEvents: PointerEvents.none,
+      backgroundColor: const Color('#ff2828'),
       raw: {
         'transform': 'translateX(-50%)',
         'box-shadow': '0 0 6px rgba(255,40,40,0.8), 0 0 14px rgba(255,40,40,0.35), inset 0 0 1px rgba(255,255,255,0.6)',
@@ -2201,11 +2202,11 @@ class RadioDialState extends State<RadioDial> {
     // directly on `.knob` (no bubbling, no listener-swap edge cases).
     css('.knob', [
       css('&').styles(
+        position: Position.relative(),
         width: 68.px,
         height: 68.px,
         radius: BorderRadius.all(Radius.circular(34.px)),
         cursor: Cursor.grab,
-        position: Position.relative(),
         raw: {
           // Outer ribbed rim via repeating-conic-gradient, with a wash of
           // light over it so the ribs on the far side of the knob fall
@@ -2278,11 +2279,11 @@ class RadioDialState extends State<RadioDial> {
     ),
     css('.vol-knob', [
       css('&').styles(
+        position: Position.relative(),
         width: 36.px,
         height: 36.px,
         radius: BorderRadius.all(Radius.circular(18.px)),
         cursor: Cursor.grab,
-        position: Position.relative(),
         raw: {
           'background':
               'radial-gradient(circle at 30% 26%, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.04) 34%, transparent 62%),'
@@ -2333,11 +2334,11 @@ class RadioDialState extends State<RadioDial> {
       radius: BorderRadius.all(Radius.circular(2.5.px)),
     ),
     css('.vol-knob-label').styles(
+      color: const Color(_lcdAmberDim),
       fontFamily: const FontFamily.list([FontFamilies.monospace]),
       fontSize: Unit.pixels(8),
       fontWeight: FontWeight.w500,
       letterSpacing: 0.2.em,
-      color: const Color(_lcdAmberDim),
       raw: {
         'text-transform': 'uppercase',
         // Silkscreen pressed into the plastic, same two-stroke rule as
@@ -2457,8 +2458,8 @@ class RadioDialState extends State<RadioDial> {
       // 44 because they sit 4px apart in a row: a 44px box on each would
       // overlap its neighbour and start eating the wrong presses.
       css('.ind').styles(
-        fontSize: Unit.pixels(8),
         padding: Padding.symmetric(horizontal: 7.px, vertical: 3.px),
+        fontSize: Unit.pixels(8),
         raw: {'letter-spacing': '0.1em', 'position': 'relative'},
       ),
       css('.ind-band-clickable::after, .ind-mem-armed::after').styles(

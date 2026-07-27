@@ -1,5 +1,6 @@
 import 'package:jaspr/dom.dart';
 import 'package:jaspr/jaspr.dart';
+import 'package:universal_web/js_interop.dart';
 import 'package:universal_web/web.dart' as web;
 
 import 'rx_chrome.dart';
@@ -85,7 +86,9 @@ class CaseStudyDialog extends StatelessComponent {
         // itself so a press inside the panel doesn't dismiss it.
         'click': (web.Event e) {
           final t = e.target;
-          if (t is web.Element && t.classList.contains('rx-overlay')) onClose();
+          if (t.isA<web.Element>() && (t as web.Element).classList.contains('rx-overlay')) {
+            onClose();
+          }
         },
       },
       [
@@ -359,15 +362,15 @@ class CaseStudyDialog extends StatelessComponent {
     css('.rx-panel-wide').styles(maxWidth: 720.px),
 
     css('.rx-subtitle').styles(
+      color: const Color('#938d81'),
       fontFamily: const FontFamily.list([
         FontFamily('IBM Plex Mono'),
         FontFamilies.monospace,
       ]),
       fontSize: Unit.pixels(11),
       fontWeight: FontWeight.w500,
-      letterSpacing: 0.24.em,
       textTransform: TextTransform.upperCase,
-      color: const Color('#938d81'),
+      letterSpacing: 0.24.em,
       raw: {'margin': '-8px 0 16px'},
     ),
 
@@ -377,10 +380,10 @@ class CaseStudyDialog extends StatelessComponent {
     // underneath so a bare "28k+" never floats without meaning.
     css('.case-figures').styles(
       display: Display.flex,
+      padding: Padding.symmetric(vertical: 16.px),
       flexDirection: FlexDirection.row,
       flexWrap: FlexWrap.wrap,
       gap: Gap(row: 12.px, column: 24.px),
-      padding: Padding.symmetric(vertical: 16.px),
       raw: {
         'border-top': '1px solid rgba(255,255,255,0.07)',
         'border-bottom': '1px solid rgba(255,255,255,0.07)',
@@ -393,12 +396,12 @@ class CaseStudyDialog extends StatelessComponent {
       gap: Gap(row: 4.px),
     ),
     css('.case-figure-val').styles(
+      color: const Color('#E8944A'),
       fontFamily: const FontFamily.list([
         FontFamily('Space Grotesk'),
         FontFamilies.sansSerif,
       ]),
       fontWeight: FontWeight.w700,
-      color: const Color('#E8944A'),
       raw: {
         'font-size': 'clamp(1.5rem, 4.5vw, 2.3rem)',
         'line-height': '1',
@@ -407,15 +410,15 @@ class CaseStudyDialog extends StatelessComponent {
       },
     ),
     css('.case-figure-key').styles(
+      color: const Color('#938d81'),
       fontFamily: const FontFamily.list([
         FontFamily('IBM Plex Mono'),
         FontFamilies.monospace,
       ]),
       fontSize: Unit.pixels(11),
       fontWeight: FontWeight.w500,
-      letterSpacing: 0.16.em,
       textTransform: TextTransform.upperCase,
-      color: const Color('#938d81'),
+      letterSpacing: 0.16.em,
     ),
 
     // ── programme segments ──
@@ -432,6 +435,12 @@ class CaseStudyDialog extends StatelessComponent {
       raw: {'margin-bottom': '8px'},
     ),
     css('.case-seg-no').styles(
+      // #7a6a4e was the first choice and measured 3.65:1 against the
+      // panel, under AA. A segment marker is not decoration - it is how
+      // you keep your place in a long read - so it gets a real contrast
+      // budget: 5.27:1, still clearly subordinate to the heading beside
+      // it.
+      color: const Color('#97845f'),
       fontFamily: const FontFamily.list([
         FontFamily('Chakra Petch'),
         FontFamilies.monospace,
@@ -439,24 +448,18 @@ class CaseStudyDialog extends StatelessComponent {
       fontSize: Unit.pixels(11),
       fontWeight: FontWeight.w700,
       letterSpacing: 0.1.em,
-      // #7a6a4e was the first choice and measured 3.65:1 against the
-      // panel, under AA. A segment marker is not decoration - it is how
-      // you keep your place in a long read - so it gets a real contrast
-      // budget: 5.27:1, still clearly subordinate to the heading beside
-      // it.
-      color: const Color('#97845f'),
       raw: {'flex-shrink': '0'},
     ),
     css('.case-seg-title').styles(
+      color: const Color('#d8c9a4'),
       fontFamily: const FontFamily.list([
         FontFamily('IBM Plex Mono'),
         FontFamilies.monospace,
       ]),
       fontSize: Unit.pixels(12),
       fontWeight: FontWeight.w600,
-      letterSpacing: 0.2.em,
       textTransform: TextTransform.upperCase,
-      color: const Color('#d8c9a4'),
+      letterSpacing: 0.2.em,
     ),
     // Paragraphs inside a segment sit closer to each other than segments
     // do to one another, so the block groups by eye without any rules or

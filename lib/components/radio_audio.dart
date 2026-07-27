@@ -109,10 +109,13 @@ class _RadioAudioState extends State<RadioAudio> {
   web.AudioContext? _ctx;
   web.AudioBufferSourceNode? _noiseA;
   web.AudioBufferSourceNode? _noiseB;
-  web.BiquadFilterNode? _highpass;
-  web.BiquadFilterNode? _lowpass;
-  web.GainNode? _highGain;
-  web.GainNode? _lowGain;
+  // The two filters and their per-path gains are deliberately *not* held
+  // as fields. Nothing ever reads them back - they are configured once at
+  // build time and never touched again - and a node that is connected
+  // into a graph reaching `destination` is kept alive by the audio system
+  // itself, not by a Dart reference. Holding them was four write-only
+  // fields pretending to be state. If a filter ever needs modulating at
+  // runtime, that is when it earns a field.
   web.GainNode? _staticGain;
   web.OscillatorNode? _whistle;
   web.GainNode? _whistleGain;
@@ -305,19 +308,15 @@ class _RadioAudioState extends State<RadioAudio> {
     final hp = ctx.createBiquadFilter()..type = 'highpass';
     hp.frequency.value = 4000;
     hp.Q.value = 0.7;
-    _highpass = hp;
 
     // Low-pass: gives the static some "body" so it doesn't sound thin.
     final lp = ctx.createBiquadFilter()..type = 'lowpass';
     lp.frequency.value = 800;
     lp.Q.value = 0.7;
-    _lowpass = lp;
 
     // Per-path gains let us bias the mix (more crisp than body).
     final hg = ctx.createGain()..gain.value = 0.85;
-    _highGain = hg;
     final lg = ctx.createGain()..gain.value = 0.45;
-    _lowGain = lg;
 
     // Master static gain - modulated by isTuning + noiseLevel.
     final staticGain = ctx.createGain()..gain.value = 0;

@@ -1020,10 +1020,10 @@ class StationDisplay extends StatelessComponent {
     // Inner shell.
     css('.panel-shell').styles(
       display: Display.flex,
+      padding: Padding.symmetric(horizontal: 24.px),
       flexDirection: FlexDirection.column,
       alignItems: AlignItems.center,
       gap: Gap(row: 16.px),
-      padding: Padding.symmetric(horizontal: 24.px),
     ),
 
     // Label - reads like a small secondary LED readout above the title.
@@ -1034,8 +1034,8 @@ class StationDisplay extends StatelessComponent {
       ]),
       fontSize: Unit.pixels(11),
       fontWeight: FontWeight.w500,
-      letterSpacing: 0.4.em,
       textTransform: TextTransform.upperCase,
+      letterSpacing: 0.4.em,
       raw: {
         // Mixed toward a warm neutral rather than tinted with opacity.
         // The station colours span a wide luminance range (#E05050 is
@@ -1100,8 +1100,8 @@ class StationDisplay extends StatelessComponent {
       ]),
       fontSize: Unit.pixels(11),
       fontWeight: FontWeight.w500,
-      letterSpacing: 0.3.em,
       textTransform: TextTransform.upperCase,
+      letterSpacing: 0.3.em,
       raw: {
         'color': 'color-mix(in srgb, var(--sc, #E8A035) 80%, #cfc9b8)',
         'opacity': '0.8',
@@ -1111,18 +1111,18 @@ class StationDisplay extends StatelessComponent {
 
     // Body - dim printed-on-dark-plastic feel, warm amber/green tint.
     css('.panel-body').styles(
+      maxWidth: 440.px,
+      // Was #c5b994 at opacity 0.55, which composited to 3.67:1 against
+      // #050507 - under AA, and that was before the noise and scanline
+      // layers stacked on top. Baking the dimness into the colour rather
+      // than the alpha keeps the printed-on-plastic look at 6.51:1.
+      color: const Color('#9c9174'),
       fontFamily: const FontFamily.list([
         FontFamily('IBM Plex Mono'),
         FontFamilies.monospace,
       ]),
       fontSize: Unit.pixels(14),
       fontWeight: FontWeight.w400,
-      // Was #c5b994 at opacity 0.55, which composited to 3.67:1 against
-      // #050507 - under AA, and that was before the noise and scanline
-      // layers stacked on top. Baking the dimness into the colour rather
-      // than the alpha keeps the printed-on-plastic look at 6.51:1.
-      color: const Color('#9c9174'),
-      maxWidth: 440.px,
       raw: {
         'line-height': '1.55',
         'letter-spacing': '0.02em',
@@ -1140,9 +1140,9 @@ class StationDisplay extends StatelessComponent {
     // values carry the weight.
     css('.tx-data').styles(
       display: Display.grid,
+      maxWidth: 440.px,
       justifyContent: JustifyContent.center,
       gap: Gap(row: 8.px, column: 16.px),
-      maxWidth: 440.px,
       raw: {
         // Label column sizes to its content, value column takes what is
         // left, so the two stay aligned down the block no matter how
@@ -1156,15 +1156,15 @@ class StationDisplay extends StatelessComponent {
       },
     ),
     css('.tx-key').styles(
+      color: const Color('#938d81'),
       fontFamily: const FontFamily.list([
         FontFamily('IBM Plex Mono'),
         FontFamilies.monospace,
       ]),
       fontSize: Unit.pixels(11),
       fontWeight: FontWeight.w500,
-      letterSpacing: 0.16.em,
       textTransform: TextTransform.upperCase,
-      color: const Color('#938d81'),
+      letterSpacing: 0.16.em,
       raw: {'line-height': '1.45', 'white-space': 'nowrap'},
     ),
     css('.tx-val').styles(
@@ -1206,17 +1206,17 @@ class StationDisplay extends StatelessComponent {
     // "pressed": inset shadow flip + slight darker face.
     css('.pill', [
       css('&').styles(
+        padding: Padding.symmetric(horizontal: 16.px, vertical: 8.px),
+        cursor: Cursor.pointer,
         fontFamily: const FontFamily.list([
           FontFamily('IBM Plex Mono'),
           FontFamilies.monospace,
         ]),
         fontSize: Unit.pixels(11),
         fontWeight: FontWeight.w500,
-        letterSpacing: 0.15.em,
-        textTransform: TextTransform.upperCase,
-        padding: Padding.symmetric(horizontal: 16.px, vertical: 8.px),
-        cursor: Cursor.pointer,
         textDecoration: const TextDecoration(line: TextDecorationLine.none),
+        textTransform: TextTransform.upperCase,
+        letterSpacing: 0.15.em,
         raw: {
           'color': 'var(--sc, #E8A035)',
           'display': 'inline-flex',
@@ -1302,13 +1302,13 @@ class StationDisplay extends StatelessComponent {
     // lighter weights, dashed border, desaturated station-colour
     // accent, and a subtle grain overlay.
     css('.am-shell').styles(
-      position: Position.relative(),
       display: Display.flex,
+      position: Position.relative(),
+      maxWidth: 420.px,
+      padding: Padding.symmetric(horizontal: 16.px, vertical: 16.px),
       flexDirection: FlexDirection.column,
       alignItems: AlignItems.center,
       gap: Gap(row: 12.px),
-      padding: Padding.symmetric(horizontal: 16.px, vertical: 16.px),
-      maxWidth: 420.px,
       raw: {
         'margin': '0 auto',
         'border': '1px dashed rgba(255,255,255,0.10)',
@@ -1373,31 +1373,31 @@ class StationDisplay extends StatelessComponent {
       },
     ),
     css('.am-subtitle').styles(
+      // Was #a89a78 at 0.7 → 3.98:1. Now 5.50:1.
+      color: const Color('#8f8468'),
       fontFamily: const FontFamily.list([
         FontFamily('IBM Plex Mono'),
         FontFamilies.monospace,
       ]),
       fontSize: Unit.pixels(11),
       fontWeight: FontWeight.w400,
-      // Was #a89a78 at 0.7 → 3.98:1. Now 5.50:1.
-      color: const Color('#8f8468'),
       raw: {
         'letter-spacing': '0.04em',
         'text-transform': 'uppercase',
       },
     ),
     css('.am-body').styles(
+      // Was #b8ac90 at 0.72, which scraped past at 5.00:1 but only
+      // because the alpha happened to land well. Pinned to 5.69:1 with
+      // no alpha so it can't drift. Still reads dimmer than the FM body
+      // (6.51:1), preserving the deliberate AM/FM hierarchy.
+      color: const Color('#8f8770'),
       fontFamily: const FontFamily.list([
         FontFamily('IBM Plex Mono'),
         FontFamilies.monospace,
       ]),
       fontSize: Unit.pixels(13),
       fontWeight: FontWeight.w400,
-      // Was #b8ac90 at 0.72, which scraped past at 5.00:1 but only
-      // because the alpha happened to land well. Pinned to 5.69:1 with
-      // no alpha so it can't drift. Still reads dimmer than the FM body
-      // (6.51:1), preserving the deliberate AM/FM hierarchy.
-      color: const Color('#8f8770'),
       raw: {
         'line-height': '1.55',
         'margin': '0',
@@ -1452,17 +1452,17 @@ class StationDisplay extends StatelessComponent {
       // 8px apart, so an invisible 44px box on a 25px pill would overlap
       // the row above and start stealing its taps.
       css('.pill').styles(
-        fontSize: Unit.pixels(12),
         minHeight: 44.px,
         padding: Padding.symmetric(horizontal: 16.px, vertical: 8.px),
+        fontSize: Unit.pixels(12),
       ),
       css('.pill-row').styles(
         gap: Gap(row: 10.px, column: 10.px),
       ),
       // AM panels tighten a touch on small screens.
       css('.am-shell').styles(
-        padding: Padding.symmetric(horizontal: 12.px, vertical: 12.px),
         maxWidth: 90.percent,
+        padding: Padding.symmetric(horizontal: 12.px, vertical: 12.px),
       ),
       css('.am-body').styles(fontSize: Unit.pixels(12)),
     ]),
