@@ -305,7 +305,7 @@ class StationDisplay extends StatelessComponent {
 
     return div(classes: 'panel-shell panel-origin', [
       div(classes: 'panel-label', [Component.text(label)]),
-      h2(classes: 'panel-title', [Component.text('Rafael Camargo')]),
+      _title('panel-title', 'Rafael Camargo', s),
       div(classes: 'panel-subtitle', [
         Component.text(
           es ? 'Ingeniero de software · Bucaramanga, Colombia' : 'Software engineer · Bucaramanga, Colombia',
@@ -387,7 +387,7 @@ class StationDisplay extends StatelessComponent {
               'reviews, which is what makes it possible to build a '
               'timetable with no surprises.';
     return _panelShell(
-      color: s.color,
+      station: s,
       label: _stationLabel(s, lang),
       title: 'DeTodoUIS',
       children: [
@@ -446,7 +446,7 @@ class StationDisplay extends StatelessComponent {
         : 'For work, questions about any of these signals, or simply to '
               'say you passed through.';
     return _panelShell(
-      color: s.color,
+      station: s,
       label: _stationLabel(s, lang),
       title: title,
       children: [
@@ -479,7 +479,7 @@ class StationDisplay extends StatelessComponent {
               'is a purpose-built tool that carries a world from concept to '
               'published video, entirely local, with no cloud.';
     return _panelShell(
-      color: s.color,
+      station: s,
       label: _stationLabel(s, lang),
       title: 'In This New World',
       children: [
@@ -519,7 +519,7 @@ class StationDisplay extends StatelessComponent {
               'chapters and cameos across my other projects. There is no '
               'planned ending: it keeps expanding wherever it asks to.';
     return _panelShell(
-      color: s.color,
+      station: s,
       label: _stationLabel(s, lang),
       title: 'Tropelorio',
       children: [
@@ -558,7 +558,7 @@ class StationDisplay extends StatelessComponent {
   }) {
     return div(classes: 'am-shell', [
       div(classes: 'panel-label am-label', [Component.text(_stationLabel(s, lang))]),
-      h2(classes: 'am-title', [Component.text(title)]),
+      _title('am-title', title, s),
       div(classes: 'am-subtitle', [Component.text(subtitle)]),
       p(classes: 'am-body', [Component.text(body)]),
       // STATUS is what turns an unfinished idea into a deliberate draft.
@@ -591,7 +591,7 @@ class StationDisplay extends StatelessComponent {
               'the official result and checks it on the device itself. It '
               'never sells tickets or handles money.';
     return _panelShell(
-      color: s.color,
+      station: s,
       label: _stationLabel(s, lang),
       title: 'Boom Boom Lotter',
       children: [
@@ -802,18 +802,53 @@ class StationDisplay extends StatelessComponent {
   }
 
   Component _panelShell({
-    required String color,
+    required Station station,
     required String label,
     required String title,
     required List<Component> children,
   }) {
-    // `color` kept in the signature for future use, but the actual
-    // value propagates through the subtree as the `--sc` custom
-    // property set on `.station-panel` - CSS picks it up.
+    // The station's colour propagates through the subtree as the `--sc`
+    // custom property set on `.station-panel`, so it is not passed here;
+    // what the station *is* needed for is how far off the dial sits,
+    // which is what decides how much of this title has resolved yet.
     return div(classes: 'panel-shell', [
       div(classes: 'panel-label', [Component.text(label)]),
-      h2(classes: 'panel-title', [Component.text(title)]),
+      _title('panel-title', title, station),
       ...children,
+    ]);
+  }
+
+  /// A station title, resolved as far as the tuning currently allows.
+  ///
+  /// The glyph substitution is the half of the approach the blur cannot
+  /// do - see [_resolvingTitle] - and it had been written, documented and
+  /// then never actually called: every title rendered as clean text and
+  /// only the blur ever ran. This is where it gets connected.
+  ///
+  /// The real title always ships as text, in a `visually-hidden` span
+  /// beside the corrupted one.
+  ///
+  /// Two audiences would otherwise lose it. A screen reader would be
+  /// handed block glyphs to read aloud, which is the point for someone
+  /// looking at the screen and pure hostility for someone listening to
+  /// it. And a crawler would too: these panels are prerendered, the dial
+  /// starts on dead air, so **every** title would have gone into the
+  /// served HTML as noise - the station names are most of the indexable
+  /// prose this page has.
+  ///
+  /// Note the noise glyphs live outside the latin subset the display face
+  /// ships, so they render from a system fallback. That is fine, and
+  /// arguably right: an undecoded cell has no business matching the type
+  /// around it.
+  Component _title(String cls, String text, Station station) {
+    final d = _distortionFor(station);
+    if (d <= 0.06) return h2(classes: cls, [Component.text(text)]);
+    return h2(classes: cls, [
+      span(classes: 'visually-hidden', [Component.text(text)]),
+      span(
+        attributes: const {'aria-hidden': 'true'},
+        [_resolvingTitle(text, d)],
+      ),
     ]);
   }
 
