@@ -130,7 +130,10 @@ class CollectedStationsState extends State<CollectedStations> {
     final visible = component.isPowered && component.stations.isNotEmpty;
     return div(
       classes: 'collected-rack${visible ? '' : ' collected-rack-hidden'}',
-      attributes: {'aria-label': 'Collected stations'},
+      // `role="group"` rather than a bare labelled div: `aria-label` is
+      // prohibited on an element with no role, and this genuinely is a
+      // group - a rack of preset buttons that belong together.
+      attributes: const {'role': 'group', 'aria-label': 'Saved stations'},
       [
         if (fmStations.isNotEmpty) _buildBandRow(Band.fm, fmStations),
         if (amStations.isNotEmpty) _buildBandRow(Band.am, amStations),
