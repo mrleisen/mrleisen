@@ -158,6 +158,7 @@ class _RadioAudioState extends State<RadioAudio> {
   static const double _paramRamp = 0.06; // filter / pitch sweeps
   static const double _gainRamp = 0.12; // gain transitions while tuning
   static const double _silenceRamp = 0.3; // fade to silence on release
+  static const double _lockSettleRamp = 0.34; // carrier taking over on lock
 
   // Cached scheduled values to avoid re-ramping to identical targets.
   double _scheduledWhistleHz = 0;
@@ -505,8 +506,17 @@ class _RadioAudioState extends State<RadioAudio> {
     // short-circuited on volume == 0 above, so here volume ∈ (0, 1].
     final gainSec = tuning ? _gainRamp : _silenceRamp;
 
-    _ramp(_staticGain!.gain, staticTarget * volume, now, gainSec);
-    _ramp(_whistleGain!.gain, whistleTarget * volume, now, gainSec);
+    // The moment of lock gets its own, longer decay. At _gainRamp the
+    // whistle and static stopped in 120 ms, which lands as a cut - the
+    // audio equivalent of a jump cut, and it made capturing a station
+    // feel like a bug rather than an event. Letting it fall over
+    // _lockSettleRamp instead reads as the carrier taking over: the beat
+    // note slides away and the hiss drains under it.
+    final locked = staticTarget == 0 && whistleTarget == 0;
+    final settleSec = locked ? _lockSettleRamp : gainSec;
+
+    _ramp(_staticGain!.gain, staticTarget * volume, now, settleSec);
+    _ramp(_whistleGain!.gain, whistleTarget * volume, now, settleSec);
 
     if (whistleHz != _scheduledWhistleHz) {
       _ramp(_whistle!.frequency, whistleHz, now, _paramRamp);

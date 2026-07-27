@@ -372,6 +372,17 @@ void main() {
             },
           ),
         }),
+        // Keyframe: lock-flash
+        // The capture beat. Snaps on hard - a lock is instantaneous, not
+        // a fade - holds long enough to read, then clears. The brief
+        // scale nudge at the start is the only movement; it reads as the
+        // panel being driven rather than as an element animating in.
+        css.keyframes('lock-flash', {
+          '0%': Styles(raw: {'opacity': '0', 'transform': 'scaleY(0.72)'}),
+          '6%': Styles(raw: {'opacity': '1', 'transform': 'scaleY(1)'}),
+          '62%': Styles(raw: {'opacity': '1', 'transform': 'scaleY(1)'}),
+          '100%': Styles(raw: {'opacity': '0', 'transform': 'scaleY(1)'}),
+        }),
         // Keyframe: hint-fade-in
         // Brings the onboarding microcopy up gently once the receiver is
         // warm, so it reads as part of the boot sequence rather than as

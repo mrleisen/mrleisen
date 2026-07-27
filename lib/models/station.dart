@@ -1,4 +1,7 @@
 /// Station data model and frequency helpers for Radio.
+library;
+
+import 'dart:math' as math;
 
 /// Broadcast band. FM carries featured long-form content; AM carries
 /// lightweight idea-stage project cards.
@@ -96,6 +99,22 @@ const stations = <Station>[
 
 Iterable<Station> stationsFor(Band band) => stations.where((s) => s.band == band);
 
+/// Shapes the raw 0-1 proximity ramp into the curve the receiver
+/// actually behaves with.
+///
+/// A linear ramp gives every point in the tolerance window equal weight,
+/// which reads as a uniform slide from noise to signal - you always know
+/// exactly how far in you are, and nothing ever surprises you. Real
+/// tuning is not like that: most of the gap between stations is dead,
+/// and then the carrier arrives almost all at once.
+///
+/// The exponent puts a knee in the curve. At a quarter of the way in the
+/// signal is still only ~11% rather than 25%, so the outer band stays
+/// convincingly empty; the last third is where it surges. That is what
+/// produces the "something is close" beat before the lock, instead of a
+/// readout that merely counts upward.
+const double _signalKnee = 1.6;
+
 /// Returns 0.0 (no signal) to 1.0 (perfect tune) based on proximity to
 /// the nearest station on [band] within [BandConfig.tolerance].
 double getSignalStrength(double frequency, Band band) {
@@ -106,7 +125,8 @@ double getSignalStrength(double frequency, Band band) {
     if (d < minDist) minDist = d;
   }
   if (minDist >= cfg.tolerance) return 0.0;
-  return 1.0 - (minDist / cfg.tolerance);
+  final linear = 1.0 - (minDist / cfg.tolerance);
+  return math.pow(linear, _signalKnee).toDouble();
 }
 
 /// Returns the station the dial is locked onto (within ±lockRange),

@@ -168,6 +168,13 @@ class RadioDialState extends State<RadioDial> {
   Timer? _memFlashTimer;
   static const Duration _memFlashDuration = Duration(milliseconds: 550);
 
+  // --- lock acknowledgement ---
+  // Brief "SIGNAL LOCKED" takeover of the LCD the instant a station is
+  // captured. See [_flashLocked].
+  bool _lockFlash = false;
+  Timer? _lockFlashTimer;
+  static const Duration _lockFlashDuration = Duration(milliseconds: 900);
+
   // --- LCD digit scramble ---
   // While [_scrambleValue] is non-null it replaces the live frequency
   // in the LCD. A periodic timer swaps it for fresh random values every
@@ -251,8 +258,35 @@ class RadioDialState extends State<RadioDial> {
     component.onVolumeChanged?.call(next.clamp(0.0, 1.0));
   }
 
+  /// Fraction of the remaining gap a drag gives up to a nearby station.
+  ///
+  /// Low on purpose. This is meant to feel like the dial finding its
+  /// detent, not like the control being taken away: at 0.28 the pull is
+  /// noticeable but a steady hand still lands wherever it wants, and
+  /// sweeping straight past a station is unaffected because the pull
+  /// only ever moves you a fraction of the way in.
+  static const double _magnetStrength = 0.28;
+
+  /// Applies a gentle pull toward a station once the drag is inside its
+  /// lock range.
+  ///
+  /// Only while dragging: keyboard tuning and preset recalls address
+  /// exact frequencies, and bending those would be a bug, not a feel.
+  double _magnetise(double v) {
+    if (!(_draggingStrip || _draggingKnob)) return v;
+    final cfg = _cfg;
+    for (final s in stationsFor(component.band)) {
+      final d = (v - s.frequency).abs();
+      if (d > 0 && d < cfg.lockRange) {
+        return v + (s.frequency - v) * _magnetStrength;
+      }
+    }
+    return v;
+  }
+
   void _setFrequency(double v) {
     final cfg = _cfg;
+    v = _magnetise(v);
     if (cfg.step < 1.0) {
       final scale = (1.0 / cfg.step).roundToDouble();
       v = (v * scale).roundToDouble() / scale;
@@ -458,11 +492,37 @@ class RadioDialState extends State<RadioDial> {
     });
   }
 
+  /// Flashes `SIGNAL LOCKED` across the LCD for [_lockFlashDuration].
+  ///
+  /// The moment a station is captured had no acknowledgement of its own:
+  /// the panel faded in and the ST badge lit, both gradual. Tuning is
+  /// the best idea in this piece, so catching something should land as
+  /// a distinct beat rather than as the absence of noise.
+  void _flashLocked() {
+    if (prefersReducedMotion) return;
+    _lockFlashTimer?.cancel();
+    setState(() => _lockFlash = true);
+    _lockFlashTimer = Timer(_lockFlashDuration, () {
+      if (mounted) setState(() => _lockFlash = false);
+    });
+  }
+
   @override
   void didUpdateComponent(RadioDial oldComponent) {
     super.didUpdateComponent(oldComponent);
     final wasPowered = oldComponent.isPowered;
     final isPowered = component.isPowered;
+
+    // Fire only on the null -> station edge, so sweeping *within* a
+    // locked station's range doesn't retrigger it.
+    final was = oldComponent.activeStation;
+    final now = component.activeStation;
+    if (isPowered && now != null && was?.callSign != now.callSign) {
+      _flashLocked();
+    } else if (now == null && _lockFlash) {
+      _lockFlashTimer?.cancel();
+      setState(() => _lockFlash = false);
+    }
     if (isPowered && !wasPowered) {
       // Defer so the CRT turn-on animation gets to start before the
       // scramble + glitch kick in.
@@ -497,6 +557,7 @@ class RadioDialState extends State<RadioDial> {
     _scrambleTimer?.cancel();
     _scramblePowerOnTimer?.cancel();
     _memFlashTimer?.cancel();
+    _lockFlashTimer?.cancel();
     super.dispose();
   }
 
@@ -687,6 +748,12 @@ class RadioDialState extends State<RadioDial> {
                   [Component.text('ST')],
                 ),
               ]),
+              // The lock beat. Overlays the digits for a moment rather
+              // than displacing them, so the readout never jumps.
+              if (_lockFlash)
+                div(classes: 'lcd-lock-flash', [
+                  Component.text('SIGNAL LOCKED'),
+                ]),
             ],
           ),
 
@@ -906,10 +973,28 @@ class RadioDialState extends State<RadioDial> {
       }
     }
 
-    // No station markers - every station is undiscovered. The dial
-    // shows only tick marks and frequency numbers; the user has to
-    // sweep the band, watch the noise clear up, and listen for
-    // signals, like on a real radio.
+    // Still no map of the band: unfound stations are never marked, so
+    // the user has to sweep, watch the noise clear and listen, like on
+    // a real radio.
+    //
+    // The one exception is the station currently locked. Marking where
+    // you already are gives the lock somewhere to land on the dial and
+    // reveals nothing - you are looking straight at it.
+    final active = component.activeStation;
+    if (active != null && active.band == component.band) {
+      final x = ((active.frequency - cfg.minFreq) / cfg.step) * cfg.pxPerStep;
+      children.add(
+        div(
+          classes: 'tick-lock',
+          styles: Styles(
+            position: Position.absolute(left: x.px, top: Unit.zero),
+            raw: {'--sc': active.color},
+          ),
+          [],
+        ),
+      );
+    }
+
     return children;
   }
 
@@ -1644,10 +1729,24 @@ class RadioDialState extends State<RadioDial> {
         raw: {
           'text-transform': 'uppercase',
           'white-space': 'nowrap',
-          'text-shadow': '0 0 6px rgba(0,0,0,0.95), 0 0 14px rgba(0,0,0,0.85)',
-          'background':
-              'radial-gradient(ellipse at center, rgba(3,3,8,0.88) 0%, rgba(3,3,8,0.72) 45%, transparent 78%)',
+          // No backdrop on the overlay itself. It used to carry a
+          // near-opaque radial scrim across the whole dial window, which
+          // buried the tick marks and the frequency numbers under it -
+          // the hint telling you to drag the dial was hiding the dial.
+          // Only the words get a backing now (below), so the band stays
+          // readable around them.
+          'background': 'none',
           'animation': 'hint-fade-in 0.6s ease-out both',
+        },
+      ),
+      // Local backing behind the text only, sized to the words.
+      css('& > span').styles(
+        padding: Padding.symmetric(horizontal: 12.px, vertical: 4.px),
+        radius: BorderRadius.all(Radius.circular(3.px)),
+        raw: {
+          'background': 'rgba(3,3,8,0.72)',
+          'box-shadow': '0 0 10px 6px rgba(3,3,8,0.55)',
+          'text-shadow': '0 0 5px rgba(0,0,0,0.9)',
         },
       ),
       // Pointer-dependent phrasing. Default to the touch wording and let
@@ -1713,6 +1812,57 @@ class RadioDialState extends State<RadioDial> {
         'transform': 'translateX(-50%)',
         'white-space': 'nowrap',
         'text-shadow': '0 0 3px rgba(255,177,58,0.4)',
+      },
+    ),
+
+    // ── locked-station marker ──
+    // A soft column of the station's own colour behind the needle,
+    // marking where the carrier sits. Only ever drawn for a station
+    // already locked, so it confirms rather than reveals.
+    css('.tick-lock').styles(
+      width: 3.px,
+      height: 100.percent,
+      pointerEvents: PointerEvents.none,
+      raw: {
+        'transform': 'translateX(-50%)',
+        'background':
+            'linear-gradient(to bottom, transparent 0%, '
+            'color-mix(in srgb, var(--sc, #E8A035) 70%, transparent) 35%, '
+            'color-mix(in srgb, var(--sc, #E8A035) 70%, transparent) 65%, '
+            'transparent 100%)',
+        'box-shadow': '0 0 8px color-mix(in srgb, var(--sc, #E8A035) 45%, transparent)',
+      },
+    ),
+
+    // ── lock acknowledgement ──
+    // Takes over the LCD face briefly on capture. Absolutely positioned
+    // so the digits underneath never shift.
+    css('.lcd-lock-flash').styles(
+      position: Position.absolute(
+        top: Unit.zero,
+        left: Unit.zero,
+        right: Unit.zero,
+        bottom: Unit.zero,
+      ),
+      display: Display.flex,
+      alignItems: AlignItems.center,
+      justifyContent: JustifyContent.center,
+      fontFamily: const FontFamily.list([
+        FontFamily('IBM Plex Mono'),
+        FontFamilies.monospace,
+      ]),
+      fontSize: Unit.pixels(11),
+      fontWeight: FontWeight.w600,
+      letterSpacing: 0.22.em,
+      color: const Color('#1a1206'),
+      pointerEvents: PointerEvents.none,
+      zIndex: ZIndex(6),
+      raw: {
+        // Inverted: dark type on a lit amber face, the way a segment
+        // display reads when every cell behind the text is driven.
+        'background': 'rgba(232,160,53,0.88)',
+        'animation': 'lock-flash 0.9s ease-out both',
+        'white-space': 'nowrap',
       },
     ),
 
