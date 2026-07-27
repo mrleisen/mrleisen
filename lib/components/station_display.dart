@@ -8,15 +8,17 @@ import '../utils/keyboard.dart';
 enum Lang { es, en }
 
 /// "Decoded" content panel that fades in when the dial locks onto a
-/// station. All five panels live in the same absolute slot; hidden ones
-/// sit at `visibility: hidden; opacity: 0`, so switching stations never
-/// causes a reflow.
+/// station. Every panel for the active band lives in the same absolute
+/// slot; hidden ones sit at `visibility: hidden; opacity: 0`, so
+/// switching stations never causes a reflow.
 ///
-/// Transitions are intentionally staggered: the outgoing panel fades
-/// quickly (0.3 s, no delay) while the incoming panel waits 0.25 s
-/// before starting its 0.5 s fade-in. That tiny gap keeps two panels
-/// from reading simultaneously and matches the "catching a signal"
-/// feel of the rest of the experience.
+/// Transitions are deliberately asymmetric, and in the direction a
+/// receiver actually behaves: **arriving is quick (0.28 s), leaving
+/// drifts (0.85 s)**. Catching a carrier is abrupt; losing one is the
+/// signal decaying, not a panel being switched off.
+///
+/// Inside a panel the blocks then stagger ~70 ms apart in reading order,
+/// so a transmission resolves progressively rather than appearing whole.
 ///
 /// NOTE: deliberately NOT marked `@client`. The parent App is already a
 /// client island; nesting another `@client` here would create a second
@@ -194,6 +196,58 @@ class StationDisplay extends StatelessComponent {
         return _conspiranoicoPanel(s, lang);
     }
     return div([]);
+  }
+
+  /// How badly out of tune [s] currently is, 0 (clean) to 1 (edge of
+  /// range). Mirrors the curve in [_stationPanel] so the title's glyph
+  /// noise stays in step with the panel's blur.
+  double _distortionFor(Station s) {
+    final cfg = configFor(s.band);
+    final d = (frequency - s.frequency).abs();
+    if (d <= cfg.lockRange) return 0.0;
+    if (d >= cfg.tolerance) return 1.0;
+    return (d - cfg.lockRange) / (cfg.tolerance - cfg.lockRange);
+  }
+
+  /// Glyphs the title decays into while the signal is unresolved.
+  /// Block and hatch characters rather than random letters: the point is
+  /// that the receiver has *not decoded* a character yet, not that it
+  /// decoded the wrong one.
+  static const String _noiseGlyphs = '▚▞▓▒░█▌▐╳╱╲┼';
+
+  /// Renders [text] with a share of its characters replaced by noise,
+  /// proportional to how far off station the dial is.
+  ///
+  /// This is the half of the approach the blur cannot do. A blurred
+  /// title is *the same title, softened* - you can still read it from
+  /// the far edge of the range, which quietly removes the reason to keep
+  /// tuning. Substituting glyphs makes the title genuinely unreadable
+  /// until you are close, so the letters resolve as you home in.
+  ///
+  /// Deterministic on (index, quantised distortion) rather than random:
+  /// a `Random` here would produce different output on the server and on
+  /// hydration, and would also churn every frame instead of stepping as
+  /// the dial moves. Quantising to twelve buckets means the glyphs
+  /// change *because you tuned*, and hold still when you stop.
+  Component _resolvingTitle(String text, double distortion) {
+    if (distortion < 0.06) return Component.text(text);
+    final bucket = (distortion * 12).floor();
+    final out = StringBuffer();
+    for (var i = 0; i < text.length; i++) {
+      final ch = text[i];
+      if (ch == ' ') {
+        out.write(ch);
+        continue;
+      }
+      // Cheap deterministic hash of (character position, tuning bucket).
+      final h = (i * 2654435761 + bucket * 40503) & 0x7fffffff;
+      if ((h % 1000) / 1000.0 < distortion) {
+        out.write(_noiseGlyphs[h % _noiseGlyphs.length]);
+      } else {
+        out.write(ch);
+      }
+    }
+    return Component.text(out.toString());
   }
 
   /// Uniform station label ("FM 95.7 - decoded transmission" /
@@ -780,7 +834,12 @@ class StationDisplay extends StatelessComponent {
       maxWidth: 560.px,
       raw: {
         'transform': 'translate(-50%, -50%)',
-        'transition': 'opacity 0.3s ease 0s, transform 0.3s ease 0s, visibility 0s linear 0.3s',
+        // Outgoing: slow. Losing a station should feel like the signal
+        // decaying, not like a panel being switched off. This used to be
+        // the *fast* side (0.3s, no delay) while entry was slow, which
+        // is exactly backwards from how a receiver behaves - arriving is
+        // abrupt, leaving drifts.
+        'transition': 'opacity 0.85s ease-in 0s, transform 0.85s ease-in 0s, visibility 0s linear 0.85s',
         'text-align': 'center',
         'visibility': 'hidden',
       },
@@ -789,10 +848,45 @@ class StationDisplay extends StatelessComponent {
       pointerEvents: PointerEvents.auto,
       raw: {
         'visibility': 'visible',
-        // Incoming: wait for the outgoing panel to fade, then fade in.
-        'transition': 'opacity 0.5s ease 0.25s, transform 0.5s ease 0.25s, visibility 0s linear 0s',
+        // Incoming: quick, and no longer waiting on the outgoing panel.
+        // The stations are far enough apart that two are never in range
+        // at once, so the hand-off delay was buying nothing and costing
+        // a quarter second of dead screen on every lock.
+        'transition': 'opacity 0.28s ease-out 0s, transform 0.28s ease-out 0s, visibility 0s linear 0s',
       },
     ),
+
+    // ── layered reveal ──
+    // Once locked, the panel's blocks arrive in reading order rather
+    // than all at once, ~70ms apart: label, title, subtitle, body, data,
+    // links. A receiver resolves a transmission progressively, and a
+    // block that appears whole reads as a web page swapping content.
+    //
+    // Applied only to the visible panel, and only to its direct
+    // children, so the stagger can never fight the panel's own fade.
+    css('.station-panel .panel-shell > *, .station-panel .am-shell > *').styles(
+      raw: {
+        'opacity': '0',
+        'transform': 'translateY(4px)',
+      },
+    ),
+    css(
+      '.station-panel.is-visible .panel-shell > *, '
+      '.station-panel.is-visible .am-shell > *',
+    ).styles(
+      raw: {
+        'opacity': '1',
+        'transform': 'translateY(0)',
+        'transition': 'opacity 0.32s ease-out, transform 0.32s ease-out',
+      },
+    ),
+    for (var i = 1; i <= 6; i++)
+      css(
+        '.station-panel.is-visible .panel-shell > *:nth-child($i), '
+        '.station-panel.is-visible .am-shell > *:nth-child($i)',
+      ).styles(
+        raw: {'transition-delay': '${((i - 1) * 0.07).toStringAsFixed(2)}s'},
+      ),
 
     // Inner shell.
     css('.panel-shell').styles(
