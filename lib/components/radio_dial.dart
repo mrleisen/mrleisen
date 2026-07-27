@@ -675,21 +675,28 @@ class RadioDialState extends State<RadioDial> {
                 'tabindex': '0',
               },
               [
-                // The ON/OFF legend is moulded switch marking, not a
-                // label: the control's name is "Power" and its state is
-                // carried by aria-checked. Left exposed, the two words
-                // became the element's visible text and clashed with
-                // that name under WCAG 2.5.3 - the switch appeared to be
-                // called "ON OFF".
+                // The ON/OFF legend is painted on via CSS `content`
+                // rather than being DOM text.
+                //
+                // It is moulded switch marking, not a label: the control
+                // is named "Power" and its state rides on aria-checked.
+                // As text nodes the two words counted as the element's
+                // visible text and collided with that name under WCAG
+                // 2.5.3 - the switch read as being called "ON OFF".
+                // `aria-hidden` alone does not fix it, because hiding
+                // something from assistive tech does not stop it being
+                // visible text. Moving it into the stylesheet does, and
+                // it is where the rest of the faceplate silkscreen
+                // already lives.
                 span(
                   classes: 'rocker-half rocker-on',
                   attributes: const {'aria-hidden': 'true'},
-                  [Component.text('ON')],
+                  [],
                 ),
                 span(
                   classes: 'rocker-half rocker-off',
                   attributes: const {'aria-hidden': 'true'},
-                  [Component.text('OFF')],
+                  [],
                 ),
               ],
             ),
@@ -1249,6 +1256,11 @@ class RadioDialState extends State<RadioDial> {
         },
       ),
     ]),
+    // Switch legend, painted rather than written. See the note at the
+    // rocker's markup for why this is not DOM text.
+    css('.rocker-half.rocker-on::after').styles(raw: {'content': "'ON'"}),
+    css('.rocker-half.rocker-off::after').styles(raw: {'content': "'OFF'"}),
+
     // Outer corners, previously handled by the parent's `overflow`.
     // 3px against the parent's 4px so the halves sit just inside the
     // moulding rather than fighting its edge.
