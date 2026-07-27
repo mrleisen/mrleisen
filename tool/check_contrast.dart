@@ -115,6 +115,14 @@ void main() {
   check('.am-body @600px', '#8f8770', px: 12);
   check('.am-subtitle', '#8f8468', px: 11);
 
+  section('Onboarding hints');
+  // Both sit on the faceplate/dial rather than the page background, so
+  // they are checked against the darkest plastic they can land on
+  // (#0a0a10 panel foot, #02020a dial slit) - close enough to page
+  // black that using `bg` is the conservative reading.
+  check('.power-hint', '#c99a4e', px: 11);
+  check('.tune-hint', '#d9c9a4', px: 11);
+
   section('Idle carrier monitor');
   // .carrier-sub and .carrier-state-text carry `carrier-breathe`, whose
   // trough is the real worst case - check the floor, not just the peak.

@@ -10,6 +10,7 @@ import '../models/station.dart';
 import '../utils/motion.dart';
 import 'collected_stations.dart';
 import 'radio_audio.dart' show unlockAudioContext;
+import 'station_display.dart' show Lang;
 
 /// Re-typed view over `PointerEvent` whose `clientX`/`clientY` are
 /// declared as `double` instead of `int`.
@@ -56,6 +57,9 @@ class RadioDial extends StatefulComponent {
     this.onDeleteStation,
     this.canSaveCurrent = false,
     this.onSaveStation,
+    this.lang = Lang.en,
+    this.showPowerHint = false,
+    this.showTuneHint = false,
     super.key,
   });
 
@@ -109,6 +113,17 @@ class RadioDial extends StatefulComponent {
   /// Fires when the user presses MEM. Parent commits the current
   /// active station into its collected set.
   final VoidCallback? onSaveStation;
+
+  /// UI language, used only for the onboarding microcopy.
+  final Lang lang;
+
+  /// Radio has never been switched on. Pulses the rocker and prints a
+  /// small etched instruction beside it.
+  final bool showPowerHint;
+
+  /// Radio is warm but the dial has never been moved. Prints the tuning
+  /// instruction across the dial window.
+  final bool showTuneHint;
 
   @override
   State<RadioDial> createState() => RadioDialState();
@@ -483,8 +498,32 @@ class RadioDialState extends State<RadioDial> {
             span(classes: 'brand-sub', [Component.text('AM/FM STEREO RECEIVER')]),
           ]),
           div(classes: 'indicator-row', [
+            // Etched instruction sitting immediately left of the rocker.
+            // Kept in normal flow rather than absolutely positioned: the
+            // header is `space-between`, so this just widens the
+            // right-hand group leftward into empty space. It cannot
+            // overlap anything or shift anything vertically, and when it
+            // retires the row simply closes up - during the CRT turn-on
+            // animation, so the reflow is never seen.
+            //
+            // aria-hidden because the rocker already carries
+            // role="switch" with its own label. This is a visual
+            // affordance, not new information.
+            if (component.showPowerHint)
+              span(
+                classes: 'power-hint',
+                attributes: {'aria-hidden': 'true'},
+                [
+                  Component.text(
+                    component.lang == Lang.es ? 'ENCIENDE' : 'PRESS ON',
+                  ),
+                  span(classes: 'power-hint-arrow', [Component.text('▸')]),
+                ],
+              ),
             div(
-              classes: 'power-rocker${powered ? ' power-on' : ''}',
+              classes:
+                  'power-rocker${powered ? ' power-on' : ''}'
+                  '${component.showPowerHint ? ' power-attract' : ''}',
               events: {'click': _onPowerTap, 'touchend': _onPowerTap},
               attributes: {
                 'role': 'switch',
@@ -608,6 +647,33 @@ class RadioDialState extends State<RadioDial> {
                 ),
                 div(classes: 'needle', []),
                 div(classes: 'dial-glass', []),
+                // Tuning instruction, laid over the dial slit itself -
+                // on the control we want touched, not off in a corner.
+                // Absolutely positioned inside the already-relative
+                // `.dial-window`, and `pointer-events: none` so it can
+                // never intercept the drag it is asking for.
+                //
+                // Both phrasings are always rendered and CSS picks one
+                // on `(hover: hover)`. Doing it in CSS rather than by
+                // sniffing the pointer in Dart keeps the SSR output and
+                // the hydrated output identical.
+                if (component.showTuneHint)
+                  div(
+                    classes: 'tune-hint',
+                    attributes: {'aria-hidden': 'true'},
+                    [
+                      span(classes: 'tune-hint-fine', [
+                        Component.text(
+                          component.lang == Lang.es ? 'ARRASTRA O USA ← →' : 'DRAG OR USE ← →',
+                        ),
+                      ]),
+                      span(classes: 'tune-hint-coarse', [
+                        Component.text(
+                          component.lang == Lang.es ? 'DESLIZA PARA SINTONIZAR' : 'SWIPE TO TUNE',
+                        ),
+                      ]),
+                    ],
+                  ),
               ],
             ),
           ]),
@@ -836,7 +902,10 @@ class RadioDialState extends State<RadioDial> {
         display: Display.flex,
         flexDirection: FlexDirection.row,
         alignItems: AlignItems.stretch,
-        overflow: Overflow.hidden,
+        // Deliberately NOT `overflow: hidden`. It used to clip the two
+        // halves to the rounded corners, but it would equally clip the
+        // ::after that enlarges the touch target, silently undoing it.
+        // The halves round their own outer corners instead (below).
         raw: {
           'box-sizing': 'border-box',
           'background': '#1a1a1a',
@@ -853,6 +922,68 @@ class RadioDialState extends State<RadioDial> {
     // Power rocker stays interactive even when the panel is dimmed
     // (powered off) - it's the only way back on.
     css('.power-rocker').styles(raw: {'pointer-events': 'auto'}),
+    // Slow amber swell while the radio has never been switched on.
+    css('.power-rocker.power-attract').styles(
+      raw: {'animation': 'power-attract 2.4s ease-in-out infinite'},
+    ),
+    // The rocker draws at 52x22 because that is what the hardware wants
+    // to look like, but 22px tall is well under a comfortable touch
+    // target. This pseudo-element grows the *hit area* to 44px tall
+    // without touching a single visible pixel, so the control still
+    // reads as a small moulded switch while behaving like a big one.
+    //
+    // Vertical only: 52px is already a wide enough target, and the MEM
+    // button sits just 4px to the right, so widening here would quietly
+    // steal presses from its left edge.
+    css('.power-rocker::after').styles(
+      position: Position.absolute(
+        top: Unit.expression('calc(50% - 22px)'),
+        left: Unit.zero,
+      ),
+      width: 100.percent,
+      height: 44.px,
+      raw: {'content': '""'},
+    ),
+    // ── onboarding: power ──
+    // Faceplate silkscreen, matched to `.brand-sub` so it reads as
+    // printed on the plastic rather than drawn by a web page.
+    css('.power-hint', [
+      css('&').styles(
+        display: Display.flex,
+        flexDirection: FlexDirection.row,
+        alignItems: AlignItems.center,
+        gap: Gap(column: 4.px),
+        fontFamily: const FontFamily.list([
+          FontFamily('IBM Plex Mono'),
+          FontFamilies.monospace,
+        ]),
+        // 11px, not the 6-8px of the surrounding silkscreen. This is the
+        // single most important instruction on the page for a first-time
+        // visitor, so it gets the same floor as any other informative
+        // text - shrinking it to match the decoration would undercut the
+        // one job it has. Tracking is pulled in to keep the width down.
+        fontSize: Unit.pixels(11),
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.16.em,
+        color: const Color('#c99a4e'),
+        pointerEvents: PointerEvents.none,
+        raw: {
+          'text-transform': 'uppercase',
+          'white-space': 'nowrap',
+          'flex-shrink': '0',
+          'text-shadow': '0 0 5px rgba(232,160,53,0.35), 0 -1px 0 rgba(0,0,0,0.7)',
+          'animation': 'hint-fade-in 0.5s ease-out both',
+        },
+      ),
+      css('& .power-hint-arrow').styles(
+        raw: {
+          'font-size': '10px',
+          'line-height': '1',
+          'opacity': '0.8',
+          'letter-spacing': '0',
+        },
+      ),
+    ]),
     css('.rocker-half', [
       css('&').styles(
         display: Display.flex,
@@ -872,6 +1003,15 @@ class RadioDialState extends State<RadioDial> {
         },
       ),
     ]),
+    // Outer corners, previously handled by the parent's `overflow`.
+    // 3px against the parent's 4px so the halves sit just inside the
+    // moulding rather than fighting its edge.
+    css('.rocker-half.rocker-on').styles(
+      raw: {'border-radius': '3px 0 0 3px'},
+    ),
+    css('.rocker-half.rocker-off').styles(
+      raw: {'border-radius': '0 3px 3px 0'},
+    ),
     // Faint moulded seam between the two halves.
     css('.rocker-half + .rocker-half').styles(
       raw: {
@@ -1394,6 +1534,50 @@ class RadioDialState extends State<RadioDial> {
         'box-shadow': 'inset 0 2px 5px rgba(0,0,0,0.95), inset 0 -1px 1px rgba(255,255,255,0.03)',
       },
     ),
+    // ── onboarding: tuning ──
+    // Sits across the dial slit, centred, with a soft dark scrim so the
+    // copy stays readable over the tick marks without hiding them.
+    css('.tune-hint', [
+      css('&').styles(
+        position: Position.absolute(
+          top: Unit.zero,
+          left: Unit.zero,
+          right: Unit.zero,
+          bottom: Unit.zero,
+        ),
+        display: Display.flex,
+        alignItems: AlignItems.center,
+        justifyContent: JustifyContent.center,
+        fontFamily: const FontFamily.list([
+          FontFamily('IBM Plex Mono'),
+          FontFamilies.monospace,
+        ]),
+        fontSize: Unit.pixels(11),
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.22.em,
+        color: const Color('#d9c9a4'),
+        // Must never swallow the drag it is asking the user to perform.
+        pointerEvents: PointerEvents.none,
+        zIndex: ZIndex(4),
+        raw: {
+          'text-transform': 'uppercase',
+          'white-space': 'nowrap',
+          'text-shadow': '0 0 6px rgba(0,0,0,0.95), 0 0 14px rgba(0,0,0,0.85)',
+          'background':
+              'radial-gradient(ellipse at center, rgba(3,3,8,0.88) 0%, rgba(3,3,8,0.72) 45%, transparent 78%)',
+          'animation': 'hint-fade-in 0.6s ease-out both',
+        },
+      ),
+      // Pointer-dependent phrasing. Default to the touch wording and let
+      // a real hover-capable pointer opt into the keyboard variant, so
+      // devices that report neither still get workable instructions.
+      css('& .tune-hint-fine').styles(display: Display.none),
+    ]),
+    css.media(const MediaQuery.raw('(hover: hover) and (pointer: fine)'), [
+      css('.tune-hint .tune-hint-fine').styles(display: Display.inline),
+      css('.tune-hint .tune-hint-coarse').styles(display: Display.none),
+    ]),
+
     // Subtle glass reflection across the dial window.
     css('.dial-glass').styles(
       position: Position.absolute(top: Unit.zero, left: Unit.zero),
