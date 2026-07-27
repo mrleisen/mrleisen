@@ -437,7 +437,7 @@ class CaseStudyDialog extends StatelessComponent {
     ),
     css('.case-seg-no').styles(
       fontFamily: const FontFamily.list([
-        FontFamily('Orbitron'),
+        FontFamily('Chakra Petch'),
         FontFamilies.monospace,
       ]),
       fontSize: Unit.pixels(11),

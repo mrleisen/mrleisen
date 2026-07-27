@@ -871,6 +871,63 @@ class StationDisplay extends StatelessComponent {
         'transition': 'opacity 0.85s ease-in 0s, transform 0.85s ease-in 0s, visibility 0s linear 0.85s',
         'text-align': 'center',
         'visibility': 'hidden',
+        // A panel taller than the space above the faceplate used to be
+        // simply unreachable: `html`, `body` and `.signal-app` are all
+        // `overflow: hidden` by design (the dial is dragged, the page is
+        // never scrolled), so anything past the viewport was clipped with
+        // no way to get at it. On a phone the DeTodoUIS panel - the
+        // longest one, with eight telemetry rows and four 44 px pills -
+        // ran off both ends.
+        //
+        // The panel now scrolls inside itself rather than the page
+        // scrolling. The height available is the free space above the
+        // faceplate, which `--panel-h` already measures at runtime, minus
+        // a little air so the copy never touches either edge.
+        'max-height': 'calc(100vh - var(--panel-h, 210px) - 24px)',
+        'overflow-y': 'auto',
+        // Pinned rather than left to compute. A box with one axis
+        // `visible` and the other not turns the visible one into `auto`,
+        // so `overflow-y` alone would have handed the title glows a
+        // horizontal scrollbar of their own. The shell's 24 px of inner
+        // padding keeps those glows off this edge.
+        'overflow-x': 'hidden',
+        // Keeps a swipe that runs past the end of the panel from chaining
+        // into the document, where it would fight `overscroll-behavior`
+        // and read as the whole receiver coming loose.
+        'overscroll-behavior': 'contain',
+        // Vertical panning only. A horizontal swipe here still belongs to
+        // nothing, but saying so explicitly stops a browser from waiting
+        // to find out before it starts scrolling.
+        'touch-action': 'pan-y',
+      },
+    ),
+    // Separate rule so `100vh` above survives as the fallback on browsers
+    // that don't know `dvh`. Same reasoning as `html, body` in
+    // `main.server.dart`: on mobile `vh` assumes the URL bar is hidden,
+    // which would let the panel grow taller than the visible viewport and
+    // put us back where we started.
+    css('.station-panel').styles(
+      raw: {'max-height': 'calc(100dvh - var(--panel-h, 210px) - 24px)'},
+    ),
+    // The scrollbar is instrumentation, not chrome: a hairline amber
+    // track that reads as part of the panel. Left visible on purpose -
+    // hiding it entirely is what made the overflow undiscoverable in the
+    // first place, and a bar that only appears when there is more to read
+    // is the affordance itself.
+    css('.station-panel').styles(
+      raw: {
+        'scrollbar-width': 'thin',
+        'scrollbar-color': 'color-mix(in srgb, var(--sc, #E8A035) 45%, transparent) transparent',
+      },
+    ),
+    css('.station-panel::-webkit-scrollbar').styles(width: 4.px),
+    css('.station-panel::-webkit-scrollbar-track').styles(
+      raw: {'background': 'transparent'},
+    ),
+    css('.station-panel::-webkit-scrollbar-thumb').styles(
+      raw: {
+        'background': 'color-mix(in srgb, var(--sc, #E8A035) 45%, transparent)',
+        'border-radius': '2px',
       },
     ),
     css('.station-panel.is-visible').styles(
@@ -1204,7 +1261,7 @@ class StationDisplay extends StatelessComponent {
 
     // ── AM lo-fi panel aesthetic ──
     // AM is for idea-stage projects, so the panels are intentionally
-    // less polished than the FM ones: default body font (no Orbitron),
+    // less polished than the FM ones: default body font (not the
     // lighter weights, dashed border, desaturated station-colour
     // accent, and a subtle grain overlay.
     css('.am-shell').styles(
@@ -1256,7 +1313,7 @@ class StationDisplay extends StatelessComponent {
         'letter-spacing': '0.3em',
       },
     ),
-    // Title: default body font (NOT Orbitron), lighter weight,
+    // Title: default body font (NOT the instrument face), lighter weight,
     // understated letter-spacing. The station colour carries through
     // but the glow is dialled back.
     css('.am-title').styles(

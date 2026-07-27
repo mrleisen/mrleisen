@@ -376,11 +376,32 @@ class AppState extends State<App> {
     final target = we.target;
     if (target is web.Element) {
       if (target.closest('.radio-panel') != null) return; // handled by panel
+      // Anything the user can actually scroll keeps its wheel. This
+      // handler calls preventDefault unconditionally, which meant a wheel
+      // over the technical transmission or over a station panel taller
+      // than the screen tuned the dial *and* swallowed the scroll, so the
+      // long printouts could not be read with a mouse at all.
+      if (_scrollableUnder(target) != null) return;
     }
     we.preventDefault();
     final step = configFor(_band).step;
     final delta = we.deltaY > 0 ? step * 2 : -step * 2;
     _tune(_frequency + delta);
+  }
+
+  /// The nearest ancestor of [el] that has content to scroll, or null.
+  ///
+  /// Checked live rather than by class alone: a station panel is only a
+  /// scroll container when its content actually overflows, and on a
+  /// desktop viewport most of them never do. Blanket-exempting the whole
+  /// panel area would quietly kill wheel-to-tune across the middle of the
+  /// screen, which is where people reach for it.
+  web.Element? _scrollableUnder(web.Element el) {
+    for (final sel in const ['.rx-panel', '.station-panel']) {
+      final found = el.closest(sel);
+      if (found != null && found.scrollHeight > found.clientHeight) return found;
+    }
+    return null;
   }
 
   // --- frequency management ---
@@ -649,7 +670,7 @@ class AppState extends State<App> {
       (es ? 'JAVASCRIPT' : 'JAVASCRIPT', '215 KB · 70 KB gzip'),
       (
         es ? 'TIPOGRAFÍAS' : 'TYPEFACES',
-        es ? '76 KB · 3 familias, subset latino' : '76 KB · 3 families, latin subset',
+        es ? '66 KB · 3 familias, subset latino' : '66 KB · 3 families, latin subset',
       ),
       (
         es ? 'DESPLIEGUE' : 'DEPLOY',

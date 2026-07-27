@@ -732,7 +732,7 @@ void main() {
         // SVG favicon (modern browsers) + .ico fallback for legacy clients.
         link(rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg'),
         link(rel: 'icon', type: 'image/x-icon', href: '/favicon.ico'),
-        // Orbitron - geometric/digital display face used for the LCD.
+        // Chakra Petch (instrument) + Space Grotesk (display) + IBM Plex Mono.
         // Self-hosted: no runtime dependency on Google Fonts.
         link(rel: 'stylesheet', href: 'fonts.css'),
         // Primary meta tags

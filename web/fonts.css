@@ -1,13 +1,24 @@
-/* Self-hosted Space Grotesk + Orbitron + IBM Plex Mono (latin subset).
+/* Self-hosted Space Grotesk + Chakra Petch + IBM Plex Mono (latin subset).
    Served locally to avoid a runtime dependency on fonts.googleapis.com.
    All three are SIL Open Font License, so redistribution is fine.
 
    The three faces have distinct jobs and should not be swapped around:
      Space Grotesk - display. Station names, dialog titles, the idle
                      dash array. The voice of the content.
-     Orbitron      - instrument. The LCD readout, the model plate, the
+     Chakra Petch  - instrument. The LCD readout, the model plate, the
                      preset call signs. Anything the *hardware* prints.
-     IBM Plex Mono - everything else: body copy, labels, telemetry. */
+     IBM Plex Mono - everything else: body copy, labels, telemetry.
+
+   Chakra Petch replaced Orbitron in the instrument role. Orbitron paired
+   with a mono is the default costume of the whole techno-retro genre and
+   reads as a template at a glance, which is the last thing a piece whose
+   entire pitch is craft can afford. Chakra Petch is squarer, has clipped
+   corners that echo a segment cell, and carries the small sizes better.
+
+   It is also narrower: 0.581 em per digit against Orbitron's 0.758, and
+   almost the same cap height (0.70 vs 0.72). So the small silkscreen
+   labels needed no adjustment at all, while the LCD readout could be set
+   larger for the same footprint - see `.lcd-value` in `radio_dial.dart`. */
 
 /* 700 only: every display role uses it, so shipping the 500 as well
    would be 13 KB nobody downloads a glyph from. */
@@ -20,21 +31,15 @@
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
+/* 700 only. Nothing in the instrument role is set lighter, and the old
+   900 alias pointed at the same 700 file anyway, which bought a synthetic
+   weight nobody asked for. */
 @font-face {
-  font-family: 'Orbitron';
+  font-family: 'Chakra Petch';
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('fonts/orbitron-700.woff2') format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-
-@font-face {
-  font-family: 'Orbitron';
-  font-style: normal;
-  font-weight: 900;
-  font-display: swap;
-  src: url('fonts/orbitron-700.woff2') format('woff2');
+  src: url('fonts/chakrapetch-700.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
