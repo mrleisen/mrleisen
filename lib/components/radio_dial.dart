@@ -1902,10 +1902,23 @@ class RadioDialState extends State<RadioDial> {
         raw: {'margin-bottom': '6px', 'justify-content': 'flex-end'},
       ),
       css('.indicator-row').styles(gap: Gap(column: 4.px)),
+      // FM / AM / MEM are real controls, not decoration, so they get a
+      // little more room to breathe and a 40px hit area. 40 rather than
+      // 44 because they sit 4px apart in a row: a 44px box on each would
+      // overlap its neighbour and start eating the wrong presses.
       css('.ind').styles(
-        fontSize: Unit.pixels(7),
-        padding: Padding.symmetric(horizontal: 4.px, vertical: 1.px),
-        raw: {'letter-spacing': '0.12em'},
+        fontSize: Unit.pixels(8),
+        padding: Padding.symmetric(horizontal: 7.px, vertical: 3.px),
+        raw: {'letter-spacing': '0.1em', 'position': 'relative'},
+      ),
+      css('.ind-band-clickable::after, .ind-mem-armed::after').styles(
+        position: Position.absolute(
+          top: Unit.expression('calc(50% - 20px)'),
+          left: Unit.zero,
+        ),
+        width: 100.percent,
+        height: 40.px,
+        raw: {'content': '""'},
       ),
       css('.panel-main').styles(
         raw: {
@@ -1916,7 +1929,19 @@ class RadioDialState extends State<RadioDial> {
           'row-gap': '6px',
         },
       ),
+      // Drawn at 32px so it stays a small trim knob next to the big
+      // tuning one, but 32px is under any sane touch minimum. Same
+      // trick as the power rocker: grow the hit area, not the artwork.
       css('.vol-knob').styles(width: 32.px, height: 32.px),
+      css('.vol-knob::after').styles(
+        position: Position.absolute(
+          top: Unit.expression('calc(50% - 22px)'),
+          left: Unit.expression('calc(50% - 22px)'),
+        ),
+        width: 44.px,
+        height: 44.px,
+        raw: {'content': '""', 'border-radius': '50%'},
+      ),
       css('.vol-knob-cap').styles(raw: {'inset': '3px'}),
       css('.vol-knob-notch').styles(
         height: 7.px,
@@ -1958,6 +1983,58 @@ class RadioDialState extends State<RadioDial> {
     ]),
     // ≤380 px: very narrow phones - just tighten the LCD + pill type.
     // Knob sizes already shrunk in the ≤600 block.
+    // ── landscape phones ──
+    // A phone on its side leaves ~390px of height. The faceplate alone
+    // claimed 180 of that, so the screen above it collapsed to a sliver
+    // and the station panels ran straight into the panel. There were no
+    // rules for this case at all.
+    //
+    // Keyed on height rather than orientation so a short desktop window
+    // gets the same treatment - the problem is vertical room, not which
+    // way a phone is held.
+    css.media(const MediaQuery.raw('(max-height: 500px)'), [
+      css('.radio-panel').styles(
+        minHeight: Unit.zero,
+        padding: Padding.symmetric(horizontal: 14.px, vertical: 6.px),
+      ),
+      css('.panel-header').styles(raw: {'margin-bottom': '4px'}),
+      // Brand plate is the first thing to go: pure decoration, and the
+      // room is needed by the controls.
+      css('.brand-plate').styles(display: Display.none),
+      css('.panel-main').styles(
+        raw: {
+          'grid-template-columns': 'auto 1fr auto auto',
+          'grid-template-rows': 'auto',
+          'grid-template-areas': '"lcd dial vol tune"',
+          'column-gap': '12px',
+          'row-gap': '0',
+        },
+      ),
+      css('.lcd').styles(height: 32.px),
+      css('.dial-window').styles(height: 40.px),
+      css('.knob').styles(width: 40.px, height: 40.px),
+      css('.knob-cap').styles(raw: {'inset': '4px'}),
+      css('.knob-notch').styles(
+        height: 9.px,
+        raw: {'transform-origin': '50% 12px'},
+      ),
+      css('.vol-knob').styles(width: 30.px, height: 30.px),
+      css('.collected-rack').styles(raw: {'max-height': '34px'}),
+    ]),
+
+    // ── very wide viewports ──
+    // The panel is pinned edge to edge, so on an ultrawide monitor the
+    // dial stretched into a runway and the controls drifted to opposite
+    // ends of the desk. Capping the inner rows keeps the receiver
+    // reading as one object; the plastic still spans the full width, the
+    // way a rack unit would.
+    css.media(MediaQuery.screen(minWidth: 1400.px), [
+      css('.panel-header, .panel-main, .collected-rack').styles(
+        raw: {'max-width': '1180px', 'margin-left': 'auto', 'margin-right': 'auto'},
+      ),
+      css('.panel-header').styles(raw: {'width': '100%'}),
+    ]),
+
     css.media(MediaQuery.screen(maxWidth: 380.px), [
       css('.lcd').styles(height: 30.px),
       css('.lcd-value').styles(fontSize: 1.0.rem),

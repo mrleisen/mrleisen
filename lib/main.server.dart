@@ -38,7 +38,21 @@ void main() {
           backgroundColor: const Color('#050507'),
           fontFamily: const FontFamily.list([FontFamilies.monospace]),
           color: const Color('#e0e0e0'),
+          raw: {
+            // Mobile browsers bounce the page on an over-scroll and some
+            // fire pull-to-refresh, both of which read as the receiver
+            // coming loose from the screen while you drag the dial.
+            'overscroll-behavior': 'none',
+          },
         ),
+        // Separate rule so `100vh` above stays as the fallback: browsers
+        // that don't know `dvh` drop this declaration and keep it.
+        //
+        // `vh` is the *largest* viewport height on mobile, i.e. it
+        // assumes the URL bar is hidden. The faceplate is pinned to the
+        // bottom, so with the bar visible the panel's lower edge - the
+        // power switch, the knobs - sits underneath it.
+        css('html, body').styles(raw: {'height': '100dvh'}),
         // Keyframe: fine-grain layer translation (very rapid step jumps).
         css.keyframes('tv-grain-shift', {
           '0%': Styles(
