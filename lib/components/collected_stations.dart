@@ -145,7 +145,7 @@ class CollectedStationsState extends State<CollectedStations> {
       span(
         classes: 'collected-row-label',
         attributes: {'aria-hidden': 'true'},
-        [text(band.name.toUpperCase())],
+        [Component.text(band.name.toUpperCase())],
       ),
       div(
         classes: 'collected-row-pills',
@@ -202,8 +202,8 @@ class CollectedStationsState extends State<CollectedStations> {
                 'Press and hold to clear.',
       },
       [
-        span(classes: 'collected-call', [text(s.callSign)]),
-        span(classes: 'collected-freq', [text(freqLabel)]),
+        span(classes: 'collected-call', [Component.text(s.callSign)]),
+        span(classes: 'collected-freq', [Component.text(freqLabel)]),
       ],
     );
   }
