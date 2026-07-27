@@ -1390,7 +1390,6 @@ class AppState extends State<App> {
       display: Display.flex,
       alignItems: AlignItems.center,
       justifyContent: JustifyContent.center,
-      padding: Padding.all(20.px),
       raw: {
         // Sized to the viewport the browser is really showing, not to the
         // one `inset: 0` implies. On a phone those differ by the height
@@ -1398,6 +1397,19 @@ class AppState extends State<App> {
         // panel - which is where the end of a long transmission is, and
         // why it could not be scrolled into view.
         'height': 'var(--vh, 100dvh)',
+        // The faceplate is z-index 50 and this overlay is 45, on purpose:
+        // the receiver frames the printout rather than being covered by
+        // it. Which also means the bottom of this box sits *behind* the
+        // faceplate, and the taller the faceplate grows - the preset rack
+        // appearing is the big one - the more of the transmission it
+        // hides. The scroll did reach the end; the end was underneath the
+        // radio.
+        //
+        // So the panel is centred in the room above the faceplate rather
+        // than in the viewport. The scrim still covers the whole screen;
+        // only the area the panel may occupy is inset, by the faceplate's
+        // measured height.
+        'padding': '20px 20px calc(20px + var(--panel-h, 210px))',
         'background': 'rgba(2,2,6,0.82)',
         'backdrop-filter': 'blur(3px)',
         '-webkit-backdrop-filter': 'blur(3px)',
