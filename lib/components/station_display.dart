@@ -840,10 +840,10 @@ class StationDisplay extends StatelessComponent {
     // Container - sits in the same vertical band as the idle hero text.
     css('.station-display').styles(
       position: Position.absolute(
-        // Same anchor as the idle carrier monitor, derived from the
-        // faceplate height rather than hand-tuned per breakpoint. See
-        // `--panel-h` in `app.dart`.
-        top: Unit.expression('calc((100% - var(--panel-h, 210px)) / 2)'),
+        // Same anchor as the idle carrier monitor: the middle of whatever
+        // room the faceplate leaves, measured at runtime. See `--free-h`
+        // in `app.dart`.
+        top: Unit.expression('calc(var(--free-h) / 2)'),
         left: 50.percent,
       ),
       width: 100.percent,
@@ -881,9 +881,10 @@ class StationDisplay extends StatelessComponent {
         //
         // The panel now scrolls inside itself rather than the page
         // scrolling. The height available is the free space above the
-        // faceplate, which `--panel-h` already measures at runtime, minus
-        // a little air so the copy never touches either edge.
-        'max-height': 'calc(100vh - var(--panel-h, 210px) - 24px)',
+        // faceplate, measured at runtime, minus a little air so the copy
+        // never touches either edge. It is centred on the midpoint of
+        // that space, so the 24 px lands as 12 above and 12 below.
+        'max-height': 'calc(var(--free-h) - 24px)',
         'overflow-y': 'auto',
         // Pinned rather than left to compute. A box with one axis
         // `visible` and the other not turns the visible one into `auto`,
@@ -900,14 +901,6 @@ class StationDisplay extends StatelessComponent {
         // to find out before it starts scrolling.
         'touch-action': 'pan-y',
       },
-    ),
-    // Separate rule so `100vh` above survives as the fallback on browsers
-    // that don't know `dvh`. Same reasoning as `html, body` in
-    // `main.server.dart`: on mobile `vh` assumes the URL bar is hidden,
-    // which would let the panel grow taller than the visible viewport and
-    // put us back where we started.
-    css('.station-panel').styles(
-      raw: {'max-height': 'calc(100dvh - var(--panel-h, 210px) - 24px)'},
     ),
     // The scrollbar is instrumentation, not chrome: a hairline amber
     // track that reads as part of the panel. Left visible on purpose -

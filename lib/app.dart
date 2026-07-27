@@ -127,9 +127,33 @@ class AppState extends State<App> {
   JSFunction? _keyDownListener;
   JSFunction? _wheelListener;
 
-  // Watches the faceplate so `--panel-h` always reflects its real
-  // height. See [_observePanelHeight].
+  // Measured faceplate geometry, in CSS pixels. `_panelH` is how tall the
+  // faceplate actually is; `_freeH` is how much room is left above it.
+  //
+  // Both live in state rather than being written straight to the DOM, and
+  // that is load-bearing: they used to be set imperatively with
+  // `setAttribute('style', …)` on `.signal-app`, and Jaspr clears the
+  // `style` attribute of every element whose component declares no styles
+  // on **every** update (`dom_render_object.dart`, `clearOrSetAttribute
+  // ('style', null)`). So the measurement survived exactly until the next
+  // setState - powering on, tuning, anything - and then silently reverted
+  // to the stylesheet fallback. On a phone with saved presets that is a
+  // 70 px error, which is why the idle readout sat too low and the bottom
+  // of the longest station panel disappeared under the faceplate.
+  //
+  // Held as state, they are re-emitted on every render, so nothing can
+  // wipe them.
+  int? _panelH;
+  int? _freeH;
+
+  // Watches the faceplate so the measurements above stay true.
   web.ResizeObserver? _panelObserver;
+
+  /// Fires on viewport changes. A `ResizeObserver` on the faceplate is not
+  /// enough on its own: when a mobile browser shows or hides its URL bar
+  /// the panel keeps exactly the same height and simply moves, so the
+  /// observer never fires while the space above it changes underneath us.
+  JSFunction? _viewportListener;
 
   // Long-form panels the receiver can print, or null when none is open.
   //
@@ -171,7 +195,7 @@ class AppState extends State<App> {
 
       // Deferred a frame so the faceplate has been laid out and measures
       // its real height rather than zero.
-      Timer(Duration.zero, _observePanelHeight);
+      Timer(Duration.zero, _watchPanelGeometry);
     }
   }
 
@@ -197,50 +221,70 @@ class AppState extends State<App> {
     }
   }
 
-  /// Keeps `--panel-h` in step with the faceplate's real height.
+  /// Keeps the faceplate measurements in step with reality.
   ///
   /// The content layers centre themselves in the space above the panel,
-  /// so they need to know how tall it is. A per-breakpoint constant gets
-  /// this wrong the moment anything changes the panel's height for
-  /// reasons a media query can't see - the preset rack appearing when
-  /// the first station is saved is the obvious one, and it is enough to
-  /// push the idle readout underneath the faceplate.
+  /// so they need to know how much space that is. A per-breakpoint
+  /// constant gets it wrong the moment anything changes the panel's
+  /// height for reasons a media query can't see - the preset rack
+  /// appearing when the first station is saved is the obvious one, and
+  /// it is enough to push the idle readout underneath the faceplate.
   ///
   /// Measuring is also what makes landscape and rotation work without a
   /// dedicated breakpoint for every device.
   ///
-  /// The stylesheet value stays as the pre-hydration fallback; this only
-  /// ever refines it.
-  void _observePanelHeight() {
+  /// The stylesheet values stay as the pre-hydration fallback; this only
+  /// ever refines them.
+  void _watchPanelGeometry() {
     if (!kIsWeb) return;
     try {
-      final root = web.document.querySelector('.signal-app');
       final panel = web.document.querySelector('.radio-panel');
-      if (root == null || panel == null) return;
-
-      void publish() {
-        final h = panel.getBoundingClientRect().height;
-        if (h <= 0) return;
-        // Set inline on `.signal-app` rather than on `:root`: the
-        // stylesheet declares `--panel-h` on this very element, and only
-        // an inline style outranks that.
-        root.setAttribute(
-          'style',
-          '--panel-h: ${h.round()}px',
-        );
-      }
+      if (panel == null) return;
 
       _panelObserver = web.ResizeObserver(
         ((JSObject _, JSObject __) {
-          publish();
+          _measurePanel();
         }).toJS,
       );
       _panelObserver!.observe(panel);
-      publish();
+
+      _viewportListener = ((web.Event _) => _measurePanel()).toJS;
+      web.window.addEventListener('resize', _viewportListener);
+      try {
+        // The one that actually fires when a mobile URL bar slides away.
+        web.window.visualViewport?.addEventListener('resize', _viewportListener);
+      } catch (_) {
+        // Not everywhere has it; `resize` above is the floor.
+      }
+
+      _measurePanel();
     } catch (_) {
       // No ResizeObserver, or the query failed. The CSS fallback still
       // holds, so the layout is merely less precise, never broken.
     }
+  }
+
+  /// Reads the faceplate's real box and stores it.
+  ///
+  /// `rect.top` is the honest answer for the free space above it: the
+  /// panel is `position: fixed`, so that number is measured against the
+  /// viewport the browser is actually painting, rather than derived from
+  /// `100dvh` minus a height, which is the arithmetic that goes wrong the
+  /// moment a mobile browser's chrome disagrees with its own unit.
+  void _measurePanel() {
+    if (!mounted) return;
+    final panel = web.document.querySelector('.radio-panel');
+    if (panel == null) return;
+    final rect = panel.getBoundingClientRect();
+    final h = rect.height.round();
+    if (h <= 0) return;
+    final free = rect.top.round().clamp(0, 100000);
+    // Guarded so a resize that changes nothing can't spin the render loop.
+    if (h == _panelH && free == _freeH) return;
+    setState(() {
+      _panelH = h;
+      _freeH = free;
+    });
   }
 
   /// Reads which onboarding cues this visitor has already cleared.
@@ -292,6 +336,12 @@ class AppState extends State<App> {
     if (kIsWeb) {
       web.document.removeEventListener('keydown', _keyDownListener);
       web.document.removeEventListener('wheel', _wheelListener);
+      web.window.removeEventListener('resize', _viewportListener);
+      try {
+        web.window.visualViewport?.removeEventListener('resize', _viewportListener);
+      } catch (_) {
+        // Symmetry with the guarded add above.
+      }
       _panelObserver?.disconnect();
     }
     super.dispose();
@@ -801,234 +851,244 @@ class AppState extends State<App> {
       _ => 'crt-screen',
     };
 
-    return div(classes: rootClass, [
-      // Keeps <html lang> honest as the user flips ES/EN. Without it a
-      // screen reader keeps reading Spanish copy with an English voice,
-      // which ranges from comic to unintelligible.
-      Document.html(attributes: {'lang': _lang == Lang.es ? 'es' : 'en'}),
-
-      // The tab title follows the dial. Idle it stays the identity line
-      // that the server rendered; locked onto a station it reports what
-      // the receiver is actually carrying, the way a tuner's display
-      // would. Only the SSR title matters for crawlers, so this is pure
-      // flourish and can't hurt indexing.
-      Document.head(title: _documentTitle),
-
-      // The document needs exactly one h1, and this page has no visible
-      // prose to promote - the "hero" is a faceplate. So the heading is
-      // real, translated and screen-reader visible, but clipped out of
-      // the visual layout rather than styled to look like nothing.
-      h1(classes: 'visually-hidden', [Component.text(_pageHeading)]),
-
-      // Live readout of what the receiver is doing.
-      //
-      // Every signal this piece gives about the dial is visual or
-      // audible: the LCD digits, the needle, the signal bars, the static
-      // clearing. None of it reaches a screen reader, which left the
-      // radio impossible to operate without sight - you could move the
-      // dial and get no feedback that anything had changed.
-      //
-      // `polite` rather than `assertive`: tuning fires this constantly
-      // while sweeping, and an assertive region would interrupt itself
-      // into noise. `aria-atomic` so the whole sentence is re-read
-      // rather than just the digits that changed.
-      div(
-        classes: 'visually-hidden',
-        attributes: {
-          'role': 'status',
-          'aria-live': 'polite',
-          'aria-atomic': 'true',
+    return div(
+      classes: rootClass,
+      // Re-emitted every render on purpose. See the note on [_panelH].
+      styles: Styles(
+        raw: {
+          if (_panelH != null) '--panel-h': '${_panelH}px',
+          if (_freeH != null) '--free-h': '${_freeH}px',
         },
-        [Component.text(_liveStatus)],
       ),
+      [
+        // Keeps <html lang> honest as the user flips ES/EN. Without it a
+        // screen reader keeps reading Spanish copy with an English voice,
+        // which ranges from comic to unintelligible.
+        Document.html(attributes: {'lang': _lang == Lang.es ? 'es' : 'en'}),
 
-      // Keyboard shortcuts, announced when focus lands on the dial via
-      // `aria-describedby`. They exist as document-level handlers, so
-      // without this they would be undiscoverable to exactly the people
-      // who most need them.
-      div(classes: 'visually-hidden', id: 'dial-instructions', [
-        Component.text(
-          _lang == Lang.es
-              ? 'Usa las flechas izquierda y derecha para sintonizar. '
-                    'Mayúsculas con las flechas salta diez pasos. '
-                    'B cambia de banda. M guarda la estación sintonizada. '
-                    'Las teclas 1 a 9 recuperan una emisora guardada.'
-              : 'Use the left and right arrow keys to tune. '
-                    'Hold shift with the arrows to jump ten steps. '
-                    'Press B to switch band. Press M to save the locked '
-                    'station. Press 1 to 9 to recall a saved station.',
-        ),
-      ]),
+        // The tab title follows the dial. Idle it stays the identity line
+        // that the server rendered; locked onto a station it reports what
+        // the receiver is actually carrying, the way a tuner's display
+        // would. Only the SSR title matters for crawlers, so this is pure
+        // flourish and can't hurt indexing.
+        Document.head(title: _documentTitle),
 
-      // Audio engine (renders no visible DOM).
-      RadioAudio(
-        frequency: _frequency,
-        band: _band,
-        noiseLevel: _noiseLevel,
-        isTuning: _isTuning,
-        volume: _volume,
-        isPowered: _isPowered,
-      ),
+        // The document needs exactly one h1, and this page has no visible
+        // prose to promote - the "hero" is a faceplate. So the heading is
+        // real, translated and screen-reader visible, but clipped out of
+        // the visual layout rather than styled to look like nothing.
+        h1(classes: 'visually-hidden', [Component.text(_pageHeading)]),
 
-      // CRT power-on/off overlay - fills the viewport under all
-      // content layers but above the root background. Opaque black
-      // when off, transparent when on, plays clip-path flash on
-      // transitions.
-      div(classes: crtClass, []),
-
-      // Effect overlays (order = paint order; z-index is the real
-      // stacking order - noise → vignette → phosphor → scanlines).
-      StaticNoise(noiseLevel: _noiseLevel, isPowered: _isPowered),
-      const Vignette(),
-      PhosphorMask(
-        intensity: (1.0 - _signalStrength).clamp(0.0, 1.0),
-        isPowered: _isPowered,
-      ),
-      const Scanlines(),
-
-      // Signal-strength meter (top-left).
-      SignalBars(
-        signalStrength: _signalStrength,
-        activeStation: _activeStation,
-        nearestStation: _nearestStation,
-        isPowered: _isPowered,
-      ),
-
-      // Language toggle (top-right).
-      div(
-        classes: 'lang-toggle',
-        events: {
-          'click': (_) => _toggleLang(),
-          'keydown': onActivateKey((_) => _toggleLang()),
-        },
-        attributes: {
-          'role': 'button',
-          'tabindex': '0',
-          // Names the action *and opens with the visible glyph*. A bare
-          // "ES"/"EN" says nothing about what pressing it does, but a
-          // name that omits the visible text breaks WCAG 2.5.3: someone
-          // driving by voice says what they can see, so "EN" has to be
-          // in the name for "click EN" to reach this.
-          'aria-label': _lang == Lang.es ? 'ES - cambiar idioma a inglés' : 'EN - switch language to Spanish',
-        },
-        [Component.text(_lang == Lang.es ? 'ES' : 'EN')],
-      ),
-
-      // Idle readout - what a real receiver shows when the dial is
-      // parked on dead air. The old "rafahcf / tune in" hero is gone;
-      // the personal identity lives inside the WHO station panel
-      // instead. Keeping the idle state as a proper no-carrier
-      // display makes the whole piece feel like hardware.
-      div(
-        classes: 'carrier-monitor',
-        styles: Styles(
-          opacity: contentOpacity,
-          raw: {
-            'transition': 'opacity 0.4s ease',
-            // Only add the horizontal content-jitter when there's real
-            // noise present - a calm, locked-in dial keeps the frame
-            // perfectly still.
-            'animation': (_isPowered && _noiseLevel > 0.3) ? 'content-jitter 0.22s steps(2, end) infinite' : 'none',
+        // Live readout of what the receiver is doing.
+        //
+        // Every signal this piece gives about the dial is visual or
+        // audible: the LCD digits, the needle, the signal bars, the static
+        // clearing. None of it reaches a screen reader, which left the
+        // radio impossible to operate without sight - you could move the
+        // dial and get no feedback that anything had changed.
+        //
+        // `polite` rather than `assertive`: tuning fires this constantly
+        // while sweeping, and an assertive region would interrupt itself
+        // into noise. `aria-atomic` so the whole sentence is re-read
+        // rather than just the digits that changed.
+        div(
+          classes: 'visually-hidden',
+          attributes: {
+            'role': 'status',
+            'aria-live': 'polite',
+            'aria-atomic': 'true',
           },
+          [Component.text(_liveStatus)],
         ),
-        [
-          // Large dash array - the "missing call-sign" glyph. Five
-          // en-dashes with thin-space separators drift slightly so
-          // the readout feels alive rather than printed.
-          div(
-            classes: 'carrier-dashes',
-            attributes: {'aria-hidden': 'true'},
-            [
-              for (var i = 0; i < 5; i++)
-                span(
-                  classes: 'carrier-dash',
-                  styles: Styles(
-                    raw: {
-                      'animation-delay': '${(i * 0.18).toStringAsFixed(2)}s',
-                    },
-                  ),
-                  [Component.text('–')],
-                ),
-            ],
+
+        // Keyboard shortcuts, announced when focus lands on the dial via
+        // `aria-describedby`. They exist as document-level handlers, so
+        // without this they would be undiscoverable to exactly the people
+        // who most need them.
+        div(classes: 'visually-hidden', id: 'dial-instructions', [
+          Component.text(
+            _lang == Lang.es
+                ? 'Usa las flechas izquierda y derecha para sintonizar. '
+                      'Mayúsculas con las flechas salta diez pasos. '
+                      'B cambia de banda. M guarda la estación sintonizada. '
+                      'Las teclas 1 a 9 recuperan una emisora guardada.'
+                : 'Use the left and right arrow keys to tune. '
+                      'Hold shift with the arrows to jump ten steps. '
+                      'Press B to switch band. Press M to save the locked '
+                      'station. Press 1 to 9 to recall a saved station.',
           ),
-          // Primary state line - tracked uppercase, station-style
-          // teletype aesthetic.
-          div(classes: 'carrier-state', [
-            span(classes: 'carrier-dot', []),
-            span(classes: 'carrier-state-text', [Component.text(idleTop)]),
-            span(classes: 'carrier-dot', []),
-          ]),
-          // Band + range. The tick-bracket on either side is just
-          // text ("[") but the centered ribbon below carries the
-          // live search sweep.
-          div(classes: 'carrier-band', [
-            span(classes: 'carrier-band-band', [Component.text(bandLabel)]),
-            span(classes: 'carrier-band-sep', [Component.text('·')]),
-            span(classes: 'carrier-band-range', [Component.text('$minLabel – $maxLabel')]),
-            span(classes: 'carrier-band-sep', [Component.text('·')]),
-            span(classes: 'carrier-band-unit', [Component.text(unitLabel)]),
-          ]),
-          // Sweep ribbon - a thin horizontal bar under the range
-          // with a single brighter tracer that runs left→right.
-          div(classes: 'carrier-sweep', [
-            div(classes: 'carrier-sweep-track', []),
-            div(classes: 'carrier-sweep-head', []),
-          ]),
-          // Sub-caption - small, tracked, breathing opacity.
-          div(classes: 'carrier-sub', [Component.text(idleSub)]),
-        ],
-      ),
+        ]),
 
-      // Decoded station content - fades in with distortion across the
-      // band's tolerance window, then locks cleanly inside its lockRange.
-      StationDisplay(
-        frequency: _frequency,
-        band: _band,
-        lang: _lang,
-        isPowered: _isPowered,
-        onOpenTech: () => _openDialogFor('tech', _techTriggerId),
-        techTriggerId: _techTriggerId,
-        onOpenCase: () => _openDialogFor('case', _caseTriggerId),
-        caseTriggerId: _caseTriggerId,
-      ),
-
-      // Long-form printouts. They sit above every content layer but below
-      // the faceplate, so the receiver stays visible around them - each
-      // panel reads as something the radio decoded, not as a web modal
-      // that took over the page.
-      if (_openDialog == 'tech') _techDialog(),
-      if (_openDialog == 'case')
-        CaseStudyDialog(
-          lang: _lang,
-          dialogId: _dialogId,
-          onClose: _closeDialog,
+        // Audio engine (renders no visible DOM).
+        RadioAudio(
+          frequency: _frequency,
+          band: _band,
+          noiseLevel: _noiseLevel,
+          isTuning: _isTuning,
+          volume: _volume,
+          isPowered: _isPowered,
         ),
 
-      // Radio dial. The collected-stations row is rendered inside
-      // the faceplate (between header and main row), so its data is
-      // threaded through here rather than mounted as a sibling.
-      RadioDial(
-        frequency: _frequency,
-        band: _band,
-        onFrequencyChanged: _tune,
-        onBandSelect: _selectBand,
-        signalStrength: _signalStrength,
-        activeStation: _activeStation,
-        volume: _volume,
-        onVolumeChanged: _setVolume,
-        isPowered: _isPowered,
-        onPowerToggle: _togglePower,
-        collectedStations: _collectedStations,
-        onRecallStation: _recallStation,
-        onDeleteStation: _deleteStation,
-        canSaveCurrent: _canSaveCurrent,
-        onSaveStation: _saveCurrentStation,
-        lang: _lang,
-        showPowerHint: _showPowerHint,
-        showPowerAttract: _showPowerAttract,
-        showTuneHint: _showTuneHint,
-      ),
-    ]);
+        // CRT power-on/off overlay - fills the viewport under all
+        // content layers but above the root background. Opaque black
+        // when off, transparent when on, plays clip-path flash on
+        // transitions.
+        div(classes: crtClass, []),
+
+        // Effect overlays (order = paint order; z-index is the real
+        // stacking order - noise → vignette → phosphor → scanlines).
+        StaticNoise(noiseLevel: _noiseLevel, isPowered: _isPowered),
+        const Vignette(),
+        PhosphorMask(
+          intensity: (1.0 - _signalStrength).clamp(0.0, 1.0),
+          isPowered: _isPowered,
+        ),
+        const Scanlines(),
+
+        // Signal-strength meter (top-left).
+        SignalBars(
+          signalStrength: _signalStrength,
+          activeStation: _activeStation,
+          nearestStation: _nearestStation,
+          isPowered: _isPowered,
+        ),
+
+        // Language toggle (top-right).
+        div(
+          classes: 'lang-toggle',
+          events: {
+            'click': (_) => _toggleLang(),
+            'keydown': onActivateKey((_) => _toggleLang()),
+          },
+          attributes: {
+            'role': 'button',
+            'tabindex': '0',
+            // Names the action *and opens with the visible glyph*. A bare
+            // "ES"/"EN" says nothing about what pressing it does, but a
+            // name that omits the visible text breaks WCAG 2.5.3: someone
+            // driving by voice says what they can see, so "EN" has to be
+            // in the name for "click EN" to reach this.
+            'aria-label': _lang == Lang.es ? 'ES - cambiar idioma a inglés' : 'EN - switch language to Spanish',
+          },
+          [Component.text(_lang == Lang.es ? 'ES' : 'EN')],
+        ),
+
+        // Idle readout - what a real receiver shows when the dial is
+        // parked on dead air. The old "rafahcf / tune in" hero is gone;
+        // the personal identity lives inside the WHO station panel
+        // instead. Keeping the idle state as a proper no-carrier
+        // display makes the whole piece feel like hardware.
+        div(
+          classes: 'carrier-monitor',
+          styles: Styles(
+            opacity: contentOpacity,
+            raw: {
+              'transition': 'opacity 0.4s ease',
+              // Only add the horizontal content-jitter when there's real
+              // noise present - a calm, locked-in dial keeps the frame
+              // perfectly still.
+              'animation': (_isPowered && _noiseLevel > 0.3) ? 'content-jitter 0.22s steps(2, end) infinite' : 'none',
+            },
+          ),
+          [
+            // Large dash array - the "missing call-sign" glyph. Five
+            // en-dashes with thin-space separators drift slightly so
+            // the readout feels alive rather than printed.
+            div(
+              classes: 'carrier-dashes',
+              attributes: {'aria-hidden': 'true'},
+              [
+                for (var i = 0; i < 5; i++)
+                  span(
+                    classes: 'carrier-dash',
+                    styles: Styles(
+                      raw: {
+                        'animation-delay': '${(i * 0.18).toStringAsFixed(2)}s',
+                      },
+                    ),
+                    [Component.text('–')],
+                  ),
+              ],
+            ),
+            // Primary state line - tracked uppercase, station-style
+            // teletype aesthetic.
+            div(classes: 'carrier-state', [
+              span(classes: 'carrier-dot', []),
+              span(classes: 'carrier-state-text', [Component.text(idleTop)]),
+              span(classes: 'carrier-dot', []),
+            ]),
+            // Band + range. The tick-bracket on either side is just
+            // text ("[") but the centered ribbon below carries the
+            // live search sweep.
+            div(classes: 'carrier-band', [
+              span(classes: 'carrier-band-band', [Component.text(bandLabel)]),
+              span(classes: 'carrier-band-sep', [Component.text('·')]),
+              span(classes: 'carrier-band-range', [Component.text('$minLabel – $maxLabel')]),
+              span(classes: 'carrier-band-sep', [Component.text('·')]),
+              span(classes: 'carrier-band-unit', [Component.text(unitLabel)]),
+            ]),
+            // Sweep ribbon - a thin horizontal bar under the range
+            // with a single brighter tracer that runs left→right.
+            div(classes: 'carrier-sweep', [
+              div(classes: 'carrier-sweep-track', []),
+              div(classes: 'carrier-sweep-head', []),
+            ]),
+            // Sub-caption - small, tracked, breathing opacity.
+            div(classes: 'carrier-sub', [Component.text(idleSub)]),
+          ],
+        ),
+
+        // Decoded station content - fades in with distortion across the
+        // band's tolerance window, then locks cleanly inside its lockRange.
+        StationDisplay(
+          frequency: _frequency,
+          band: _band,
+          lang: _lang,
+          isPowered: _isPowered,
+          onOpenTech: () => _openDialogFor('tech', _techTriggerId),
+          techTriggerId: _techTriggerId,
+          onOpenCase: () => _openDialogFor('case', _caseTriggerId),
+          caseTriggerId: _caseTriggerId,
+        ),
+
+        // Long-form printouts. They sit above every content layer but below
+        // the faceplate, so the receiver stays visible around them - each
+        // panel reads as something the radio decoded, not as a web modal
+        // that took over the page.
+        if (_openDialog == 'tech') _techDialog(),
+        if (_openDialog == 'case')
+          CaseStudyDialog(
+            lang: _lang,
+            dialogId: _dialogId,
+            onClose: _closeDialog,
+          ),
+
+        // Radio dial. The collected-stations row is rendered inside
+        // the faceplate (between header and main row), so its data is
+        // threaded through here rather than mounted as a sibling.
+        RadioDial(
+          frequency: _frequency,
+          band: _band,
+          onFrequencyChanged: _tune,
+          onBandSelect: _selectBand,
+          signalStrength: _signalStrength,
+          activeStation: _activeStation,
+          volume: _volume,
+          onVolumeChanged: _setVolume,
+          isPowered: _isPowered,
+          onPowerToggle: _togglePower,
+          collectedStations: _collectedStations,
+          onRecallStation: _recallStation,
+          onDeleteStation: _deleteStation,
+          canSaveCurrent: _canSaveCurrent,
+          onSaveStation: _saveCurrentStation,
+          lang: _lang,
+          showPowerHint: _showPowerHint,
+          showPowerAttract: _showPowerAttract,
+          showTuneHint: _showTuneHint,
+        ),
+      ],
+    );
   }
 
   void _toggleLang() {
@@ -1182,9 +1242,21 @@ class AppState extends State<App> {
         // silently drifted the content off-centre or pushed it under the
         // panel. One value, one place, and the arithmetic follows.
         '--panel-h': '210px',
+        // Room left above the faceplate. This declaration and the `dvh`
+        // one below are only the pre-hydration fallback: once `AppState`
+        // has measured the panel it overrides both inline, with numbers
+        // taken from the box the browser is really painting rather than
+        // from a unit that disagrees with the browser's own chrome on
+        // mobile.
+        '--free-h': 'calc(100vh - var(--panel-h))',
       },
     ),
-    css('.signal-app').styles(raw: {'height': '100dvh'}),
+    css('.signal-app').styles(
+      raw: {
+        'height': '100dvh',
+        '--free-h': 'calc(100dvh - var(--panel-h))',
+      },
+    ),
     // ── CRT power overlay ──
     // Fills the viewport above the root background (#050507) but
     // below the noise layer (z:10). When the radio is off the
@@ -1442,8 +1514,10 @@ class AppState extends State<App> {
     // reads top-down like a real monitoring panel.
     css('.carrier-monitor').styles(
       position: Position.absolute(
-        // Centre of the free space above the faceplate.
-        top: Unit.expression('calc((100% - var(--panel-h)) / 2)'),
+        // Centre of the free space above the faceplate, measured rather
+        // than derived. `100% - var(--panel-h)` was the same idea done as
+        // arithmetic, and it inherited every error in `--panel-h`.
+        top: Unit.expression('calc(var(--free-h) / 2)'),
         left: 50.percent,
       ),
       transform: Transform.translate(x: (-50).percent, y: (-50).percent),

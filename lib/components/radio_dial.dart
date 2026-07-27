@@ -2536,7 +2536,11 @@ class RadioDialState extends State<RadioDial> {
         raw: {'transform-origin': '50% 12px'},
       ),
       css('.vol-knob').styles(width: 30.px, height: 30.px),
-      css('.collected-rack').styles(raw: {'max-height': '34px'}),
+      // No rack override here any more. It used to be pinned to 34px,
+      // which clipped the second band in landscape exactly as it did on
+      // phones; the cap is now derived from how many rows there are, and
+      // a landscape phone is wider than 600px so it uses the compact
+      // desktop row slot already.
     ]),
 
     // ── very wide viewports ──
