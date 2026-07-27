@@ -146,6 +146,14 @@ class AppState extends State<App> {
   int? _panelH;
   int? _freeH;
 
+  /// Height of the viewport the browser is actually showing, which on a
+  /// phone is not the same thing as `100dvh` at every moment. The
+  /// long-form printouts size themselves against this: measured against
+  /// the layout viewport instead, the bottom of the panel sits below the
+  /// browser's own chrome, and the last of the content cannot be scrolled
+  /// into view no matter how far you drag.
+  int? _viewH;
+
   // Watches the faceplate so the measurements above stay true.
   web.ResizeObserver? _panelObserver;
 
@@ -279,11 +287,22 @@ class AppState extends State<App> {
     final h = rect.height.round();
     if (h <= 0) return;
     final free = rect.top.round().clamp(0, 100000);
+    // `visualViewport` is the only honest answer here: it excludes
+    // browser chrome and shrinks for an on-screen keyboard, neither of
+    // which `innerHeight` accounts for. It is the fallback, not the
+    // preference.
+    var view = 0;
+    try {
+      view = (web.window.visualViewport?.height ?? web.window.innerHeight.toDouble()).round();
+    } catch (_) {
+      view = web.window.innerHeight;
+    }
     // Guarded so a resize that changes nothing can't spin the render loop.
-    if (h == _panelH && free == _freeH) return;
+    if (h == _panelH && free == _freeH && view == _viewH) return;
     setState(() {
       _panelH = h;
       _freeH = free;
+      if (view > 0) _viewH = view;
     });
   }
 
@@ -858,6 +877,7 @@ class AppState extends State<App> {
         raw: {
           if (_panelH != null) '--panel-h': '${_panelH}px',
           if (_freeH != null) '--free-h': '${_freeH}px',
+          if (_viewH != null) '--vh': '${_viewH}px',
         },
       ),
       [
@@ -1328,6 +1348,12 @@ class AppState extends State<App> {
       justifyContent: JustifyContent.center,
       padding: Padding.all(20.px),
       raw: {
+        // Sized to the viewport the browser is really showing, not to the
+        // one `inset: 0` implies. On a phone those differ by the height
+        // of the URL bar, and the difference lands at the bottom of the
+        // panel - which is where the end of a long transmission is, and
+        // why it could not be scrolled into view.
+        'height': 'var(--vh, 100dvh)',
         'background': 'rgba(2,2,6,0.82)',
         'backdrop-filter': 'blur(3px)',
         '-webkit-backdrop-filter': 'blur(3px)',
@@ -1338,7 +1364,11 @@ class AppState extends State<App> {
       position: Position.relative(),
       width: 100.percent,
       maxWidth: 560.px,
-      maxHeight: Unit.expression('calc(100% - 40px)'),
+      // 100% of the overlay's content box, which already excludes its own
+      // 20px of padding. The old `calc(100% - 40px)` subtracted that
+      // padding a second time and gave away 40px of reading height for
+      // nothing.
+      maxHeight: 100.percent,
       overflow: Overflow.auto,
       padding: Padding.symmetric(horizontal: 24.px, vertical: 24.px),
       raw: {
@@ -1353,6 +1383,10 @@ class AppState extends State<App> {
             'inset -1px -1px 0 rgba(0,0,0,0.5), '
             '4px 20px 60px rgba(0,0,0,0.7)',
         'outline': 'none',
+        // A swipe that runs past the end stays here rather than tugging
+        // at the document behind the dialog.
+        'overscroll-behavior': 'contain',
+        'touch-action': 'pan-y',
       },
     ),
     css('.rx-head').styles(
