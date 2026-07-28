@@ -183,8 +183,6 @@ class StationDisplay extends StatelessComponent {
         return _aboutPanel(s, lang);
       case 'DTU':
         return _detodouisPanel(s, lang);
-      case 'NET':
-        return _connectPanel(s, lang);
       case 'ITNW':
         return _itnwPanel(s, lang);
       case 'BBL':
@@ -343,11 +341,13 @@ class StationDisplay extends StatelessComponent {
         ),
       ]),
       p(classes: 'panel-body', [Component.text(note)]),
-      // Two, not three. LinkedIn lives on the Contact station, which is
-      // the frequency for reaching the operator; repeating it here made
-      // this panel end on a row of profile links, which is exactly the
-      // LinkedIn-summary reading the panel was rewritten to escape. What
-      // is left is how the thing was built and the code itself.
+      // Two pills, and they are the only two links left on FM: how the
+      // thing was built, and the code itself. There used to be a Contact
+      // station carrying LinkedIn a few MHz down the dial; it is gone,
+      // and with it the last profile link. A row of profile badges is
+      // the LinkedIn-summary reading this panel was rewritten to escape,
+      // so if a way to write to the operator comes back, it belongs here
+      // as one line - not as a second station saying "reach me".
       div(classes: 'pill-row', [
         _techPill(lang),
         _pill('GitHub', href: 'https://github.com/mrleisen'),
@@ -449,34 +449,6 @@ class StationDisplay extends StatelessComponent {
           _pill(
             'Google Play',
             href: 'https://play.google.com/store/apps/details?id=com.rafahcf.detodouisapp',
-          ),
-        ]),
-      ],
-    );
-  }
-
-  /// Not a project: the operator's own contact frequency, the station
-  /// you tune to in order to reach whoever is broadcasting the rest.
-  Component _connectPanel(Station s, Lang lang) {
-    final title = lang == Lang.es ? 'Contacto' : 'Contact';
-    final subtitle = lang == Lang.es ? 'Frecuencia del operador' : 'Operator frequency';
-    final body = lang == Lang.es
-        ? 'Para trabajo, preguntas sobre cualquiera de estas señales, o '
-              'simplemente para decir que pasaste por aquí.'
-        : 'For work, questions about any of these signals, or simply to '
-              'say you passed through.';
-    return _panelShell(
-      station: s,
-      label: _stationLabel(s, lang),
-      title: title,
-      children: [
-        div(classes: 'panel-subtitle', [Component.text(subtitle)]),
-        p(classes: 'panel-body', [Component.text(body)]),
-        div(classes: 'pill-row', [
-          _pill('GitHub', href: 'https://github.com/mrleisen'),
-          _pill(
-            'LinkedIn',
-            href: 'https://www.linkedin.com/in/rafael-c-a6132982/',
           ),
         ]),
       ],
