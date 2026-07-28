@@ -201,6 +201,8 @@ class StationDisplay extends StatelessComponent {
         return _numeloroPanel(s, lang);
       case 'AYU':
         return _ayuwokiPanel(s, lang);
+      case 'KIW':
+        return _kiwoPanel(s, lang);
       case 'CSP':
         return _conspiranoicoPanel(s, lang);
     }
@@ -341,12 +343,13 @@ class StationDisplay extends StatelessComponent {
         ),
       ]),
       p(classes: 'panel-body', [Component.text(note)]),
+      // Two, not three. LinkedIn lives on the Contact station, which is
+      // the frequency for reaching the operator; repeating it here made
+      // this panel end on a row of profile links, which is exactly the
+      // LinkedIn-summary reading the panel was rewritten to escape. What
+      // is left is how the thing was built and the code itself.
       div(classes: 'pill-row', [
         _techPill(lang),
-        _pill(
-          'LinkedIn',
-          href: 'https://www.linkedin.com/in/rafael-c-a6132982/',
-        ),
         _pill('GitHub', href: 'https://github.com/mrleisen'),
       ]),
     ]);
@@ -634,16 +637,16 @@ class StationDisplay extends StatelessComponent {
     );
   }
 
-  /// The one AM station with a finished body of work behind it. It sits
-  /// on AM anyway because AM is the side of the dial for things that are
-  /// not the current job - and a record you closed in 2012 belongs there
-  /// as squarely as an idea you never started.
-  Component _awsPanel(Station s, Lang lang) => _amPanel(
-    s: s,
-    lang: lang,
-    title: 'A Wired Spine',
-    subtitle: lang == Lang.es ? 'Proyecto musical' : 'Music project',
-    body: lang == Lang.es
+  /// Promoted from AM. It spent a while on the idea side of the dial on
+  /// the theory that AM was for things that are not the current job, and
+  /// that theory was wrong: AM is for things that are still a sentence.
+  /// This one is three finished records and eight years of work, closed
+  /// in 2012 and none the smaller for it, so it gets the FM shell - a
+  /// data card and its own links, like everything else you can actually
+  /// go and listen to.
+  Component _awsPanel(Station s, Lang lang) {
+    final subtitle = lang == Lang.es ? 'Proyecto musical' : 'Music project';
+    final body = lang == Lang.es
         ? 'Electrónica instrumental, sin voces: ambient, ruido, rock '
               'hipnótico. Algunas pistas usan grabaciones cortas de casete '
               '(lluvia, pasos, agua, carros de noche) como textura. Todo '
@@ -651,18 +654,33 @@ class StationDisplay extends StatelessComponent {
         : 'Instrumental electronic, no vocals: ambient, noise, hypnotic '
               'rock. A few tracks use short cassette recordings - rain, '
               'steps, water, cars at night - as texture. All made in FL '
-              'Studio and self-released.',
-    data: [
-      (
-        _key(lang, 'records'),
-        'INTERRUPTOR (2006) · PLEASE, PLEASE!!! (2010) · ROUTINE (2012)',
-      ),
-      (_key(lang, 'recorded'), '2004 – 2012'),
-    ],
-    status: _status(lang, 'archived'),
-    href: 'https://soundcloud.com/awiredspine',
-    websiteHref: 'https://awiredspine.com',
-  );
+              'Studio and self-released.';
+    return _panelShell(
+      station: s,
+      label: _stationLabel(s, lang),
+      title: 'A Wired Spine',
+      children: [
+        div(classes: 'panel-subtitle', [Component.text(subtitle)]),
+        p(classes: 'panel-body', [Component.text(body)]),
+        _transmissionData([
+          (
+            _key(lang, 'records'),
+            'INTERRUPTOR (2006) · PLEASE, PLEASE!!! (2010) · ROUTINE (2012)',
+          ),
+          (_key(lang, 'recorded'), '2004 – 2012'),
+          (
+            _key(lang, 'format'),
+            lang == Lang.es ? 'Instrumental · autoeditado' : 'Instrumental · self-released',
+          ),
+          (_key(lang, 'status'), _status(lang, 'archived')),
+        ]),
+        div(classes: 'pill-row', [
+          _pill('Web', href: 'https://awiredspine.com'),
+          _pill('SoundCloud', href: 'https://soundcloud.com/awiredspine'),
+        ]),
+      ],
+    );
+  }
 
   Component _nftPanel(Station s, Lang lang) => _amPanel(
     s: s,
@@ -715,6 +733,34 @@ class StationDisplay extends StatelessComponent {
               'without it feeling like homework: every number is a '
               'character with its own temperament, and operations are '
               'conversations between them.',
+    status: _status(lang, 'concept'),
+  );
+
+  /// The only station on the dial that somebody else is also making. The
+  /// panel says "with my nephew" rather than "inspired by" because that
+  /// is the whole shape of the thing: it exists because two people showed
+  /// up on Saturdays, and a credit line is the cheapest true detail here.
+  Component _kiwoPanel(Station s, Lang lang) => _amPanel(
+    s: s,
+    lang: lang,
+    title: 'Kiwo 10000',
+    subtitle: lang == Lang.es ? 'Universo de personajes' : 'Character universe',
+    body: lang == Lang.es
+        ? 'Un personaje de caricatura que salió de los sábados con mi '
+              'sobrino: nos juntábamos a jugar videojuegos y terminábamos '
+              'haciendo música y dibujando. De ahí salieron varios - Kiwo, '
+              'Al, el Señor Patacera - y la idea es construirle a Kiwo su '
+              'universo entero, que es el universo número 10000.'
+        : 'A cartoon character that came out of Saturdays with my nephew: '
+              'we got together to play videogames and ended up making music '
+              'and drawing instead. Several of them came out of it - Kiwo, '
+              'Al, Señor Patacera - and the idea is to build Kiwo his whole '
+              'universe, which is universe number 10000.',
+    data: [
+      (_key(lang, 'origin'), '2022'),
+      (_key(lang, 'characters'), 'Kiwo · Al · El Señor Patacera'),
+      (_key(lang, 'universe'), '#10000'),
+    ],
     status: _status(lang, 'concept'),
   );
 
@@ -808,6 +854,8 @@ class StationDisplay extends StatelessComponent {
       'records': ('DISCOS', 'RECORDS'),
       'recorded': ('GRABADO', 'RECORDED'),
       'origin': ('ORIGEN', 'ORIGIN'),
+      'characters': ('PERSONAJES', 'CHARACTERS'),
+      'universe': ('UNIVERSO', 'UNIVERSE'),
       'episodes': ('EPISODIOS', 'EPISODES'),
       'privacy': ('PRIVACIDAD', 'PRIVACY'),
       'downloads': ('DESCARGAS', 'DOWNLOADS'),

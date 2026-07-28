@@ -3,8 +3,14 @@ library;
 
 import 'dart:math' as math;
 
-/// Broadcast band. FM carries featured long-form content; AM carries
-/// lightweight idea-stage project cards.
+/// Broadcast band. FM carries the work worth stopping on - shipped, or
+/// finished, or still being made; AM carries lightweight idea-stage
+/// project cards.
+///
+/// The split is about whether there is something to show, not about
+/// whether it is current: A Wired Spine closed in 2012 and broadcasts on
+/// FM because three records exist, while a concept from last month sits
+/// on AM because it is still a sentence.
 enum Band { fm, am }
 
 /// Per-band constants used by the dial, audio engine, and content panels.
@@ -80,18 +86,33 @@ class Station {
   });
 }
 
+/// The band plan.
+///
+/// Spacing is load-bearing, not layout. Two stations closer than twice
+/// their band's [BandConfig.tolerance] have overlapping catchment, so the
+/// dead air between them never reaches true silence and the receiver
+/// always sounds like it is near *something*. That floor is 2.0 MHz on FM
+/// and 160 kHz on AM; check it before moving anything.
 const stations = <Station>[
   // ── FM: featured content. ──
   Station(band: Band.fm, frequency: 89.5, callSign: 'ITNW', color: '#4EBFB0'),
   Station(band: Band.fm, frequency: 91.6, callSign: 'BBL', color: '#D4A843'),
   Station(band: Band.fm, frequency: 93.6, callSign: 'NET', color: '#B085E0'),
   Station(band: Band.fm, frequency: 97.7, callSign: 'WHO', color: '#5BA4D9'),
+  // Exactly 2.0 from WHO and 2.1 from DTU - the tightest legal pair on
+  // the plan, and the reason this sits here rather than a step lower.
+  Station(band: Band.fm, frequency: 99.7, callSign: 'AWS', color: '#E05050'),
   Station(band: Band.fm, frequency: 101.8, callSign: 'DTU', color: '#E8944A'),
   Station(band: Band.fm, frequency: 105.9, callSign: 'TRP', color: '#E86A8A'),
   // ── AM: idea-stage projects, one per station. ──
   Station(band: Band.am, frequency: 660.0, callSign: 'NUM', color: '#5BC8A0'),
   Station(band: Band.am, frequency: 820.0, callSign: 'AYU', color: '#B07CD6'),
-  Station(band: Band.am, frequency: 960.0, callSign: 'AWS', color: '#E05050'),
+  // The one deliberate exception to the spacing floor: 1000 is the
+  // number the station is *about* - Kiwo's universe is #10000 - and the
+  // dial saying so is worth the 120 kHz to CSP instead of 160. The cost
+  // is roughly 11% residual signal at the deadest point between them
+  // rather than silence. 980 buys the silence back and loses the joke.
+  Station(band: Band.am, frequency: 1000.0, callSign: 'KIW', color: '#E8C04A'),
   Station(band: Band.am, frequency: 1120.0, callSign: 'CSP', color: '#C77B4E'),
   Station(band: Band.am, frequency: 1280.0, callSign: 'NFT', color: '#8BBF55'),
   Station(band: Band.am, frequency: 1600.0, callSign: 'PNK', color: '#D05A8C'),
