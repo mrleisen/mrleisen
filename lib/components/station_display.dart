@@ -341,16 +341,16 @@ class StationDisplay extends StatelessComponent {
         ),
       ]),
       p(classes: 'panel-body', [Component.text(note)]),
-      // Two pills, and they are the only two links left on FM: how the
-      // thing was built, and the code itself. There used to be a Contact
-      // station carrying LinkedIn a few MHz down the dial; it is gone,
-      // and with it the last profile link. A row of profile badges is
-      // the LinkedIn-summary reading this panel was rewritten to escape,
-      // so if a way to write to the operator comes back, it belongs here
-      // as one line - not as a second station saying "reach me".
+      // How this was built, and how to reach the person who built it.
+      // No GitHub, here or on any other station - the receiver is the
+      // portfolio, and a repo link invites the visitor to go read the
+      // source instead of tuning the thing the source produced.
       div(classes: 'pill-row', [
         _techPill(lang),
-        _pill('GitHub', href: 'https://github.com/mrleisen'),
+        _pill(
+          'LinkedIn',
+          href: 'https://www.linkedin.com/in/rafael-c-a6132982/',
+        ),
       ]),
     ]);
   }
