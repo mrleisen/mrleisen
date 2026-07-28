@@ -108,15 +108,7 @@ class AppState extends State<App> {
   Timer? _tuneHintTimer;
   static const Duration _tuneHintDelay = Duration(milliseconds: 1200);
 
-  /// Label the power switch whenever the radio is off.
-  ///
-  /// Not gated on onboarding: an off receiver is a black screen, so the
-  /// way back on has to be legible every single time, not only on a
-  /// first visit. Someone who switches off to see what happens should
-  /// not have to hunt for the way back.
-  bool get _showPowerHint => !_isPowered;
-
-  /// The animated pull, on the other hand, stays a first-visit cue. Once
+  /// The animated pull stays a first-visit cue. Once
   /// you know where the switch is, a permanently pulsing control is just
   /// something twitching in the corner of your eye.
   bool get _showPowerAttract => !_isPowered && !_onboarded.contains('power');
@@ -916,6 +908,15 @@ class AppState extends State<App> {
     final idleTop = _lang == Lang.es ? 'SIN PORTADORA' : 'NO CARRIER';
     final idleSub = _lang == Lang.es ? 'BARRIENDO BANDA' : 'SCANNING BAND';
 
+    // Standby poster. The lamp stands on the dial line at the frequency
+    // the readout underneath it claims, so its position is a fact about
+    // the receiver rather than a composition choice - park on 108.0 and
+    // it sits at the right-hand end of the line.
+    final sbPos = ((_frequency - cfg.minFreq) / (cfg.maxFreq - cfg.minFreq) * 100).clamp(0.0, 100.0);
+    final sbFreq = _band == Band.fm ? _frequency.toStringAsFixed(1) : _frequency.toInt().toString();
+    final sbState = _lang == Lang.es ? 'EN ESPERA' : 'STANDBY';
+    final sbPress = _lang == Lang.es ? 'ENCIENDE' : 'PRESS ON';
+
     final rootClass = 'signal-app ${_isPowered ? 'powered-on' : 'powered-off'}';
     final crtClass = switch (_crtPhase) {
       'turning-on' => 'crt-screen crt-animate-on',
@@ -1008,6 +1009,64 @@ class AppState extends State<App> {
         // when off, transparent when on, plays clip-path flash on
         // transitions.
         div(classes: crtClass, []),
+
+        // ── standby poster ──
+        // What the piece looks like before anyone has touched it, which
+        // for most visitors is the only frame they will ever judge it on.
+        // A dark screen with a faceplate parked at the bottom edge reads
+        // as a page that hasn't finished loading; the same screen with
+        // the receiver's housing rising out of that faceplate, one lamp
+        // lit and a dial line holding the empty half of the frame, reads
+        // as hardware in standby. Same amount of black, deliberate
+        // instead of accidental.
+        //
+        // Gated on `_crtPhase`, not on `_isPowered`: powering off runs a
+        // white flash across the whole screen at z-index 5, and this
+        // layer sits above it at 8. Waiting for the tube to finish
+        // collapsing is also simply the truth - the poster is what is
+        // there once the screen is dark and settled, so it fades in as
+        // the last beat of switching off rather than glowing through the
+        // flash.
+        //
+        // Decorative throughout: the live region already announces "radio
+        // off", and the power switch carries its own name and state, so
+        // every string here is a second telling of something assistive
+        // tech has been given properly.
+        div(
+          classes: 'standby${_crtPhase == 'off' ? '' : ' standby-out'}',
+          attributes: {'aria-hidden': 'true'},
+          [
+            // The housing. Bottomless and anchored to the top of the
+            // faceplate, so the panel reads as the front of an object
+            // that continues upward rather than as a bar stuck to the
+            // bottom of the window.
+            div(classes: 'sb-body', []),
+            // The dial, reduced to the one horizontal that organises the
+            // empty space - the same line the real dial window draws,
+            // seen unlit.
+            div(classes: 'sb-rule', [
+              span(classes: 'sb-ticks', []),
+              span(
+                classes: 'sb-led',
+                styles: Styles(raw: {'left': '${sbPos.toStringAsFixed(1)}%'}),
+                [],
+              ),
+            ]),
+            // Model, state, frequency. Instrument microtype, set in the
+            // face the hardware already prints its lettering in.
+            div(classes: 'sb-data', [
+              span(classes: 'sb-mark', [Component.text('RCHF')]),
+              span(classes: 'sb-sep', []),
+              span(classes: 'sb-state', [Component.text(sbState)]),
+              span(classes: 'sb-sep', []),
+              span(classes: 'sb-freq', [Component.text(sbFreq)]),
+            ]),
+            // The only instruction on the page. It used to be silkscreen
+            // beside the rocker; it is now the closing line of the
+            // composition, which is where the eye already is.
+            div(classes: 'sb-press', [Component.text(sbPress)]),
+          ],
+        ),
 
         // Effect overlays (order = paint order; z-index is the real
         // stacking order - noise → vignette → phosphor → scanlines).
@@ -1158,7 +1217,6 @@ class AppState extends State<App> {
           canSaveCurrent: _canSaveCurrent,
           onSaveStation: _saveCurrentStation,
           lang: _lang,
-          showPowerHint: _showPowerHint,
           showPowerAttract: _showPowerAttract,
           showTuneHint: _showTuneHint,
         ),
@@ -1386,6 +1444,173 @@ class AppState extends State<App> {
         'opacity': '0',
       },
     ),
+    // ── standby poster ──
+    // Above the black CRT plate (z 5) and below the faceplate (z 50), so
+    // the housing this draws meets the real panel's top edge instead of
+    // covering it. Everything is measured off `--panel-h` and `--free-h`,
+    // the same two numbers `AppState` measures for the content layers -
+    // the composition follows the faceplate wherever it ends up rather
+    // than being pinned to a viewport fraction.
+    css('.standby').styles(
+      position: Position.absolute(
+        top: Unit.zero,
+        left: Unit.zero,
+        right: Unit.zero,
+        bottom: Unit.zero,
+      ),
+      zIndex: ZIndex(8),
+      pointerEvents: PointerEvents.none,
+      raw: {'transition': 'opacity 0.45s ease'},
+    ),
+    css('.standby-out').styles(opacity: 0),
+
+    // The housing. Deliberately bottomless and tucked 1px under the
+    // panel's own top border, so there is no seam between the drawn
+    // silhouette and the real hardware below it - they are one object.
+    css('.sb-body').styles(
+      position: Position.absolute(
+        bottom: Unit.expression('calc(var(--panel-h) - 1px)'),
+        left: 50.percent,
+      ),
+      width: Unit.expression('min(720px, 60%)'),
+      height: Unit.expression('calc(var(--free-h) * 0.7)'),
+      raw: {
+        // Same lamp as the faceplate: up and to the left, falling off
+        // fast. The hairline edge is what actually draws the silhouette;
+        // the gradients only stop the inside from reading as a hole.
+        'border': '1px solid rgba(255,255,255,0.05)',
+        'border-bottom': '0',
+        'border-radius': '5px 5px 0 0',
+        'background':
+            'radial-gradient(100% 120% at 16% -12%, rgba(255,255,255,0.032), transparent 62%),'
+            'linear-gradient(180deg, rgba(255,255,255,0.012), rgba(255,255,255,0) 58%)',
+        'translate': '-50% 0',
+      },
+    ),
+
+    // ── the dial, unlit ──
+    // One horizontal line through the empty half of the frame. It is the
+    // same object as the dial window on the faceplate, drawn as the
+    // receiver would show it with no power on the scale lamp.
+    css('.sb-rule').styles(
+      position: Position.absolute(
+        bottom: Unit.expression('calc(var(--panel-h) + var(--free-h) * 0.26)'),
+        left: 50.percent,
+      ),
+      width: Unit.expression('min(600px, 50%)'),
+      height: 1.px,
+      raw: {
+        'background':
+            'linear-gradient(90deg, transparent, rgba(178,178,195,0.16) 10%, '
+            'rgba(178,178,195,0.30) 50%, rgba(178,178,195,0.16) 90%, transparent)',
+        'translate': '-50% 0',
+      },
+    ),
+    // Ticks are drawn, not placed: a repeating gradient masked to fade at
+    // both ends. Twenty-odd absolutely-positioned divs would be the same
+    // picture at the cost of twenty-odd elements that never move.
+    css('.sb-ticks').styles(
+      position: Position.absolute(
+        top: (-5).px,
+        left: Unit.zero,
+        right: Unit.zero,
+      ),
+      height: 5.px,
+      raw: {
+        'background': 'repeating-linear-gradient(90deg, rgba(178,178,195,0.26) 0 1px, transparent 1px 26px)',
+        '-webkit-mask-image': 'linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent)',
+        'mask-image': 'linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent)',
+      },
+    ),
+    // The one lit thing on a dark screen. `left` is set inline from the
+    // tuned frequency - see the note at the markup.
+    css('.sb-led').styles(
+      position: Position.absolute(top: 50.percent),
+      width: 5.px,
+      height: 5.px,
+      radius: BorderRadius.all(Radius.circular(2.5.px)),
+      backgroundColor: const Color('#E8A035'),
+      raw: {
+        // The lit end of `sb-breathe`, so the blanket `animation: none`
+        // under reduced motion leaves a steady lamp rather than a dot
+        // frozen at the bottom of its cycle.
+        'box-shadow': '0 0 5px rgba(232,160,53,0.9), 0 0 16px rgba(232,160,53,0.34)',
+        'translate': '-50% -50%',
+        'animation': 'sb-breathe 4.6s ease-in-out infinite',
+      },
+    ),
+
+    // ── model / state / frequency ──
+    // Set in Chakra Petch because this is the hardware talking about
+    // itself, which is exactly the role that face holds everywhere else
+    // on the panel.
+    css('.sb-data').styles(
+      display: Display.flex,
+      position: Position.absolute(
+        bottom: Unit.expression('calc(var(--panel-h) + var(--free-h) * 0.26 + 30px)'),
+        left: 50.percent,
+      ),
+      flexDirection: FlexDirection.row,
+      alignItems: AlignItems.center,
+      gap: Gap(column: 14.px),
+      fontFamily: const FontFamily.list([
+        FontFamily('Chakra Petch'),
+        FontFamilies.monospace,
+      ]),
+      fontSize: Unit.pixels(10),
+      fontWeight: FontWeight.w700,
+      textTransform: TextTransform.upperCase,
+      letterSpacing: 0.34.em,
+      raw: {'white-space': 'nowrap', 'translate': '-50% 0'},
+    ),
+    // The model number is the dimmest of the three - it is the only one
+    // that never changes, so it is the only one that can afford to be
+    // read last. Still 5.12:1: dim is not the same as illegible.
+    css('.sb-mark').styles(color: const Color('#7d7d88')),
+    // Brightest, because it is the answer to the question the black
+    // screen raises.
+    css('.sb-state').styles(color: const Color('#b4b4be')),
+    // Amber, because it is a value the receiver is holding rather than a
+    // word printed on it. Tracking is pulled in: digits at 0.34em read
+    // as separate numbers.
+    css('.sb-freq').styles(
+      color: const Color('#a8823f'),
+      raw: {'letter-spacing': '0.2em'},
+    ),
+    css('.sb-sep').styles(
+      width: 3.px,
+      height: 3.px,
+      backgroundColor: const Color('#4a4a52'),
+    ),
+
+    // ── the instruction ──
+    // Sits below the dial line, closing the composition. It is the only
+    // thing on the page telling a first-time visitor what to do, so the
+    // breathe cycle bottoms out at 0.75 (4.87:1) rather than at
+    // something that looks better and is readable half the time.
+    css('.sb-press').styles(
+      position: Position.absolute(
+        bottom: Unit.expression('calc(var(--panel-h) + var(--free-h) * 0.26 - 42px)'),
+        left: 50.percent,
+      ),
+      color: const Color('#c99a4e'),
+      fontFamily: const FontFamily.list([
+        FontFamily('IBM Plex Mono'),
+        FontFamilies.monospace,
+      ]),
+      fontSize: Unit.pixels(11),
+      fontWeight: FontWeight.w600,
+      textTransform: TextTransform.upperCase,
+      letterSpacing: 0.42.em,
+      raw: {
+        'text-indent': '0.42em', // compensate trailing letter-spacing
+        'text-shadow': '0 0 6px rgba(232,160,53,0.30)',
+        'white-space': 'nowrap',
+        'translate': '-50% 0',
+        'animation': 'sb-press-breathe 4.6s ease-in-out infinite',
+      },
+    ),
+
     // ── technical transmission dialog ──
     // Deliberately not styled like a web modal. No rounded card floating
     // on a grey scrim: it is a printout the receiver produced, so it
@@ -1860,6 +2085,24 @@ class AppState extends State<App> {
       // Matches the shorter mobile faceplate. The vertical position
       // follows automatically from here.
       css('.signal-app').styles(raw: {'--panel-h': '180px'}),
+      // The standby poster keeps its proportions by widening rather than
+      // by scaling: 60% of a phone is a 230 px housing, which reads as a
+      // slab in the middle of the screen instead of as the front of the
+      // radio underneath it. The vertical maths needs no adjustment - it
+      // is all derived from the measured `--panel-h` / `--free-h`.
+      css('.sb-body').styles(width: Unit.expression('min(720px, 86%)')),
+      css('.sb-rule').styles(width: Unit.expression('min(600px, 74%)')),
+      // Three tracked words plus two separators do not fit across a
+      // phone at 0.34em. Tracking gives way before the type size does -
+      // same rule the carrier readout follows.
+      css('.sb-data').styles(
+        gap: Gap(column: 8.px),
+        letterSpacing: 0.16.em,
+      ),
+      css('.sb-press').styles(
+        letterSpacing: 0.3.em,
+        raw: {'text-indent': '0.3em'},
+      ),
       css('.carrier-monitor').styles(gap: Gap(row: 12.px)),
       css('.carrier-dashes').styles(gap: Gap(column: 12.px)),
       css('.carrier-dash').styles(fontSize: 1.9.rem),

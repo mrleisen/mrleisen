@@ -432,6 +432,51 @@ void main() {
             },
           ),
         }),
+        // Keyframe: sb-breathe
+        // The single lamp on the standby poster. It sits on the dial line
+        // at the tuned frequency, so it is the only lit thing on the
+        // screen while the receiver is off - which is the entire reason
+        // the off state reads as hardware in standby rather than as a
+        // page that failed to load.
+        //
+        // 4.6 s and warm, deliberately slower than `power-attract`: that
+        // one is asking to be pressed, this one is only saying the mains
+        // are connected. Two amber pulses at the same tempo would read as
+        // one blinking interface.
+        //
+        // The base rule holds the *lit* end of this cycle, so the
+        // blanket `animation: none` under reduced motion leaves a steady
+        // lamp rather than an unlit dot.
+        css.keyframes('sb-breathe', {
+          '0%, 100%': Styles(
+            opacity: 0.42,
+            raw: {
+              'box-shadow':
+                  '0 0 3px rgba(232,160,53,0.5), '
+                  '0 0 8px rgba(232,160,53,0.16)',
+            },
+          ),
+          '50%': Styles(
+            opacity: 1,
+            raw: {
+              'box-shadow':
+                  '0 0 5px rgba(232,160,53,0.9), '
+                  '0 0 16px rgba(232,160,53,0.34)',
+            },
+          ),
+        }),
+        // Keyframe: sb-press-breathe
+        // The instruction breathes on the same 4.6 s cycle as the lamp,
+        // so the two read as one heartbeat instead of as two independent
+        // animations. Opacity only - the trough is 0.5, which is where
+        // its contrast budget bottoms out.
+        css.keyframes('sb-press-breathe', {
+          // The trough decides the contrast, not the average: 0.75 keeps
+          // #c99a4e at 4.87:1 on the black screen for the whole cycle.
+          // Anything deeper is a word that is only readable half the time.
+          '0%, 100%': Styles(opacity: 0.75),
+          '50%': Styles(opacity: 1),
+        }),
         // Keyframe: band-sweep
         // Crossing between FM and AM. Previously this was the LCD digits
         // scrambling and nothing else - the biggest structural move in
@@ -726,8 +771,11 @@ void main() {
               'border-color': 'rgba(232,160,53,0.55)',
             },
           ),
-          // Hints appear at full strength rather than fading up.
-          css('.power-hint, .tune-hint').styles(raw: {'opacity': '1'}),
+          // Hints appear at full strength rather than fading up. The
+          // standby instruction is in the same position: with its breathe
+          // cycle gone it holds the lit end of it, so the only copy that
+          // tells a first-time visitor what to do never sits at a trough.
+          css('.tune-hint, .sb-press').styles(raw: {'opacity': '1'}),
           // Grain, scanlines and the phosphor mask stay as static texture:
           // they carry the CRT look but none of them need to move to do it.
           // The noise layer is the one exception - held still it reads as a
