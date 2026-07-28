@@ -49,3 +49,4 @@ app.*.map.json
 # needs it to be, and a running commentary on the work is not part of
 # what is being published.
 docs/
+CLAUDE.md
