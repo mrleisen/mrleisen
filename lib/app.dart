@@ -1561,12 +1561,17 @@ class AppState extends State<App> {
     // inline from the tuned frequency, so the pointer stands on the value
     // the readout above it claims.
     //
-    // It drifts, and the way it drifts is the whole point: it hunts
-    // sideways within +/-3px, never pulses. The scale beside it changes
-    // brightness because it is being lit; this changes position because
-    // it is a pointer on a spindle. Two kinds of motion for two kinds of
-    // part, which is what keeps the pair reading as hardware instead of
-    // as two animated divs.
+    // It moves in two ways, and neither is a pulse. It drifts - hunting
+    // sideways within +/-3px - and it tears off its position entirely
+    // whenever the readout above it drops a frame. The scale beside it
+    // changes brightness because it is being lit; this changes position
+    // because it is a pointer on a spindle. Two kinds of motion for two
+    // kinds of part, which is what keeps the pair reading as hardware
+    // instead of as two animated divs.
+    //
+    // The drift is on `translate` and the jump on `transform` so both can
+    // run at once - see `sb-needle-drift` for why that split is load-
+    // bearing rather than stylistic.
     //
     // +/-3px is not arbitrary. The scale is 600px at full width, so on FM
     // (20.5 MHz across it) 3px is 0.1 MHz - exactly one tuning step, the
@@ -1580,7 +1585,10 @@ class AppState extends State<App> {
       position: Position.absolute(top: 50.percent),
       zIndex: ZIndex(1),
       width: 2.px,
-      height: 14.px,
+      // Short enough to cross the line without reaching the tops of the
+      // ticks. At twice this it was a pointer spanning a dial window;
+      // the window is what the off state has taken away.
+      height: 7.px,
       backgroundColor: const Color('#ff2828'),
       raw: {
         // The live needle's shadow with the outer halo pulled in: on the
@@ -1589,11 +1597,12 @@ class AppState extends State<App> {
         'box-shadow':
             '0 0 5px rgba(255,40,40,0.7), 0 0 13px rgba(255,40,40,0.28), '
             'inset 0 0 1px rgba(255,255,255,0.6)',
-        // Centring stays on `translate` so the drift can own `transform`
-        // outright - the two are separate properties and both apply, so
-        // the keyframe never has to restate the -50% and get it wrong.
+        // The resting position, for reduced motion. While the drift runs
+        // it restates this offset on every frame.
         'translate': '-50% -50%',
-        'animation': 'sb-needle-drift 11s ease-in-out infinite',
+        'animation':
+            'sb-needle-drift 11s ease-in-out infinite, '
+            'sb-needle-jump 19s step-end infinite',
       },
     ),
 
