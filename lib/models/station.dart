@@ -95,14 +95,21 @@ class Station {
 /// and 160 kHz on AM; check it before moving anything.
 const stations = <Station>[
   // ── FM: featured content. ──
+  // Spread deliberately rather than inherited: gaps of 2.9, 2.9, 3.4,
+  // 3.6 and 3.6 MHz, all comfortably clear of the 2.0 floor, with 2.0 to
+  // the bottom of the band and 2.1 to the top. Perfectly even spacing is
+  // available and is not used - see the note on the startup pocket.
   Station(band: Band.fm, frequency: 89.5, callSign: 'ITNW', color: '#4EBFB0'),
-  Station(band: Band.fm, frequency: 91.6, callSign: 'BBL', color: '#D4A843'),
-  Station(band: Band.fm, frequency: 93.6, callSign: 'NET', color: '#B085E0'),
-  Station(band: Band.fm, frequency: 97.7, callSign: 'WHO', color: '#5BA4D9'),
-  // Exactly 2.0 from WHO and 2.1 from DTU - the tightest legal pair on
-  // the plan, and the reason this sits here rather than a step lower.
-  Station(band: Band.fm, frequency: 99.7, callSign: 'AWS', color: '#E05050'),
-  Station(band: Band.fm, frequency: 101.8, callSign: 'DTU', color: '#E8944A'),
+  Station(band: Band.fm, frequency: 92.4, callSign: 'BBL', color: '#D4A843'),
+  // The gap above this one is where the receiver wakes up. `_fmFreq`
+  // starts at 96.5, which has to sit at least a full tolerance from
+  // everything or the site opens on a half-tuned panel instead of on the
+  // empty carrier monitor it was designed to open on. 96.5 is 1.2 from
+  // here and 2.2 from AWS, so the first frame is genuinely dead air -
+  // and that constraint is exactly why the five gaps are not identical.
+  Station(band: Band.fm, frequency: 95.3, callSign: 'WHO', color: '#5BA4D9'),
+  Station(band: Band.fm, frequency: 98.7, callSign: 'AWS', color: '#E05050'),
+  Station(band: Band.fm, frequency: 102.3, callSign: 'DTU', color: '#E8944A'),
   Station(band: Band.fm, frequency: 105.9, callSign: 'TRP', color: '#E86A8A'),
   // ── AM: idea-stage projects, one per station. ──
   Station(band: Band.am, frequency: 660.0, callSign: 'NUM', color: '#5BC8A0'),
