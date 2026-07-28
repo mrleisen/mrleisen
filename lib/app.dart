@@ -828,6 +828,34 @@ class AppState extends State<App> {
               'Jaspr. The server prerenders, the client hydrates, and no '
               'framework ships to the browser.';
 
+    // The question the spec sheet above raises and never answers. A list
+    // of choices with no reasoning behind it reads as a stack someone
+    // inherited; this is the one place the panel gets to say a person
+    // picked it. The second line is the real answer and it is allowed to
+    // stay - a technical page that admits taste is more honest than one
+    // that reverse-engineers a business case for a personal site.
+    final whyTitle = es ? '¿Por qué Jaspr?' : 'Why Jaspr?';
+    final why = es
+        ? 'Esto se podía hacer en cualquier cosa. Lo que pasa es que mis '
+              'últimos años son Flutter y Dart, y Flutter no produce HTML: '
+              'pinta sobre un lienzo, y lo que sale no es una página sino '
+              'una aplicación dibujada encima de una. Quería quedarme en '
+              'Dart y que el resultado fuera web de verdad - etiquetas, '
+              'texto que se puede seleccionar, algo que un buscador pueda '
+              'leer. Jaspr es exactamente eso: Dart que produce HTML.'
+        : 'This could have been built in anything. The thing is that my '
+              'last few years are Flutter and Dart, and Flutter does not '
+              'produce HTML: it paints on a canvas, and what comes out is '
+              'not a page but an application drawn on top of one. I wanted '
+              'to stay in Dart and still end up with actual web - tags, '
+              'text you can select, something a crawler can read. Jaspr is '
+              'exactly that: Dart that produces HTML.';
+    final whyShort = es
+        ? 'La respuesta honesta, de todos modos, es más corta: porque '
+              'puedo y porque quiero.'
+        : 'The honest answer is shorter anyway: because I can, and because '
+              'I want to.';
+
     final sig = _dialogSignalState;
     return div(
       classes: 'rx-overlay',
@@ -871,6 +899,9 @@ class AppState extends State<App> {
               ],
             ]),
             p(classes: 'rx-body', [Component.text(outro)]),
+            h3(classes: 'rx-sub', [Component.text(whyTitle)]),
+            p(classes: 'rx-body', [Component.text(why)]),
+            p(classes: 'rx-body', [Component.text(whyShort)]),
             rxHint(_lang),
           ],
         ),
@@ -1822,6 +1853,24 @@ class AppState extends State<App> {
         'margin': '0 0 14px',
         'line-height': '1.15',
         'text-shadow': '0 0 8px rgba(232,160,53,0.28)',
+      },
+    ),
+    // Section heading inside a printout that already has a title. Same
+    // face and same amber as `.rx-title`, two thirds the size and without
+    // its glow: the hierarchy is carried by scale, so the panel never
+    // ends up with two headings competing at the same brightness.
+    css('.rx-sub').styles(
+      color: const Color('#E8A035'),
+      fontFamily: const FontFamily.list([
+        FontFamily('Space Grotesk'),
+        FontFamilies.sansSerif,
+      ]),
+      fontWeight: FontWeight.w700,
+      letterSpacing: 0.02.em,
+      raw: {
+        'font-size': 'clamp(1rem, 1.9vw, 1.15rem)',
+        'margin': '6px 0 12px',
+        'line-height': '1.2',
       },
     ),
     css('.rx-body').styles(
