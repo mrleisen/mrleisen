@@ -109,8 +109,8 @@ const stations = <Station>[
   // dead air - and that constraint is exactly why the gaps are not
   // identical.
   Station(band: Band.fm, frequency: 95.3, callSign: 'WHO', color: '#5BA4D9'),
-  Station(band: Band.fm, frequency: 98.7, callSign: 'TRP', color: '#E86A8A'),
-  Station(band: Band.fm, frequency: 102.3, callSign: 'DTU', color: '#E8944A'),
+  Station(band: Band.fm, frequency: 98.7, callSign: 'DTU', color: '#E8944A'),
+  Station(band: Band.fm, frequency: 102.3, callSign: 'TRP', color: '#E86A8A'),
   Station(band: Band.fm, frequency: 105.9, callSign: 'AWS', color: '#E05050'),
   // ── AM: idea-stage projects, one per station. ──
   Station(band: Band.am, frequency: 660.0, callSign: 'NUM', color: '#5BC8A0'),
