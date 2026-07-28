@@ -1040,8 +1040,12 @@ void main() {
               '"name":"Rafael Camargo",'
               '"jobTitle":"Software Engineer",'
               '"url":"https://rafahcf.com/",'
+              // No GitHub. It comes off the stations and off the metadata
+              // together - `sameAs` is a claim about where else this
+              // person is, and leaving one here after removing it from
+              // the interface would just be a link that only crawlers
+              // ever see.
               '"sameAs":['
-              '"https://github.com/mrleisen",'
               '"https://www.linkedin.com/in/rafael-c-a6132982/",'
               '"https://www.youtube.com/@InThisNewWorld",'
               '"https://www.instagram.com/tropelorio"'
