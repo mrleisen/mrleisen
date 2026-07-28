@@ -1586,8 +1586,11 @@ class AppState extends State<App> {
     // ── the instruction ──
     // Sits below the dial line, closing the composition. It is the only
     // thing on the page telling a first-time visitor what to do, so the
-    // breathe cycle bottoms out at 0.75 (4.87:1) rather than at
-    // something that looks better and is readable half the time.
+    // pulse bottoms out at 0.78 (5.09:1) rather than at something that
+    // looks better and is readable half the time.
+    //
+    // It runs `power-attract`'s cycle rather than one of its own, so it
+    // swells in step with the rocker it is naming - see the keyframe.
     css('.sb-press').styles(
       position: Position.absolute(
         bottom: Unit.expression('calc(var(--panel-h) + var(--free-h) * 0.26 - 42px)'),
@@ -1604,10 +1607,13 @@ class AppState extends State<App> {
       letterSpacing: 0.42.em,
       raw: {
         'text-indent': '0.42em', // compensate trailing letter-spacing
-        'text-shadow': '0 0 6px rgba(232,160,53,0.30)',
+        // The lit end of `sb-press-attract`, same as `.sb-led` holds the
+        // lit end of its own cycle: with the animation stripped the word
+        // stays at the top of its swell instead of at the bottom.
+        'text-shadow': '0 0 9px rgba(232,160,53,0.55), 0 0 20px rgba(232,160,53,0.28)',
         'white-space': 'nowrap',
         'translate': '-50% 0',
-        'animation': 'sb-press-breathe 4.6s ease-in-out infinite',
+        'animation': 'sb-press-attract 2.4s ease-in-out infinite',
       },
     ),
 
