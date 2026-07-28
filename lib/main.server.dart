@@ -7,6 +7,15 @@ import 'package:jaspr/server.dart';
 import 'app.dart';
 import 'main.server.options.dart';
 
+/// The standby needle while it is displaced by `sb-needle-jump`.
+///
+/// Brightness and saturation together, not one or the other: dropping only
+/// the brightness gives a dark but still vivid red that reads as a second
+/// needle, and dropping only the saturation gives a bright pink one. Both
+/// at once give a dead bar, which is what a pointer in the wrong place for
+/// 100 ms should look like.
+const String _sbNeedleDead = 'brightness(0.5) saturate(0.72)';
+
 void main() {
   Jaspr.initializeApp(
     options: defaultServerOptions,
@@ -518,19 +527,26 @@ void main() {
         // and has to keep agreeing with the frequency printed above it;
         // this is visibly a fault, gone in a tenth of a second, and a
         // fault that only moves things by a hair does not read as one.
+        // Displaced frames are also dulled, and that is what sells the
+        // jump as a fault rather than as the needle having genuinely
+        // moved: a pointer that is really there is lit like one, and this
+        // thing is a bar in the wrong place for a tenth of a second.
+        // `filter` rather than a second colour, because it takes the
+        // #ff2828 and its red halo down together - swapping only
+        // `background-color` would leave a bright glow around a dead bar.
         css.keyframes('sb-needle-jump', {
-          '0%': Styles(raw: {'transform': 'translateX(0)'}),
+          '0%': Styles(raw: {'transform': 'translateX(0)', 'filter': 'none'}),
           // ─ burst, frame for frame with the readout ─
-          '34%': Styles(raw: {'transform': 'translateX(-52px)'}),
-          '34.5%': Styles(raw: {'transform': 'translateX(0)'}),
-          '35%': Styles(raw: {'transform': 'translateX(26px)'}),
-          '35.4%': Styles(raw: {'transform': 'translateX(0)'}),
-          '36%': Styles(raw: {'transform': 'translateX(-26px)'}),
-          '36.5%': Styles(raw: {'transform': 'translateX(0)'}),
+          '34%': Styles(raw: {'transform': 'translateX(-52px)', 'filter': _sbNeedleDead}),
+          '34.5%': Styles(raw: {'transform': 'translateX(0)', 'filter': 'none'}),
+          '35%': Styles(raw: {'transform': 'translateX(26px)', 'filter': _sbNeedleDead}),
+          '35.4%': Styles(raw: {'transform': 'translateX(0)', 'filter': 'none'}),
+          '36%': Styles(raw: {'transform': 'translateX(-26px)', 'filter': _sbNeedleDead}),
+          '36.5%': Styles(raw: {'transform': 'translateX(0)', 'filter': 'none'}),
           // ─ the lone late tick ─
-          '78%': Styles(raw: {'transform': 'translateX(52px)'}),
-          '78.4%': Styles(raw: {'transform': 'translateX(0)'}),
-          '100%': Styles(raw: {'transform': 'translateX(0)'}),
+          '78%': Styles(raw: {'transform': 'translateX(52px)', 'filter': _sbNeedleDead}),
+          '78.4%': Styles(raw: {'transform': 'translateX(0)', 'filter': 'none'}),
+          '100%': Styles(raw: {'transform': 'translateX(0)', 'filter': 'none'}),
         }),
         // Keyframe: sb-data-glitch
         // The `RCHF · STANDBY · <freq>` line dropping a frame. Same fault
