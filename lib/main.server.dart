@@ -432,40 +432,113 @@ void main() {
             },
           ),
         }),
-        // Keyframe: sb-breathe
-        // The single lamp on the standby poster. It sits on the dial line
-        // at the tuned frequency, so it is the only lit thing on the
-        // screen while the receiver is off - which is the entire reason
-        // the off state reads as hardware in standby rather than as a
-        // page that failed to load.
+        // Keyframe: sb-scale-breathe
+        // The dial scale on the standby poster, breathing. It is the only
+        // thing that moves in the empty half of the off state, which is
+        // the entire reason that half reads as hardware with the mains
+        // connected rather than as a page that failed to load.
         //
-        // 4.6 s and warm, deliberately off the 2.4 s the instruction and
-        // the rocker share. That pair is asking to be pressed and has to
-        // be seen as one thing; this lamp is only saying the mains are
-        // connected. If all three pulsed together the screen would read
-        // as one blinking interface, and the pairing that carries the
-        // instruction would be the thing it cost.
+        // Run by two elements - the line itself (`.sb-rule::before`) and
+        // the tick marks above it - because they are one drawn object and
+        // a scale whose ticks hold still while its line swells is two
+        // objects. Both are in the first paint and neither is remounted
+        // while the radio is off, so they share a phase for free; the
+        // same fragile arrangement `sb-press-attract` depends on.
         //
-        // The base rule holds the *lit* end of this cycle, so the
-        // blanket `animation: none` under reduced motion leaves a steady
-        // lamp rather than an unlit dot.
-        css.keyframes('sb-breathe', {
-          '0%, 100%': Styles(
-            opacity: 0.42,
-            raw: {
-              'box-shadow':
-                  '0 0 3px rgba(232,160,53,0.5), '
-                  '0 0 8px rgba(232,160,53,0.16)',
-            },
-          ),
-          '50%': Styles(
-            opacity: 1,
-            raw: {
-              'box-shadow':
-                  '0 0 5px rgba(232,160,53,0.9), '
-                  '0 0 16px rgba(232,160,53,0.34)',
-            },
-          ),
+        // 6.5 s, deliberately off the 2.4 s the instruction and the
+        // rocker share. That pair is asking to be pressed and has to be
+        // seen as one thing; this is only the receiver idling. If all
+        // three pulsed together the screen would read as one blinking
+        // interface, and the pairing that carries the instruction would
+        // be the thing it cost. It is also grey rather than amber, so
+        // it never competes with the one warm cue on the screen.
+        //
+        // The needle standing on this scale is pointedly NOT in here: it
+        // is a mechanical pointer, and a pointer that pulses is a light.
+        //
+        // The base rule holds the *lit* end of this cycle, so the blanket
+        // `animation: none` under reduced motion leaves a fully drawn
+        // scale rather than one stranded at half brightness.
+        css.keyframes('sb-scale-breathe', {
+          '0%, 100%': Styles(opacity: 0.5),
+          '50%': Styles(opacity: 1),
+        }),
+        // Keyframe: sb-needle-drift
+        // The pointer on the standby scale, hunting. A dial needle at
+        // rest is never quite at rest - it sits in the slack of its drive
+        // cord and creeps a hair either way - and that is the only kind
+        // of motion this part is allowed. Position, never brightness:
+        // the scale behind it is lit and breathes, this is mechanical and
+        // wanders, and keeping the two kinds of movement on the two kinds
+        // of part is what stops the poster reading as animated decoration.
+        //
+        // Not a pendulum. A sine between two extremes is a metronome, and
+        // a metronome is a third tempo on a screen that already has two.
+        // The stops are uneven and it lingers off-centre, so at any given
+        // glance it is somewhere slightly different without ever looking
+        // like it is keeping time. 11 s is long enough that the motion is
+        // read as drift rather than as an animation playing.
+        //
+        // Amplitude is capped at 3px on purpose - see the note on
+        // `.sb-needle` for why that number is the readout's own
+        // resolution rather than a taste call.
+        //
+        // `transform` and not `translate`: the base rule owns `translate`
+        // for centring, the two properties are applied independently, and
+        // splitting them means this keyframe can move the needle without
+        // restating the -50% it knows nothing about.
+        css.keyframes('sb-needle-drift', {
+          '0%, 100%': Styles(raw: {'transform': 'translateX(-2.5px)'}),
+          '28%': Styles(raw: {'transform': 'translateX(3px)'}),
+          '44%': Styles(raw: {'transform': 'translateX(1.5px)'}),
+          '62%': Styles(raw: {'transform': 'translateX(-3px)'}),
+          '82%': Styles(raw: {'transform': 'translateX(-1px)'}),
+        }),
+        // Keyframe: sb-data-glitch
+        // The `RCHF · STANDBY · <freq>` line dropping a frame. Same fault
+        // the LCD has - see `lcd-glitch` - because it is the same class of
+        // part: a segment readout on a receiver old enough to have a
+        // drive cord. Reusing that idiom rather than inventing a second
+        // kind of glitch is the point; two different failure signatures on
+        // one machine reads as two effects.
+        //
+        // Pitched far under the LCD's, though, and deliberately so. That
+        // one is on a lit panel a foot from the eye and bottoms out at
+        // 0.08; this is 10px microtype at 0.34em on a black screen, where
+        // the same amplitude stops being a fault and becomes a strobe.
+        // Here the floor is 0.5 and the shift is 1px, once each way.
+        //
+        // Shape: ~19 s, almost all of it perfectly still, then a 0.5 s
+        // burst and one late lone tick. A glitch is an event; something
+        // that happens continuously is a texture, and a texture on the
+        // only line of type in the upper half would make the poster look
+        // broken rather than worn.
+        //
+        // `step-end` so every value snaps instead of tweening - a tweened
+        // dropout reads as a fade, and displays do not fade. Which is also
+        // why this is opacity and position only: no colour split, no blur.
+        // The palette up here is grey, amber and the red of the needle,
+        // and a chromatic fringe would introduce a hue the hardware has
+        // nowhere else.
+        //
+        // 19 s is chosen against the other three cycles on this screen
+        // (2.4 s, 6.5 s, 11 s) so the burst never lands on the same beat
+        // twice running. The base rule is the clean state, so the blanket
+        // `animation: none` under reduced motion leaves the line steady
+        // and fully legible.
+        css.keyframes('sb-data-glitch', {
+          '0%': Styles(raw: {'opacity': '1', 'transform': 'translateX(0)'}),
+          // ─ burst: two skips and a dim, ~95 ms apart ─
+          '34%': Styles(raw: {'opacity': '0.62', 'transform': 'translateX(-1px)'}),
+          '34.5%': Styles(raw: {'opacity': '1', 'transform': 'translateX(0)'}),
+          '35%': Styles(raw: {'opacity': '0.78', 'transform': 'translateX(1px)'}),
+          '35.4%': Styles(raw: {'opacity': '1', 'transform': 'translateX(0)'}),
+          '36%': Styles(raw: {'opacity': '0.5'}),
+          '36.5%': Styles(raw: {'opacity': '1'}),
+          // ─ long stable, then one tick on its own ─
+          '78%': Styles(raw: {'opacity': '0.7', 'transform': 'translateX(-1px)'}),
+          '78.4%': Styles(raw: {'opacity': '1', 'transform': 'translateX(0)'}),
+          '100%': Styles(raw: {'opacity': '1', 'transform': 'translateX(0)'}),
         }),
         // Keyframe: sb-press-attract
         // The instruction and the rocker are the same sentence said in
