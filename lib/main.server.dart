@@ -483,16 +483,54 @@ void main() {
         // `.sb-needle` for why that number is the readout's own
         // resolution rather than a taste call.
         //
-        // `transform` and not `translate`: the base rule owns `translate`
-        // for centring, the two properties are applied independently, and
-        // splitting them means this keyframe can move the needle without
-        // restating the -50% it knows nothing about.
+        // Runs on `translate`, folding the centring offset into every
+        // frame, so that `transform` stays free for `sb-needle-jump`.
+        // The two are separate properties and compose (translate first,
+        // then transform), which is the only way both can move the same
+        // needle: two animations on one property do not blend, the last
+        // one declared simply wins. Hence the -50% restated everywhere -
+        // it is the cost of the needle being able to drift and glitch at
+        // once, and if it goes missing from one frame the needle jumps
+        // half its width sideways for that frame only.
         css.keyframes('sb-needle-drift', {
-          '0%, 100%': Styles(raw: {'transform': 'translateX(-2.5px)'}),
-          '28%': Styles(raw: {'transform': 'translateX(3px)'}),
-          '44%': Styles(raw: {'transform': 'translateX(1.5px)'}),
-          '62%': Styles(raw: {'transform': 'translateX(-3px)'}),
-          '82%': Styles(raw: {'transform': 'translateX(-1px)'}),
+          '0%, 100%': Styles(raw: {'translate': 'calc(-50% - 2.5px) -50%'}),
+          '28%': Styles(raw: {'translate': 'calc(-50% + 3px) -50%'}),
+          '44%': Styles(raw: {'translate': 'calc(-50% + 1.5px) -50%'}),
+          '62%': Styles(raw: {'translate': 'calc(-50% - 3px) -50%'}),
+          '82%': Styles(raw: {'translate': 'calc(-50% - 1px) -50%'}),
+        }),
+        // Keyframe: sb-needle-jump
+        // The needle tearing off its position while the readout above it
+        // drops a frame. Every stop here is a stop in `sb-data-glitch`,
+        // and both run 19s `step-end`, so the two faults are one fault
+        // seen in two places: the pointer flies and the line that names
+        // where it is pointing breaks up in the same 100ms. Retime or
+        // reshape either keyframe and you have to do the other, or the
+        // screen goes from having one fault to having two coincidences.
+        //
+        // The distances are whole multiples of 26px, which is the tick
+        // pitch on `.sb-ticks` - the needle jumps by whole marks rather
+        // than by an arbitrary number of pixels, so even mid-fault it
+        // lands where a needle could actually land.
+        //
+        // This is allowed to be large where the drift is capped at 3px,
+        // and the difference is the point. The drift is the resting state
+        // and has to keep agreeing with the frequency printed above it;
+        // this is visibly a fault, gone in a tenth of a second, and a
+        // fault that only moves things by a hair does not read as one.
+        css.keyframes('sb-needle-jump', {
+          '0%': Styles(raw: {'transform': 'translateX(0)'}),
+          // ─ burst, frame for frame with the readout ─
+          '34%': Styles(raw: {'transform': 'translateX(-52px)'}),
+          '34.5%': Styles(raw: {'transform': 'translateX(0)'}),
+          '35%': Styles(raw: {'transform': 'translateX(26px)'}),
+          '35.4%': Styles(raw: {'transform': 'translateX(0)'}),
+          '36%': Styles(raw: {'transform': 'translateX(-26px)'}),
+          '36.5%': Styles(raw: {'transform': 'translateX(0)'}),
+          // ─ the lone late tick ─
+          '78%': Styles(raw: {'transform': 'translateX(52px)'}),
+          '78.4%': Styles(raw: {'transform': 'translateX(0)'}),
+          '100%': Styles(raw: {'transform': 'translateX(0)'}),
         }),
         // Keyframe: sb-data-glitch
         // The `RCHF · STANDBY · <freq>` line dropping a frame. Same fault
