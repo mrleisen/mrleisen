@@ -915,7 +915,17 @@ class AppState extends State<App> {
     final sbPos = ((_frequency - cfg.minFreq) / (cfg.maxFreq - cfg.minFreq) * 100).clamp(0.0, 100.0);
     final sbFreq = _band == Band.fm ? _frequency.toStringAsFixed(1) : _frequency.toInt().toString();
     final sbState = _lang == Lang.es ? 'EN ESPERA' : 'STANDBY';
-    final sbPress = _lang == Lang.es ? 'ENCIENDE' : 'PRESS ON';
+    // Names the object, not the gesture. "PRESS ON" was the switch's own
+    // legend read aloud, which asks the visitor to already know that the
+    // legend belongs to that rocker - the exact thing they don't know
+    // yet. A sentence about the radio is understood before the control is
+    // found, and then the pulse pairs it with the rocker.
+    //
+    // "Enciende" rather than "prende": the switch's accessible name is
+    // already "Encendido" and the live region says "Radio apagada", so
+    // this is the verb the receiver already speaks about itself. One
+    // string decides it if that ever changes.
+    final sbPress = _lang == Lang.es ? 'ENCIENDE LA RADIO' : 'TURN ON THE RADIO';
 
     final rootClass = 'signal-app ${_isPowered ? 'powered-on' : 'powered-off'}';
     final crtClass = switch (_crtPhase) {
@@ -1604,11 +1614,16 @@ class AppState extends State<App> {
       fontSize: Unit.pixels(11),
       fontWeight: FontWeight.w600,
       textTransform: TextTransform.upperCase,
-      letterSpacing: 0.42.em,
+      // 0.28em, not the 0.42em this carried as a two-word legend. Letter
+      // spacing is added to the word spaces as well, so heavy tracking on
+      // a sentence pushes the words apart faster than it pushes the
+      // letters apart and the line stops reading as a phrase. Wide
+      // tracking belongs to labels; this is a sentence now.
+      letterSpacing: 0.28.em,
       raw: {
-        'text-indent': '0.42em', // compensate trailing letter-spacing
+        'text-indent': '0.28em', // compensate trailing letter-spacing
         // The lit end of `sb-press-attract`, same as `.sb-led` holds the
-        // lit end of its own cycle: with the animation stripped the word
+        // lit end of its own cycle: with the animation stripped the line
         // stays at the top of its swell instead of at the bottom.
         'text-shadow': '0 0 9px rgba(232,160,53,0.55), 0 0 20px rgba(232,160,53,0.28)',
         'white-space': 'nowrap',
@@ -2106,8 +2121,8 @@ class AppState extends State<App> {
         letterSpacing: 0.16.em,
       ),
       css('.sb-press').styles(
-        letterSpacing: 0.3.em,
-        raw: {'text-indent': '0.3em'},
+        letterSpacing: 0.16.em,
+        raw: {'text-indent': '0.16em'},
       ),
       css('.carrier-monitor').styles(gap: Gap(row: 12.px)),
       css('.carrier-dashes').styles(gap: Gap(column: 12.px)),
