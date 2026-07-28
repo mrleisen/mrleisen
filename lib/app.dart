@@ -1053,11 +1053,14 @@ class AppState extends State<App> {
             div(classes: 'sb-body', []),
             // The dial, reduced to the one horizontal that organises the
             // empty space - the same line the real dial window draws,
-            // seen unlit.
+            // seen unlit. The needle on it is the same red pointer the
+            // powered dial carries, which is the point: a scale lamp goes
+            // out with the mains, a mechanical pointer stays where it was
+            // parked.
             div(classes: 'sb-rule', [
               span(classes: 'sb-ticks', []),
               span(
-                classes: 'sb-led',
+                classes: 'sb-needle',
                 styles: Styles(raw: {'left': '${sbPos.toStringAsFixed(1)}%'}),
                 [],
               ),
@@ -1502,6 +1505,12 @@ class AppState extends State<App> {
     // One horizontal line through the empty half of the frame. It is the
     // same object as the dial window on the faceplate, drawn as the
     // receiver would show it with no power on the scale lamp.
+    //
+    // The element itself only holds the geometry; the line it draws is on
+    // `::before` so the breath can run on the drawing alone. Animating
+    // opacity on this box would take the ticks and the needle down with
+    // it, and a red pointer that fades in and out is a lamp, not a
+    // pointer.
     css('.sb-rule').styles(
       position: Position.absolute(
         bottom: Unit.expression('calc(var(--panel-h) + var(--free-h) * 0.26)'),
@@ -1509,16 +1518,29 @@ class AppState extends State<App> {
       ),
       width: Unit.expression('min(600px, 50%)'),
       height: 1.px,
+      raw: {'translate': '-50% 0'},
+    ),
+    css('.sb-rule::before').styles(
+      position: Position.absolute(
+        top: Unit.zero,
+        left: Unit.zero,
+        right: Unit.zero,
+        bottom: Unit.zero,
+      ),
       raw: {
+        'content': '""',
         'background':
             'linear-gradient(90deg, transparent, rgba(178,178,195,0.16) 10%, '
             'rgba(178,178,195,0.30) 50%, rgba(178,178,195,0.16) 90%, transparent)',
-        'translate': '-50% 0',
+        'animation': 'sb-scale-breathe 6.5s ease-in-out infinite',
       },
     ),
     // Ticks are drawn, not placed: a repeating gradient masked to fade at
     // both ends. Twenty-odd absolutely-positioned divs would be the same
     // picture at the cost of twenty-odd elements that never move.
+    //
+    // Breathes on the same cycle as the line below it, started on the
+    // same frame - see the keyframe. The scale is one object.
     css('.sb-ticks').styles(
       position: Position.absolute(
         top: (-5).px,
@@ -1530,23 +1552,48 @@ class AppState extends State<App> {
         'background': 'repeating-linear-gradient(90deg, rgba(178,178,195,0.26) 0 1px, transparent 1px 26px)',
         '-webkit-mask-image': 'linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent)',
         'mask-image': 'linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent)',
+        'animation': 'sb-scale-breathe 6.5s ease-in-out infinite',
       },
     ),
-    // The one lit thing on a dark screen. `left` is set inline from the
-    // tuned frequency - see the note at the markup.
-    css('.sb-led').styles(
+    // The needle. Same colour and same glow as `.needle` on the powered
+    // dial, because it is the same part - short enough to cross the line
+    // and its ticks rather than a window it no longer has. `left` is set
+    // inline from the tuned frequency, so the pointer stands on the value
+    // the readout above it claims.
+    //
+    // It drifts, and the way it drifts is the whole point: it hunts
+    // sideways within +/-3px, never pulses. The scale beside it changes
+    // brightness because it is being lit; this changes position because
+    // it is a pointer on a spindle. Two kinds of motion for two kinds of
+    // part, which is what keeps the pair reading as hardware instead of
+    // as two animated divs.
+    //
+    // +/-3px is not arbitrary. The scale is 600px at full width, so on FM
+    // (20.5 MHz across it) 3px is 0.1 MHz - exactly one tuning step, the
+    // finest thing the readout can say. On AM it is under 6 kHz against a
+    // 10 kHz step. The pointer therefore never wanders off the value
+    // `.sb-freq` is printing: it hunts inside the resolution of the
+    // number, the way a real one sits inside the slack of its drive cord.
+    // Widen this and the poster starts claiming a frequency it is not
+    // pointing at.
+    css('.sb-needle').styles(
       position: Position.absolute(top: 50.percent),
-      width: 5.px,
-      height: 5.px,
-      radius: BorderRadius.all(Radius.circular(2.5.px)),
-      backgroundColor: const Color('#E8A035'),
+      zIndex: ZIndex(1),
+      width: 2.px,
+      height: 14.px,
+      backgroundColor: const Color('#ff2828'),
       raw: {
-        // The lit end of `sb-breathe`, so the blanket `animation: none`
-        // under reduced motion leaves a steady lamp rather than a dot
-        // frozen at the bottom of its cycle.
-        'box-shadow': '0 0 5px rgba(232,160,53,0.9), 0 0 16px rgba(232,160,53,0.34)',
+        // The live needle's shadow with the outer halo pulled in: on the
+        // faceplate it is a red pointer standing in front of a lit scale,
+        // here the scale is dark and the same halo would read as a lamp.
+        'box-shadow':
+            '0 0 5px rgba(255,40,40,0.7), 0 0 13px rgba(255,40,40,0.28), '
+            'inset 0 0 1px rgba(255,255,255,0.6)',
+        // Centring stays on `translate` so the drift can own `transform`
+        // outright - the two are separate properties and both apply, so
+        // the keyframe never has to restate the -50% and get it wrong.
         'translate': '-50% -50%',
-        'animation': 'sb-breathe 4.6s ease-in-out infinite',
+        'animation': 'sb-needle-drift 11s ease-in-out infinite',
       },
     ),
 
@@ -1571,7 +1618,13 @@ class AppState extends State<App> {
       fontWeight: FontWeight.w700,
       textTransform: TextTransform.upperCase,
       letterSpacing: 0.34.em,
-      raw: {'white-space': 'nowrap', 'translate': '-50% 0'},
+      raw: {
+        'white-space': 'nowrap',
+        // Centring on `translate`, the glitch's 1px skips on `transform`
+        // - the same split the needle uses, for the same reason.
+        'translate': '-50% 0',
+        'animation': 'sb-data-glitch 19s step-end infinite',
+      },
     ),
     // The model number is the dimmest of the three - it is the only one
     // that never changes, so it is the only one that can afford to be
@@ -1622,9 +1675,9 @@ class AppState extends State<App> {
       letterSpacing: 0.28.em,
       raw: {
         'text-indent': '0.28em', // compensate trailing letter-spacing
-        // The lit end of `sb-press-attract`, same as `.sb-led` holds the
-        // lit end of its own cycle: with the animation stripped the line
-        // stays at the top of its swell instead of at the bottom.
+        // The lit end of `sb-press-attract`, same as the dial scale holds
+        // the lit end of its own cycle: with the animation stripped the
+        // line stays at the top of its swell instead of at the bottom.
         'text-shadow': '0 0 9px rgba(232,160,53,0.55), 0 0 20px rgba(232,160,53,0.28)',
         'white-space': 'nowrap',
         'translate': '-50% 0',
