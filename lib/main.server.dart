@@ -439,10 +439,12 @@ void main() {
         // the off state reads as hardware in standby rather than as a
         // page that failed to load.
         //
-        // 4.6 s and warm, deliberately slower than `power-attract`: that
-        // one is asking to be pressed, this one is only saying the mains
-        // are connected. Two amber pulses at the same tempo would read as
-        // one blinking interface.
+        // 4.6 s and warm, deliberately off the 2.4 s the instruction and
+        // the rocker share. That pair is asking to be pressed and has to
+        // be seen as one thing; this lamp is only saying the mains are
+        // connected. If all three pulsed together the screen would read
+        // as one blinking interface, and the pairing that carries the
+        // instruction would be the thing it cost.
         //
         // The base rule holds the *lit* end of this cycle, so the
         // blanket `animation: none` under reduced motion leaves a steady
@@ -465,17 +467,42 @@ void main() {
             },
           ),
         }),
-        // Keyframe: sb-press-breathe
-        // The instruction breathes on the same 4.6 s cycle as the lamp,
-        // so the two read as one heartbeat instead of as two independent
-        // animations. Opacity only - the trough is 0.5, which is where
-        // its contrast budget bottoms out.
-        css.keyframes('sb-press-breathe', {
-          // The trough decides the contrast, not the average: 0.75 keeps
-          // #c99a4e at 4.87:1 on the black screen for the whole cycle.
+        // Keyframe: sb-press-attract
+        // The instruction and the rocker are the same sentence said in
+        // two places, half a screen apart: the words are in the middle of
+        // the display and the control they name is a 52x22 switch down on
+        // the faceplate. Nothing in the composition connects them, and a
+        // first-time visitor has no reason to assume they are related.
+        //
+        // What connects them is common fate. This is `power-attract`'s
+        // cycle to the frame - 2.4 s, ease-in-out, dim at 0 and 100,
+        // amber at 50 - so the two swell and fade in step, in the same
+        // hue, and get read as one thing. Deliberately not a translation
+        // of the shape: a glow that grows around a word is the type
+        // equivalent of a glow that grows around a moulding.
+        //
+        // The phase matters as much as the period, and it holds for free:
+        // both elements are in the first paint, so both cycles start on
+        // the same frame and neither is ever restarted while the radio is
+        // off. Anything that re-mounted one of them would break the
+        // pairing without breaking anything that looks broken - if this
+        // ever stops reading as a pair, look there first.
+        css.keyframes('sb-press-attract', {
+          // The trough decides the contrast, not the average: 0.78 keeps
+          // #c99a4e at 5.09:1 on the black screen for the whole cycle.
           // Anything deeper is a word that is only readable half the time.
-          '0%, 100%': Styles(opacity: 0.75),
-          '50%': Styles(opacity: 1),
+          '0%, 100%': Styles(
+            opacity: 0.78,
+            raw: {'text-shadow': '0 0 5px rgba(232,160,53,0.20)'},
+          ),
+          '50%': Styles(
+            opacity: 1,
+            raw: {
+              'text-shadow':
+                  '0 0 9px rgba(232,160,53,0.55), '
+                  '0 0 20px rgba(232,160,53,0.28)',
+            },
+          ),
         }),
         // Keyframe: band-sweep
         // Crossing between FM and AM. Previously this was the LCD digits
@@ -772,9 +799,15 @@ void main() {
             },
           ),
           // Hints appear at full strength rather than fading up. The
-          // standby instruction is in the same position: with its breathe
-          // cycle gone it holds the lit end of it, so the only copy that
-          // tells a first-time visitor what to do never sits at a trough.
+          // standby instruction is in the same position: with its cycle
+          // gone it holds the lit end of it, so the only copy that tells
+          // a first-time visitor what to do never sits at a trough.
+          //
+          // That is also what keeps it paired with the rocker here. The
+          // two are linked by moving together, and nothing moves in this
+          // block - but both are pinned to the bright end of the same
+          // cycle in the same hue, so the association survives as matched
+          // contrast instead of as matched motion.
           css('.tune-hint, .sb-press').styles(raw: {'opacity': '1'}),
           // Grain, scanlines and the phosphor mask stay as static texture:
           // they carry the CRT look but none of them need to move to do it.
