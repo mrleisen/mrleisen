@@ -105,12 +105,13 @@ const stations = <Station>[
   // starts at 96.5, which has to sit at least a full tolerance from
   // everything or the site opens on a half-tuned panel instead of on the
   // empty carrier monitor it was designed to open on. 96.5 is 1.2 from
-  // here and 2.2 from AWS, so the first frame is genuinely dead air -
-  // and that constraint is exactly why the five gaps are not identical.
+  // here and 2.2 from the station above, so the first frame is genuinely
+  // dead air - and that constraint is exactly why the gaps are not
+  // identical.
   Station(band: Band.fm, frequency: 95.3, callSign: 'WHO', color: '#5BA4D9'),
-  Station(band: Band.fm, frequency: 98.7, callSign: 'AWS', color: '#E05050'),
+  Station(band: Band.fm, frequency: 98.7, callSign: 'TRP', color: '#E86A8A'),
   Station(band: Band.fm, frequency: 102.3, callSign: 'DTU', color: '#E8944A'),
-  Station(band: Band.fm, frequency: 105.9, callSign: 'TRP', color: '#E86A8A'),
+  Station(band: Band.fm, frequency: 105.9, callSign: 'AWS', color: '#E05050'),
   // ── AM: idea-stage projects, one per station. ──
   Station(band: Band.am, frequency: 660.0, callSign: 'NUM', color: '#5BC8A0'),
   Station(band: Band.am, frequency: 820.0, callSign: 'AYU', color: '#B07CD6'),
