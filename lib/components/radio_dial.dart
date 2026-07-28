@@ -66,7 +66,6 @@ class RadioDial extends StatefulComponent {
     this.canSaveCurrent = false,
     this.onSaveStation,
     this.lang = Lang.en,
-    this.showPowerHint = false,
     this.showPowerAttract = false,
     this.showTuneHint = false,
     super.key,
@@ -125,10 +124,6 @@ class RadioDial extends StatefulComponent {
 
   /// UI language, used only for the onboarding microcopy.
   final Lang lang;
-
-  /// Radio is off: print the etched instruction beside the rocker.
-  /// Shown every time the receiver is off, not only on a first visit.
-  final bool showPowerHint;
 
   /// Radio is off *and* has never been switched on: also pulse the
   /// rocker. Retired permanently after the first power-on.
@@ -638,28 +633,13 @@ class RadioDialState extends State<RadioDial> {
             span(classes: 'brand-sub', [Component.text('AM/FM STEREO RECEIVER')]),
           ]),
           div(classes: 'indicator-row', [
-            // Etched instruction sitting immediately left of the rocker.
-            // Kept in normal flow rather than absolutely positioned: the
-            // header is `space-between`, so this just widens the
-            // right-hand group leftward into empty space. It cannot
-            // overlap anything or shift anything vertically, and when it
-            // retires the row simply closes up - during the CRT turn-on
-            // animation, so the reflow is never seen.
-            //
-            // aria-hidden because the rocker already carries
-            // role="switch" with its own label. This is a visual
-            // affordance, not new information.
-            if (component.showPowerHint)
-              span(
-                classes: 'power-hint',
-                attributes: {'aria-hidden': 'true'},
-                [
-                  Component.text(
-                    component.lang == Lang.es ? 'ENCIENDE' : 'PRESS ON',
-                  ),
-                  span(classes: 'power-hint-arrow', [Component.text('▸')]),
-                ],
-              ),
+            // The "PRESS ON" silkscreen that used to sit here has moved
+            // into the standby poster in `app.dart`. It is the same
+            // instruction, shown on the same condition; it is now the
+            // closing line of a composition instead of a label crammed
+            // into the busiest corner of the faceplate, where it was
+            // competing with the rocker, MEM and both band pills for the
+            // one place a first-time visitor is least likely to look.
             div(
               classes:
                   'power-rocker${powered ? ' power-on' : ''}'
@@ -1199,6 +1179,42 @@ class RadioDialState extends State<RadioDial> {
       },
     ),
 
+    // ── ambient light on an unlit faceplate ──
+    // The panel is already lit from the upper left, but that lighting was
+    // tuned against a screen full of phosphor. With the tube dark there
+    // is nothing else in the frame, and the same surface reads flat - the
+    // plastic stops looking like plastic and starts looking like a
+    // rectangle of dark grey. This is the same lamp, turned up to what an
+    // unlit object needs, plus a long shallow glance across the lower
+    // right so the sheen has a direction.
+    //
+    // `z-index: -1` is what keeps it a property of the surface: inside
+    // the panel's own stacking context that paints it above the housing
+    // gradient and below every control, so the knobs and the LCD sit on
+    // top of the light instead of under a white film.
+    css('.radio-panel::before').styles(
+      position: Position.absolute(
+        top: Unit.zero,
+        left: Unit.zero,
+        right: Unit.zero,
+        bottom: Unit.zero,
+      ),
+      opacity: 0,
+      pointerEvents: PointerEvents.none,
+      raw: {
+        'content': '""',
+        'z-index': '-1',
+        'background':
+            'radial-gradient(120% 150% at 16% -35%, rgba(255,255,255,0.05), rgba(255,255,255,0.014) 42%, transparent 74%),'
+            'linear-gradient(100deg, transparent 62%, rgba(255,255,255,0.012) 78%, transparent 92%)',
+        // Matches the 0.6s the rest of the powered-off treatment fades
+        // over, so the surface relights on the same beat as the dimming
+        // lifts rather than as a separate event.
+        'transition': 'opacity 0.6s ease',
+      },
+    ),
+    css('.radio-panel.panel-off::before').styles(opacity: 1),
+
     // ── header ──
     css('.panel-header').styles(
       display: Display.flex,
@@ -1288,46 +1304,6 @@ class RadioDialState extends State<RadioDial> {
       height: 44.px,
       raw: {'content': '""'},
     ),
-    // ── onboarding: power ──
-    // Faceplate silkscreen, matched to `.brand-sub` so it reads as
-    // printed on the plastic rather than drawn by a web page.
-    css('.power-hint', [
-      css('&').styles(
-        display: Display.flex,
-        pointerEvents: PointerEvents.none,
-        flexDirection: FlexDirection.row,
-        alignItems: AlignItems.center,
-        gap: Gap(column: 4.px),
-        color: const Color('#c99a4e'),
-        fontFamily: const FontFamily.list([
-          FontFamily('IBM Plex Mono'),
-          FontFamilies.monospace,
-        ]),
-        // 11px, not the 6-8px of the surrounding silkscreen. This is the
-        // single most important instruction on the page for a first-time
-        // visitor, so it gets the same floor as any other informative
-        // text - shrinking it to match the decoration would undercut the
-        // one job it has. Tracking is pulled in to keep the width down.
-        fontSize: Unit.pixels(11),
-        fontWeight: FontWeight.w600,
-        letterSpacing: 0.16.em,
-        raw: {
-          'text-transform': 'uppercase',
-          'white-space': 'nowrap',
-          'flex-shrink': '0',
-          'text-shadow': '0 0 5px rgba(232,160,53,0.35), 0 -1px 0 rgba(0,0,0,0.7)',
-          'animation': 'hint-fade-in 0.5s ease-out both',
-        },
-      ),
-      css('& .power-hint-arrow').styles(
-        raw: {
-          'font-size': '10px',
-          'line-height': '1',
-          'opacity': '0.8',
-          'letter-spacing': '0',
-        },
-      ),
-    ]),
     css('.rocker-half', [
       css('&').styles(
         display: Display.flex,
