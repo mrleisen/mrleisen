@@ -852,9 +852,9 @@ class AppState extends State<App> {
               'exactly that: Dart that produces HTML.';
     final whyShort = es
         ? 'La respuesta honesta, de todos modos, es más corta: porque '
-              'puedo y porque quiero.'
-        : 'The honest answer is shorter anyway: because I can, and because '
-              'I want to.';
+              'puedo, porque quiero y porque es divertido.'
+        : 'The honest answer is shorter anyway: because I can, because I '
+              'want to, and because it is fun.';
 
     final sig = _dialogSignalState;
     return div(
