@@ -91,8 +91,10 @@ class AppState extends State<App> {
   static const String _storageKey = 'rchf:collected_stations';
 
   // Onboarding cues the visitor has already worked out for themselves.
-  // Holds the literals 'power' and 'tune'; persisted comma-joined under
-  // [_onboardKey], the same shape as the collected-stations rack.
+  // Holds the literal 'tune'; persisted comma-joined under [_onboardKey],
+  // the same shape as the collected-stations rack. 'power' may still be
+  // in there from an older build and is simply ignored - see
+  // [_showPowerAttract].
   //
   // These are one-way and permanent. A hint that comes back on the
   // second visit stops being help and starts being nagging, so once a
@@ -108,10 +110,18 @@ class AppState extends State<App> {
   Timer? _tuneHintTimer;
   static const Duration _tuneHintDelay = Duration(milliseconds: 1200);
 
-  /// The animated pull stays a first-visit cue. Once
-  /// you know where the switch is, a permanently pulsing control is just
-  /// something twitching in the corner of your eye.
-  bool get _showPowerAttract => !_isPowered && !_onboarded.contains('power');
+  /// Whenever the radio is off, without exception.
+  ///
+  /// This used to be a first-visit cue, retired for good on the first
+  /// power-on and remembered in `localStorage`, on the reasoning that a
+  /// permanently pulsing control is just something twitching in the
+  /// corner of your eye. That held while the standby poster carried a
+  /// composition of its own. It no longer does: the off screen is now a
+  /// dark housing and nothing else, and the one moving thing on it is
+  /// this switch. Retiring it would leave a returning visitor a
+  /// completely still frame with no indication the page is alive - which
+  /// is the failure the poster existed to prevent.
+  bool get _showPowerAttract => !_isPowered;
 
   /// Powered up, warm, and the dial has never been moved.
   bool get _showTuneHint => _isPowered && _tuneHintArmed && !_onboarded.contains('tune');
@@ -939,13 +949,6 @@ class AppState extends State<App> {
     final idleTop = _lang == Lang.es ? 'SIN PORTADORA' : 'NO CARRIER';
     final idleSub = _lang == Lang.es ? 'BARRIENDO BANDA' : 'SCANNING BAND';
 
-    // Standby poster. The needle stands on the dial line at the tuned
-    // frequency, so its position is a fact about the receiver rather than
-    // a composition choice - park on 108.0 and it sits at the right-hand
-    // end of the line. Nothing prints that number any more, but the
-    // pointer is still answering to it.
-    final sbPos = ((_frequency - cfg.minFreq) / (cfg.maxFreq - cfg.minFreq) * 100).clamp(0.0, 100.0);
-
     final rootClass = 'signal-app ${_isPowered ? 'powered-on' : 'powered-off'}';
     final crtClass = switch (_crtPhase) {
       'turning-on' => 'crt-screen crt-animate-on',
@@ -1044,10 +1047,17 @@ class AppState extends State<App> {
         // for most visitors is the only frame they will ever judge it on.
         // A dark screen with a faceplate parked at the bottom edge reads
         // as a page that hasn't finished loading; the same screen with
-        // the receiver's housing rising out of that faceplate, one lamp
-        // lit and a dial line holding the empty half of the frame, reads
-        // as hardware in standby. Same amount of black, deliberate
-        // instead of accidental.
+        // the receiver's housing rising out of that faceplate reads as
+        // hardware in standby. Same amount of black, deliberate instead
+        // of accidental.
+        //
+        // One element, and that is the whole design. It drew a dial line
+        // with ticks and a red needle as well, and both are gone: an
+        // unlit receiver is a dark box, and everything drawn on the front
+        // of it was the piece describing itself. The screen is now empty
+        // above the housing and the only thing moving anywhere is the
+        // amber pulse on the rocker - which is the one thing the visitor
+        // actually needs to find.
         //
         // Gated on `_crtPhase`, not on `_isPowered`: powering off runs a
         // white flash across the whole screen at z-index 5, and this
@@ -1071,27 +1081,6 @@ class AppState extends State<App> {
             // that continues upward rather than as a bar stuck to the
             // bottom of the window.
             div(classes: 'sb-body', []),
-            // The dial, reduced to the one horizontal that organises the
-            // empty space - the same line the real dial window draws,
-            // seen unlit. The needle on it is the same red pointer the
-            // powered dial carries, which is the point: a scale lamp goes
-            // out with the mains, a mechanical pointer stays where it was
-            // parked.
-            //
-            // This and the housing are the whole poster. The microtype
-            // line and the instruction that used to sit above and below
-            // it are gone: an object with no lettering on it is read as
-            // an object, and the amber pulse on the rocker is left to
-            // carry the invitation on its own, down on the faceplate
-            // where the switch actually is.
-            div(classes: 'sb-rule', [
-              span(classes: 'sb-ticks', []),
-              span(
-                classes: 'sb-needle',
-                styles: Styles(raw: {'left': '${sbPos.toStringAsFixed(1)}%'}),
-                [],
-              ),
-            ]),
           ],
         ),
 
@@ -1340,11 +1329,6 @@ class AppState extends State<App> {
     _tuneHintTimer?.cancel();
     final powering = !_isPowered;
 
-    if (powering) {
-      // They found the switch. That cue has done its job.
-      _markOnboarded('power');
-    }
-
     setState(() {
       _isPowered = powering;
       _crtPhase = powering ? 'turning-on' : 'turning-off';
@@ -1484,10 +1468,10 @@ class AppState extends State<App> {
     // ── standby poster ──
     // Above the black CRT plate (z 5) and below the faceplate (z 50), so
     // the housing this draws meets the real panel's top edge instead of
-    // covering it. Everything is measured off `--panel-h` and `--free-h`,
-    // the same two numbers `AppState` measures for the content layers -
-    // the composition follows the faceplate wherever it ends up rather
-    // than being pinned to a viewport fraction.
+    // covering it. It is measured off `--panel-h` and `--free-h`, the
+    // same two numbers `AppState` measures for the content layers, so it
+    // follows the faceplate wherever it ends up rather than being pinned
+    // to a viewport fraction.
     css('.standby').styles(
       position: Position.absolute(
         top: Unit.zero,
@@ -1522,112 +1506,6 @@ class AppState extends State<App> {
             'radial-gradient(100% 120% at 16% -12%, rgba(255,255,255,0.032), transparent 62%),'
             'linear-gradient(180deg, rgba(255,255,255,0.012), rgba(255,255,255,0) 58%)',
         'translate': '-50% 0',
-      },
-    ),
-
-    // ── the dial, unlit ──
-    // One horizontal line through the empty half of the frame. It is the
-    // same object as the dial window on the faceplate, drawn as the
-    // receiver would show it with no power on the scale lamp.
-    //
-    // The element itself only holds the geometry; the line it draws is on
-    // `::before` so the breath can run on the drawing alone. Animating
-    // opacity on this box would take the ticks and the needle down with
-    // it, and a red pointer that fades in and out is a lamp, not a
-    // pointer.
-    css('.sb-rule').styles(
-      position: Position.absolute(
-        bottom: Unit.expression('calc(var(--panel-h) + var(--free-h) * 0.26)'),
-        left: 50.percent,
-      ),
-      width: Unit.expression('min(600px, 50%)'),
-      height: 1.px,
-      raw: {'translate': '-50% 0'},
-    ),
-    css('.sb-rule::before').styles(
-      position: Position.absolute(
-        top: Unit.zero,
-        left: Unit.zero,
-        right: Unit.zero,
-        bottom: Unit.zero,
-      ),
-      raw: {
-        'content': '""',
-        'background':
-            'linear-gradient(90deg, transparent, rgba(178,178,195,0.16) 10%, '
-            'rgba(178,178,195,0.30) 50%, rgba(178,178,195,0.16) 90%, transparent)',
-        'animation': 'sb-scale-breathe 6.5s ease-in-out infinite',
-      },
-    ),
-    // Ticks are drawn, not placed: a repeating gradient masked to fade at
-    // both ends. Twenty-odd absolutely-positioned divs would be the same
-    // picture at the cost of twenty-odd elements that never move.
-    //
-    // Breathes on the same cycle as the line below it, started on the
-    // same frame - see the keyframe. The scale is one object.
-    css('.sb-ticks').styles(
-      position: Position.absolute(
-        top: (-5).px,
-        left: Unit.zero,
-        right: Unit.zero,
-      ),
-      height: 5.px,
-      raw: {
-        'background': 'repeating-linear-gradient(90deg, rgba(178,178,195,0.26) 0 1px, transparent 1px 26px)',
-        '-webkit-mask-image': 'linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent)',
-        'mask-image': 'linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent)',
-        'animation': 'sb-scale-breathe 6.5s ease-in-out infinite',
-      },
-    ),
-    // The needle. Same colour and same glow as `.needle` on the powered
-    // dial, because it is the same part - short enough to cross the line
-    // and its ticks rather than a window it no longer has. `left` is set
-    // inline from the tuned frequency, so the pointer stands on the value
-    // the powered dial will show the moment the tube comes up.
-    //
-    // It moves in two ways, and neither is a pulse. It drifts - hunting
-    // sideways within +/-3px - and roughly every 19 s it tears off its
-    // position entirely for a tenth of a second. The scale beside it
-    // changes brightness because it is being lit; this changes position
-    // because it is a pointer on a spindle. Two kinds of motion for two
-    // kinds of part, which is what keeps the pair reading as hardware
-    // instead of as two animated divs.
-    //
-    // The drift is on `translate` and the jump on `transform` so both can
-    // run at once - see `sb-needle-drift` for why that split is load-
-    // bearing rather than stylistic.
-    //
-    // +/-3px is not arbitrary. The scale is 600px at full width, so on FM
-    // (20.5 MHz across it) 3px is 0.1 MHz - exactly one tuning step, the
-    // finest thing the dial can resolve. On AM it is under 6 kHz against
-    // a 10 kHz step. The pointer therefore never wanders off the value it
-    // is parked on: it hunts inside the resolution of the tuning, the way
-    // a real one sits inside the slack of its drive cord. Widen this and
-    // the poster parks on one frequency and points at another - which the
-    // visitor will see the instant they switch on and the lit dial
-    // disagrees with where the needle was.
-    css('.sb-needle').styles(
-      position: Position.absolute(top: 50.percent),
-      zIndex: ZIndex(1),
-      width: 2.px,
-      // Short enough to cross the line without reaching the tops of the
-      // ticks. At twice this it was a pointer spanning a dial window;
-      // the window is what the off state has taken away.
-      height: 7.px,
-      backgroundColor: const Color('#ff2828'),
-      raw: {
-        // The live needle's shadow with the outer halo pulled in: on the
-        // faceplate it is a red pointer standing in front of a lit scale,
-        // here the scale is dark and the same halo would read as a lamp.
-        'box-shadow':
-            '0 0 5px rgba(255,40,40,0.7), 0 0 13px rgba(255,40,40,0.28), '
-            'inset 0 0 1px rgba(255,255,255,0.6)',
-        // The resting position, for reduced motion. While the drift runs
-        // it restates this offset on every frame.
-        'translate': '-50% -50%',
-        'animation':
-            'sb-needle-drift 11s ease-in-out infinite, '
-            'sb-needle-jump 19s step-end infinite',
       },
     ),
 
@@ -2123,13 +2001,12 @@ class AppState extends State<App> {
       // Matches the shorter mobile faceplate. The vertical position
       // follows automatically from here.
       css('.signal-app').styles(raw: {'--panel-h': '180px'}),
-      // The standby poster keeps its proportions by widening rather than
+      // The standby housing keeps its proportions by widening rather than
       // by scaling: 60% of a phone is a 230 px housing, which reads as a
       // slab in the middle of the screen instead of as the front of the
       // radio underneath it. The vertical maths needs no adjustment - it
       // is all derived from the measured `--panel-h` / `--free-h`.
       css('.sb-body').styles(width: Unit.expression('min(720px, 86%)')),
-      css('.sb-rule').styles(width: Unit.expression('min(600px, 74%)')),
       css('.carrier-monitor').styles(gap: Gap(row: 12.px)),
       css('.carrier-dashes').styles(gap: Gap(column: 12.px)),
       css('.carrier-dash').styles(fontSize: 1.9.rem),
