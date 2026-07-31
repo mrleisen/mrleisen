@@ -1367,6 +1367,16 @@ class AppState extends State<App> {
       _crtPhase = powering ? 'turning-on' : 'turning-off';
       // Any armed tune hint belongs to the session that is ending.
       if (!powering) _tuneHintArmed = false;
+      // The printouts are something the receiver decoded, so they can't
+      // outlive the receiver. Cleared here rather than through
+      // `_closeDialog` because that hands focus back to the control that
+      // opened it - a control inside the station content, which is on
+      // its way out. Focus is already on the rocker the user just used.
+      if (!powering) {
+        _openDialog = null;
+        _dialogTriggerId = null;
+        _dialogStation = null;
+      }
     });
 
     final dur = powering ? _crtOnDuration : _crtOffDuration;
