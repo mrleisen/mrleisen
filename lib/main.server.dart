@@ -419,6 +419,11 @@ void main() {
         // (2.4 s) and warm rather than a blink - it should read as a
         // standby lamp on the hardware, not as a notification badge.
         //
+        // It is now the only invitation on the off screen - the standby
+        // poster used to spell the instruction out in words above the
+        // faceplate and no longer does - so weakening this pulse costs
+        // the whole cue rather than half of it.
+        //
         // Retired for good the first time the radio is powered on, so a
         // returning visitor never sees it.
         css.keyframes('power-attract', {
@@ -451,16 +456,15 @@ void main() {
         // the tick marks above it - because they are one drawn object and
         // a scale whose ticks hold still while its line swells is two
         // objects. Both are in the first paint and neither is remounted
-        // while the radio is off, so they share a phase for free; the
-        // same fragile arrangement `sb-press-attract` depends on.
+        // while the radio is off, so they share a phase for free.
         //
-        // 6.5 s, deliberately off the 2.4 s the instruction and the
-        // rocker share. That pair is asking to be pressed and has to be
-        // seen as one thing; this is only the receiver idling. If all
-        // three pulsed together the screen would read as one blinking
-        // interface, and the pairing that carries the instruction would
-        // be the thing it cost. It is also grey rather than amber, so
-        // it never competes with the one warm cue on the screen.
+        // 6.5 s, deliberately off the 2.4 s the rocker's `power-attract`
+        // runs at. That pulse is asking to be pressed; this is only the
+        // receiver idling. If they beat together the screen and the
+        // faceplate would read as one blinking interface, and the switch
+        // would stop being the thing singled out. It is also grey rather
+        // than amber, so it never competes with the one warm cue on the
+        // page.
         //
         // The needle standing on this scale is pointedly NOT in here: it
         // is a mechanical pointer, and a pointer that pulses is a light.
@@ -509,13 +513,13 @@ void main() {
           '82%': Styles(raw: {'translate': 'calc(-50% - 1px) -50%'}),
         }),
         // Keyframe: sb-needle-jump
-        // The needle tearing off its position while the readout above it
-        // drops a frame. Every stop here is a stop in `sb-data-glitch`,
-        // and both run 19s `step-end`, so the two faults are one fault
-        // seen in two places: the pointer flies and the line that names
-        // where it is pointing breaks up in the same 100ms. Retime or
-        // reshape either keyframe and you have to do the other, or the
-        // screen goes from having one fault to having two coincidences.
+        // The needle tearing off its position. This used to be half of a
+        // pair - the microtype line under it dropped the same frames on
+        // the same timeline, one fault seen in two places. That line is
+        // gone, so this is now the whole fault, and it carries on alone
+        // at 19 s: the timing was picked against the other cycles on the
+        // screen, not against the line, and it is the only thing left up
+        // here that ever behaves like a machine with a loose contact.
         //
         // The distances are whole multiples of 26px, which is the tick
         // pitch on `.sb-ticks` - the needle jumps by whole marks rather
@@ -524,8 +528,8 @@ void main() {
         //
         // This is allowed to be large where the drift is capped at 3px,
         // and the difference is the point. The drift is the resting state
-        // and has to keep agreeing with the frequency printed above it;
-        // this is visibly a fault, gone in a tenth of a second, and a
+        // and has to keep agreeing with the frequency the dial is parked
+        // on; this is visibly a fault, gone in a tenth of a second, and a
         // fault that only moves things by a hair does not read as one.
         // Displaced frames are also dulled, and that is what sells the
         // jump as a fault rather than as the needle having genuinely
@@ -536,7 +540,7 @@ void main() {
         // `background-color` would leave a bright glow around a dead bar.
         css.keyframes('sb-needle-jump', {
           '0%': Styles(raw: {'transform': 'translateX(0)', 'filter': 'none'}),
-          // ─ burst, frame for frame with the readout ─
+          // ─ the burst: three throws, ~95 ms apart ─
           '34%': Styles(raw: {'transform': 'translateX(-52px)', 'filter': _sbNeedleDead}),
           '34.5%': Styles(raw: {'transform': 'translateX(0)', 'filter': 'none'}),
           '35%': Styles(raw: {'transform': 'translateX(26px)', 'filter': _sbNeedleDead}),
@@ -547,89 +551,6 @@ void main() {
           '78%': Styles(raw: {'transform': 'translateX(52px)', 'filter': _sbNeedleDead}),
           '78.4%': Styles(raw: {'transform': 'translateX(0)', 'filter': 'none'}),
           '100%': Styles(raw: {'transform': 'translateX(0)', 'filter': 'none'}),
-        }),
-        // Keyframe: sb-data-glitch
-        // The `RCHF · STANDBY · <freq>` line dropping a frame. Same fault
-        // the LCD has - see `lcd-glitch` - because it is the same class of
-        // part: a segment readout on a receiver old enough to have a
-        // drive cord. Reusing that idiom rather than inventing a second
-        // kind of glitch is the point; two different failure signatures on
-        // one machine reads as two effects.
-        //
-        // Pitched far under the LCD's, though, and deliberately so. That
-        // one is on a lit panel a foot from the eye and bottoms out at
-        // 0.08; this is 10px microtype at 0.34em on a black screen, where
-        // the same amplitude stops being a fault and becomes a strobe.
-        // Here the floor is 0.5 and the shift is 1px, once each way.
-        //
-        // Shape: ~19 s, almost all of it perfectly still, then a 0.5 s
-        // burst and one late lone tick. A glitch is an event; something
-        // that happens continuously is a texture, and a texture on the
-        // only line of type in the upper half would make the poster look
-        // broken rather than worn.
-        //
-        // `step-end` so every value snaps instead of tweening - a tweened
-        // dropout reads as a fade, and displays do not fade. Which is also
-        // why this is opacity and position only: no colour split, no blur.
-        // The palette up here is grey, amber and the red of the needle,
-        // and a chromatic fringe would introduce a hue the hardware has
-        // nowhere else.
-        //
-        // 19 s is chosen against the other three cycles on this screen
-        // (2.4 s, 6.5 s, 11 s) so the burst never lands on the same beat
-        // twice running. The base rule is the clean state, so the blanket
-        // `animation: none` under reduced motion leaves the line steady
-        // and fully legible.
-        css.keyframes('sb-data-glitch', {
-          '0%': Styles(raw: {'opacity': '1', 'transform': 'translateX(0)'}),
-          // ─ burst: two skips and a dim, ~95 ms apart ─
-          '34%': Styles(raw: {'opacity': '0.62', 'transform': 'translateX(-1px)'}),
-          '34.5%': Styles(raw: {'opacity': '1', 'transform': 'translateX(0)'}),
-          '35%': Styles(raw: {'opacity': '0.78', 'transform': 'translateX(1px)'}),
-          '35.4%': Styles(raw: {'opacity': '1', 'transform': 'translateX(0)'}),
-          '36%': Styles(raw: {'opacity': '0.5'}),
-          '36.5%': Styles(raw: {'opacity': '1'}),
-          // ─ long stable, then one tick on its own ─
-          '78%': Styles(raw: {'opacity': '0.7', 'transform': 'translateX(-1px)'}),
-          '78.4%': Styles(raw: {'opacity': '1', 'transform': 'translateX(0)'}),
-          '100%': Styles(raw: {'opacity': '1', 'transform': 'translateX(0)'}),
-        }),
-        // Keyframe: sb-press-attract
-        // The instruction and the rocker are the same sentence said in
-        // two places, half a screen apart: the words are in the middle of
-        // the display and the control they name is a 52x22 switch down on
-        // the faceplate. Nothing in the composition connects them, and a
-        // first-time visitor has no reason to assume they are related.
-        //
-        // What connects them is common fate. This is `power-attract`'s
-        // cycle to the frame - 2.4 s, ease-in-out, dim at 0 and 100,
-        // amber at 50 - so the two swell and fade in step, in the same
-        // hue, and get read as one thing. Deliberately not a translation
-        // of the shape: a glow that grows around a word is the type
-        // equivalent of a glow that grows around a moulding.
-        //
-        // The phase matters as much as the period, and it holds for free:
-        // both elements are in the first paint, so both cycles start on
-        // the same frame and neither is ever restarted while the radio is
-        // off. Anything that re-mounted one of them would break the
-        // pairing without breaking anything that looks broken - if this
-        // ever stops reading as a pair, look there first.
-        css.keyframes('sb-press-attract', {
-          // The trough decides the contrast, not the average: 0.78 keeps
-          // #c99a4e at 5.09:1 on the black screen for the whole cycle.
-          // Anything deeper is a word that is only readable half the time.
-          '0%, 100%': Styles(
-            opacity: 0.78,
-            raw: {'text-shadow': '0 0 5px rgba(232,160,53,0.20)'},
-          ),
-          '50%': Styles(
-            opacity: 1,
-            raw: {
-              'text-shadow':
-                  '0 0 9px rgba(232,160,53,0.55), '
-                  '0 0 20px rgba(232,160,53,0.28)',
-            },
-          ),
         }),
         // Keyframe: band-sweep
         // Crossing between FM and AM. Previously this was the LCD digits
@@ -925,17 +846,8 @@ void main() {
               'border-color': 'rgba(232,160,53,0.55)',
             },
           ),
-          // Hints appear at full strength rather than fading up. The
-          // standby instruction is in the same position: with its cycle
-          // gone it holds the lit end of it, so the only copy that tells
-          // a first-time visitor what to do never sits at a trough.
-          //
-          // That is also what keeps it paired with the rocker here. The
-          // two are linked by moving together, and nothing moves in this
-          // block - but both are pinned to the bright end of the same
-          // cycle in the same hue, so the association survives as matched
-          // contrast instead of as matched motion.
-          css('.tune-hint, .sb-press').styles(raw: {'opacity': '1'}),
+          // Hints appear at full strength rather than fading up.
+          css('.tune-hint').styles(raw: {'opacity': '1'}),
           // Grain, scanlines and the phosphor mask stay as static texture:
           // they carry the CRT look but none of them need to move to do it.
           // The noise layer is the one exception - held still it reads as a
