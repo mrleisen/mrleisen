@@ -7,15 +7,6 @@ import 'package:jaspr/server.dart';
 import 'app.dart';
 import 'main.server.options.dart';
 
-/// The standby needle while it is displaced by `sb-needle-jump`.
-///
-/// Brightness and saturation together, not one or the other: dropping only
-/// the brightness gives a dark but still vivid red that reads as a second
-/// needle, and dropping only the saturation gives a bright pink one. Both
-/// at once give a dead bar, which is what a pointer in the wrong place for
-/// 100 ms should look like.
-const String _sbNeedleDead = 'brightness(0.5) saturate(0.72)';
-
 void main() {
   Jaspr.initializeApp(
     options: defaultServerOptions,
@@ -412,20 +403,20 @@ void main() {
           '50%': Styles(opacity: 1),
         }),
         // Keyframe: power-attract
-        // Slow amber swell on the power rocker while the radio has never
-        // been switched on. Everything on this page lives behind that one
-        // 52x22 control, so if a first-time visitor doesn't find it they
-        // see a black screen and leave. The pulse is deliberately slow
-        // (2.4 s) and warm rather than a blink - it should read as a
-        // standby lamp on the hardware, not as a notification badge.
+        // Slow amber swell on the power rocker whenever the radio is off.
+        // Everything on this page lives behind that one 52x22 control, so
+        // if a first-time visitor doesn't find it they see a black screen
+        // and leave. The pulse is deliberately slow (2.4 s) and warm
+        // rather than a blink - it should read as a standby lamp on the
+        // hardware, not as a notification badge.
         //
-        // It is now the only invitation on the off screen - the standby
-        // poster used to spell the instruction out in words above the
-        // faceplate and no longer does - so weakening this pulse costs
-        // the whole cue rather than half of it.
-        //
-        // Retired for good the first time the radio is powered on, so a
-        // returning visitor never sees it.
+        // It is the only thing that moves anywhere in the off state. The
+        // standby poster used to hold a breathing dial scale, a drifting
+        // needle and two lines of type, and all of it is gone; what is
+        // left is a dark housing and this. Weaken it, retime it or gate
+        // it behind a first-visit flag again and the off screen becomes a
+        // still image of a dead object - see `_showPowerAttract`, which
+        // used to do exactly that.
         css.keyframes('power-attract', {
           '0%, 100%': Styles(
             raw: {
@@ -445,112 +436,6 @@ void main() {
               'border-color': 'rgba(232,160,53,0.55)',
             },
           ),
-        }),
-        // Keyframe: sb-scale-breathe
-        // The dial scale on the standby poster, breathing. It is the only
-        // thing that moves in the empty half of the off state, which is
-        // the entire reason that half reads as hardware with the mains
-        // connected rather than as a page that failed to load.
-        //
-        // Run by two elements - the line itself (`.sb-rule::before`) and
-        // the tick marks above it - because they are one drawn object and
-        // a scale whose ticks hold still while its line swells is two
-        // objects. Both are in the first paint and neither is remounted
-        // while the radio is off, so they share a phase for free.
-        //
-        // 6.5 s, deliberately off the 2.4 s the rocker's `power-attract`
-        // runs at. That pulse is asking to be pressed; this is only the
-        // receiver idling. If they beat together the screen and the
-        // faceplate would read as one blinking interface, and the switch
-        // would stop being the thing singled out. It is also grey rather
-        // than amber, so it never competes with the one warm cue on the
-        // page.
-        //
-        // The needle standing on this scale is pointedly NOT in here: it
-        // is a mechanical pointer, and a pointer that pulses is a light.
-        //
-        // The base rule holds the *lit* end of this cycle, so the blanket
-        // `animation: none` under reduced motion leaves a fully drawn
-        // scale rather than one stranded at half brightness.
-        css.keyframes('sb-scale-breathe', {
-          '0%, 100%': Styles(opacity: 0.5),
-          '50%': Styles(opacity: 1),
-        }),
-        // Keyframe: sb-needle-drift
-        // The pointer on the standby scale, hunting. A dial needle at
-        // rest is never quite at rest - it sits in the slack of its drive
-        // cord and creeps a hair either way - and that is the only kind
-        // of motion this part is allowed. Position, never brightness:
-        // the scale behind it is lit and breathes, this is mechanical and
-        // wanders, and keeping the two kinds of movement on the two kinds
-        // of part is what stops the poster reading as animated decoration.
-        //
-        // Not a pendulum. A sine between two extremes is a metronome, and
-        // a metronome is a third tempo on a screen that already has two.
-        // The stops are uneven and it lingers off-centre, so at any given
-        // glance it is somewhere slightly different without ever looking
-        // like it is keeping time. 11 s is long enough that the motion is
-        // read as drift rather than as an animation playing.
-        //
-        // Amplitude is capped at 3px on purpose - see the note on
-        // `.sb-needle` for why that number is the readout's own
-        // resolution rather than a taste call.
-        //
-        // Runs on `translate`, folding the centring offset into every
-        // frame, so that `transform` stays free for `sb-needle-jump`.
-        // The two are separate properties and compose (translate first,
-        // then transform), which is the only way both can move the same
-        // needle: two animations on one property do not blend, the last
-        // one declared simply wins. Hence the -50% restated everywhere -
-        // it is the cost of the needle being able to drift and glitch at
-        // once, and if it goes missing from one frame the needle jumps
-        // half its width sideways for that frame only.
-        css.keyframes('sb-needle-drift', {
-          '0%, 100%': Styles(raw: {'translate': 'calc(-50% - 2.5px) -50%'}),
-          '28%': Styles(raw: {'translate': 'calc(-50% + 3px) -50%'}),
-          '44%': Styles(raw: {'translate': 'calc(-50% + 1.5px) -50%'}),
-          '62%': Styles(raw: {'translate': 'calc(-50% - 3px) -50%'}),
-          '82%': Styles(raw: {'translate': 'calc(-50% - 1px) -50%'}),
-        }),
-        // Keyframe: sb-needle-jump
-        // The needle tearing off its position. This used to be half of a
-        // pair - the microtype line under it dropped the same frames on
-        // the same timeline, one fault seen in two places. That line is
-        // gone, so this is now the whole fault, and it carries on alone
-        // at 19 s: the timing was picked against the other cycles on the
-        // screen, not against the line, and it is the only thing left up
-        // here that ever behaves like a machine with a loose contact.
-        //
-        // The distances are whole multiples of 26px, which is the tick
-        // pitch on `.sb-ticks` - the needle jumps by whole marks rather
-        // than by an arbitrary number of pixels, so even mid-fault it
-        // lands where a needle could actually land.
-        //
-        // This is allowed to be large where the drift is capped at 3px,
-        // and the difference is the point. The drift is the resting state
-        // and has to keep agreeing with the frequency the dial is parked
-        // on; this is visibly a fault, gone in a tenth of a second, and a
-        // fault that only moves things by a hair does not read as one.
-        // Displaced frames are also dulled, and that is what sells the
-        // jump as a fault rather than as the needle having genuinely
-        // moved: a pointer that is really there is lit like one, and this
-        // thing is a bar in the wrong place for a tenth of a second.
-        // `filter` rather than a second colour, because it takes the
-        // #ff2828 and its red halo down together - swapping only
-        // `background-color` would leave a bright glow around a dead bar.
-        css.keyframes('sb-needle-jump', {
-          '0%': Styles(raw: {'transform': 'translateX(0)', 'filter': 'none'}),
-          // ─ the burst: three throws, ~95 ms apart ─
-          '34%': Styles(raw: {'transform': 'translateX(-52px)', 'filter': _sbNeedleDead}),
-          '34.5%': Styles(raw: {'transform': 'translateX(0)', 'filter': 'none'}),
-          '35%': Styles(raw: {'transform': 'translateX(26px)', 'filter': _sbNeedleDead}),
-          '35.4%': Styles(raw: {'transform': 'translateX(0)', 'filter': 'none'}),
-          '36%': Styles(raw: {'transform': 'translateX(-26px)', 'filter': _sbNeedleDead}),
-          '36.5%': Styles(raw: {'transform': 'translateX(0)', 'filter': 'none'}),
-          // ─ the lone late tick ─
-          '78%': Styles(raw: {'transform': 'translateX(52px)', 'filter': _sbNeedleDead}),
-          '78.4%': Styles(raw: {'transform': 'translateX(0)', 'filter': 'none'}),
-          '100%': Styles(raw: {'transform': 'translateX(0)', 'filter': 'none'}),
         }),
         // Keyframe: band-sweep
         // Crossing between FM and AM. Previously this was the LCD digits
@@ -834,9 +719,11 @@ void main() {
           ),
           // Panels cross-fade instead of tearing into focus.
           css('.panel-fx').styles(raw: {'filter': 'none'}),
-          // The power rocker still has to be findable. With the pulse
-          // gone it holds the lit end of that pulse permanently, so the
-          // cue survives as contrast instead of as movement.
+          // The power rocker still has to be findable, and here it is the
+          // whole of the off state's design - nothing else on that screen
+          // moves or is lit. With the pulse suppressed it holds the lit
+          // end of that pulse permanently, so the cue survives as
+          // contrast instead of as movement.
           css('.power-rocker.power-attract').styles(
             raw: {
               'box-shadow':

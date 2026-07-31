@@ -125,8 +125,8 @@ class RadioDial extends StatefulComponent {
   /// UI language, used only for the onboarding microcopy.
   final Lang lang;
 
-  /// Radio is off *and* has never been switched on: also pulse the
-  /// rocker. Retired permanently after the first power-on.
+  /// Radio is off: pulse the rocker. True on every power-off, not only
+  /// the first one - it is the only motion the off state has left.
   final bool showPowerAttract;
 
   /// Radio is warm but the dial has never been moved. Prints the tuning
@@ -633,13 +633,12 @@ class RadioDialState extends State<RadioDial> {
             span(classes: 'brand-sub', [Component.text('AM/FM STEREO RECEIVER')]),
           ]),
           div(classes: 'indicator-row', [
-            // The "PRESS ON" silkscreen that used to sit here has moved
-            // into the standby poster in `app.dart`. It is the same
-            // instruction, shown on the same condition; it is now the
-            // closing line of a composition instead of a label crammed
-            // into the busiest corner of the faceplate, where it was
-            // competing with the rocker, MEM and both band pills for the
-            // one place a first-time visitor is least likely to look.
+            // There is no "PRESS ON" silkscreen here, and no instruction
+            // anywhere else either - it lived here, then moved into the
+            // standby poster, and is now gone. The switch has to carry
+            // the invitation on its own, which is what `power-attract`
+            // below is for: the pulse is the whole cue, so treat it as
+            // load-bearing rather than as decoration on a control.
             div(
               classes:
                   'power-rocker${powered ? ' power-on' : ''}'
@@ -1268,7 +1267,8 @@ class RadioDialState extends State<RadioDial> {
     // Power rocker stays interactive even when the panel is dimmed
     // (powered off) - it's the only way back on.
     css('.power-rocker').styles(raw: {'pointer-events': 'auto'}),
-    // Slow amber swell while the radio has never been switched on.
+    // Slow amber swell whenever the radio is off - the only thing moving
+    // on the whole screen while it is.
     css('.power-rocker.power-attract').styles(
       raw: {'animation': 'power-attract 2.4s ease-in-out infinite'},
     ),
