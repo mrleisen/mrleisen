@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
@@ -43,14 +44,17 @@ void unlockAudioContext() {
 /// Web-Audio engine that mimics a real FM radio mid-tuning.
 ///
 /// The graph is two crackly noise paths summed into a master static
-/// gain, plus a heterodyne whistle oscillator that mirrors the physical
-/// "beat frequency" between the tuner and the nearest carrier:
+/// gain, a heterodyne whistle oscillator that mirrors the physical
+/// "beat frequency" between the tuner and the nearest carrier, and the
+/// station's own programme:
 ///
 ///   sparseNoiseA(loop) ─► highpass(~4 kHz, Q≈0.7) ─► highGain ─┐
 ///                                                              ├─► staticGain ─► destination
 ///   sparseNoiseB(loop) ─► lowpass(~800 Hz, Q≈0.7) ──► lowGain ─┘
 ///
 ///   sineOsc ──► whistleGain ─► destination
+///
+///   <audio loop> ──► mediaSource ──► musicGain ─► destination
 ///
 /// Why this shape:
 /// * The noise buffers are "sparse" (mostly zeros, occasional ±1 spikes)
@@ -80,6 +84,8 @@ class RadioAudio extends StatefulComponent {
     required this.noiseLevel,
     required this.isTuning,
     required this.isPowered,
+    this.signalStrength = 0.0,
+    this.musicSrc,
     this.volume = 0.0,
     super.key,
   });
@@ -88,6 +94,15 @@ class RadioAudio extends StatefulComponent {
   final Band band;
   final double noiseLevel;
   final bool isTuning;
+
+  /// Proximity to the nearest station, 0 at the tolerance edge and 1 on
+  /// the carrier. Drives the music up as [noiseLevel] takes the static
+  /// down, so the two cross rather than swap.
+  final double signalStrength;
+
+  /// What the nearest in-range station is broadcasting, or null when the
+  /// dial is in dead air. Changing this swaps the stream.
+  final String? musicSrc;
 
   /// Whether the radio is powered on. The audio graph is only built
   /// once this flips to true - [unlockAudioContext] must have run in
@@ -120,6 +135,49 @@ class _RadioAudioState extends State<RadioAudio> {
   web.OscillatorNode? _whistle;
   web.GainNode? _whistleGain;
 
+  // ── the programme ──
+  // One element and one MediaElementAudioSourceNode for all twelve
+  // stations, with `src` swapped as the dial moves, rather than twelve of
+  // each. A source node is permanently bound to the element it was
+  // created from, but the element is free to change what it is playing,
+  // so one pair covers the whole band plan - and only one track is ever
+  // in flight, which is the difference between streaming 3 MB and
+  // streaming 36.
+  web.HTMLAudioElement? _musicEl;
+  web.GainNode? _musicGain;
+
+  /// The `src` currently loaded, so a re-render that changes nothing
+  /// doesn't restart the track. Compared before every assignment.
+  String? _loadedMusicSrc;
+
+  /// Where each station was when the dial left it, keyed by `src`.
+  ///
+  /// Tuning away and back resumes the track rather than restarting it,
+  /// which is the closer lie: a real station does not begin again because
+  /// you came back. It is a lie either way - the recording is paused, not
+  /// still playing - but the wrong half of a song is a better wrong than
+  /// the same eight bars every time the dial passes.
+  final Map<String, double> _musicPos = <String, double>{};
+
+  /// Tracks that failed to load, and are not to be asked for again.
+  ///
+  /// Without this a station whose file is missing is retried on every
+  /// tune event - and every tune event is a dial step, so easing past a
+  /// 404 fires a burst of identical failing requests. One attempt per
+  /// track per session is enough to establish that it is not there.
+  final Set<String> _deadMusicSrc = <String>{};
+
+  /// Pending pause, armed when the music fades out so the element is not
+  /// stopped mid-fade. Cancelled if the dial comes back into range.
+  Timer? _musicPauseTimer;
+
+  /// The element's `error` handler, which is what marks a track dead.
+  JSFunction? _musicErrorListener;
+
+  /// One-shot `loadedmetadata` handler for the seek-on-swap, held so it
+  /// can be detached if another swap happens before it fires.
+  JSFunction? _musicSeekListener;
+
   bool _sourcesStarted = false;
 
   // Guards _resumeAndApply against concurrent re-entry while an
@@ -146,6 +204,29 @@ class _RadioAudioState extends State<RadioAudio> {
   /// Static peak amplitude when the user is actively tuning. Cap on
   /// the sum of the high-pass + low-pass paths.
   static const double _staticCeiling = 0.12;
+
+  /// Programme peak amplitude, reached on the carrier.
+  ///
+  /// Deliberately low. This is a station playing under a piece of
+  /// hardware, not a player - the reference is the music in a lobby,
+  /// which you notice second. It still sits above [_staticCeiling]
+  /// (0.12) because a mastered track has to win against the noise it is
+  /// replacing, but only just: at the crossover the two are audible at
+  /// once, which is the entire point of the crossfade.
+  ///
+  /// Everything here is scaled by the user's volume control on top, so
+  /// this is the ceiling of the ceiling.
+  static const double _musicCeiling = 0.18;
+
+  /// Fade applied to the programme as the dial moves. Slower than
+  /// [_gainRamp]: static reacts instantly because it is noise, music
+  /// swells because it is a signal arriving.
+  static const double _musicRamp = 0.45;
+
+  /// How long the element keeps running after the music has faded to
+  /// nothing before it is actually paused. Covers the fade, plus enough
+  /// slack that flicking across a station and back does not stutter.
+  static const Duration _musicPauseDelay = Duration(milliseconds: 900);
 
   /// Idle static volume, expressed as a fraction of [_staticCeiling].
   /// When the user releases the dial the static drops to this level
@@ -200,6 +281,25 @@ class _RadioAudioState extends State<RadioAudio> {
     if (kIsWeb) {
       if (_visibilityListener != null) {
         web.document.removeEventListener('visibilitychange', _visibilityListener);
+      }
+      _musicPauseTimer?.cancel();
+      _detachMusicSeekListener();
+      final musicEl = _musicEl;
+      if (musicEl != null) {
+        try {
+          if (_musicErrorListener != null) {
+            musicEl.removeEventListener('error', _musicErrorListener);
+            _musicErrorListener = null;
+          }
+          musicEl.pause();
+          // Emptying the src aborts an in-flight fetch. Removing the
+          // node alone does not: a media element that is still loading
+          // keeps its request alive after it leaves the document.
+          musicEl.removeAttribute('src');
+          musicEl.load();
+          musicEl.remove();
+        } catch (_) {}
+        _musicEl = null;
       }
       if (_ctx != null) {
         try {
@@ -342,6 +442,71 @@ class _RadioAudioState extends State<RadioAudio> {
 
     osc.connect(wg);
     wg.connect(ctx.destination);
+
+    _buildMusicPath(ctx);
+  }
+
+  /// The programme path: a detached looping `<audio>` element routed
+  /// into the same context as everything else.
+  ///
+  /// An element rather than a decoded AudioBuffer because these are full
+  /// tracks: `decodeAudioData` would pull each one into memory whole and
+  /// hold it there, for twelve stations, to play one at a time. The
+  /// element streams and the browser handles the buffering.
+  ///
+  /// Routed through the context rather than driven by `element.volume`
+  /// so the crossfade can use the same `linearRampToValueAtTime` the
+  /// static and whistle use. `element.volume` has no automation, so
+  /// fading it means stepping it on a timer - a hand-rolled second
+  /// implementation of what the graph already does, and one that would
+  /// drift out of step with the fade it is supposed to be crossing.
+  void _buildMusicPath(web.AudioContext ctx) {
+    try {
+      final el = web.HTMLAudioElement()
+        ..loop = true
+        // Nothing is fetched until the dial first comes near a station.
+        // The site opens on dead air by design, and a visitor who never
+        // tunes anywhere should never pay for a track.
+        ..preload = 'none'
+        ..crossOrigin = 'anonymous';
+      // The element is in the document but never rendered. Detached
+      // media elements are legal per spec and work in Chrome and
+      // Firefox; Safari has historically been unreliable about playing
+      // them, and appending costs one hidden node.
+      el.style.display = 'none';
+      web.document.body?.append(el);
+      _musicEl = el;
+
+      // A station whose file is missing or unplayable becomes a station
+      // that broadcasts a carrier and nothing else. That is a state the
+      // receiver already has a name for, so it needs no handling beyond
+      // not asking again.
+      final onError = ((web.Event _) {
+        final src = _loadedMusicSrc;
+        if (src == null) return;
+        _deadMusicSrc.add(src);
+        final gain = _musicGain;
+        final ctx = _ctx;
+        if (gain != null && ctx != null) {
+          _ramp(gain.gain, 0, ctx.currentTime, _musicRamp);
+        }
+      }).toJS;
+      _musicErrorListener = onError;
+      el.addEventListener('error', onError);
+
+      final source = ctx.createMediaElementSource(el);
+      final mg = ctx.createGain()..gain.value = 0;
+      _musicGain = mg;
+
+      source.connect(mg);
+      mg.connect(ctx.destination);
+    } catch (e) {
+      // A browser that refuses the media-element source leaves the rest
+      // of the radio intact - the station simply broadcasts nothing.
+      print('Music path build failed: $e');
+      _musicEl = null;
+      _musicGain = null;
+    }
   }
 
   /// Build a "sparse-noise" buffer: mostly silence with occasional
@@ -436,6 +601,12 @@ class _RadioAudioState extends State<RadioAudio> {
     final tuning = component.isTuning;
     final volume = component.volume.clamp(0.0, 1.0);
 
+    // Ahead of the power and volume short-circuits below, not after
+    // them: the programme has to be faded out and paused on power-off
+    // and at volume zero, and both of those branches return early. It
+    // re-checks the same two conditions itself.
+    _applyMusic(now, volume);
+
     // Powered off - fade everything to silence. The graph stays wired
     // so power-on restores smoothly without rebuilding nodes.
     if (!component.isPowered) {
@@ -521,6 +692,141 @@ class _RadioAudioState extends State<RadioAudio> {
       _ramp(_whistle!.frequency, whistleHz, now, _paramRamp);
       _scheduledWhistleHz = whistleHz;
     }
+  }
+
+  // ── the programme ──
+
+  /// Rides the station's track against the static.
+  ///
+  /// The gain is `signalStrength` straight through, which is the whole
+  /// reason the two cross cleanly: static is driven by `noiseLevel`,
+  /// `noiseLevel` is derived from the same signal, so as one falls the
+  /// other rises on the identical curve. Nothing here re-derives the
+  /// crossover point - there isn't one to get wrong.
+  ///
+  /// That curve already has the knee ([_signalKnee] in `station.dart`),
+  /// so the music stays almost inaudible across the outer band and
+  /// arrives in the last third, the same way the carrier does. Coming in
+  /// linearly instead would announce the station long before the dial is
+  /// anywhere near it.
+  void _applyMusic(double now, double volume) {
+    final gain = _musicGain;
+    final el = _musicEl;
+    if (gain == null || el == null) return;
+
+    final src = component.musicSrc;
+    // Dead air, powered off, muted, or a track that already failed to
+    // load - all the same thing to the programme. Fade it out and let
+    // the pause follow the fade.
+    if (src == null || _deadMusicSrc.contains(src) || !component.isPowered || volume <= 0.0) {
+      _ramp(gain.gain, 0, now, _musicRamp);
+      _armMusicPause();
+      return;
+    }
+
+    _swapMusicSrc(src);
+
+    final target = _musicCeiling * component.signalStrength.clamp(0.0, 1.0) * volume;
+    _ramp(gain.gain, target, now, _musicRamp);
+
+    if (target <= 0.0) {
+      _armMusicPause();
+      return;
+    }
+
+    _musicPauseTimer?.cancel();
+    _musicPauseTimer = null;
+    _ensureMusicPlaying(el);
+  }
+
+  /// Points the element at [src], remembering where the outgoing station
+  /// was and restoring where the incoming one was left.
+  ///
+  /// The seek has to wait for `loadedmetadata` - `currentTime` on an
+  /// element that has not loaded its header yet is either ignored or
+  /// throws, depending on the browser.
+  void _swapMusicSrc(String src) {
+    if (_loadedMusicSrc == src) return;
+    final el = _musicEl;
+    if (el == null) return;
+
+    _rememberMusicPosition();
+    _detachMusicSeekListener();
+    _loadedMusicSrc = src;
+    el.src = src;
+
+    final resumeAt = _musicPos[src] ?? 0.0;
+    if (resumeAt <= 0.0) return;
+
+    late final JSFunction handler;
+    handler = ((web.Event _) {
+      try {
+        final dur = el.duration;
+        // A resume point past the end means the file was replaced by a
+        // shorter one since the position was taken. Start over rather
+        // than seeking into nothing.
+        if (dur.isFinite && resumeAt < dur) el.currentTime = resumeAt;
+      } catch (_) {
+        // Seeking is a nicety; a track that starts from the top is not
+        // a failure worth propagating.
+      }
+      el.removeEventListener('loadedmetadata', handler);
+      if (identical(_musicSeekListener, handler)) _musicSeekListener = null;
+    }).toJS;
+    _musicSeekListener = handler;
+    el.addEventListener('loadedmetadata', handler);
+  }
+
+  /// Starts playback, tolerating a browser that refuses.
+  ///
+  /// The power switch is a real gesture and unlocks the context, which
+  /// is normally enough for the document to be allowed to play media.
+  /// Where it is not, the rejection is swallowed: every tune event calls
+  /// [_applyState] again and every tune event is itself a gesture, so
+  /// the retry is the next thing the user does rather than a loop.
+  void _ensureMusicPlaying(web.HTMLAudioElement el) {
+    if (!el.paused) return;
+    try {
+      el.play().toDart.catchError((Object _) => null);
+    } catch (_) {
+      // Synchronous throw on a browser that has no play() promise.
+    }
+  }
+
+  /// Pauses the element once the fade has finished.
+  ///
+  /// Pausing on the same frame as the fade starts would cut the music
+  /// dead at full level; the delay covers the ramp with slack to spare,
+  /// so sweeping across a station and back never stutters.
+  void _armMusicPause() {
+    final el = _musicEl;
+    if (el == null || el.paused) return;
+    _musicPauseTimer?.cancel();
+    _musicPauseTimer = Timer(_musicPauseDelay, () {
+      if (!mounted) return;
+      final target = _musicEl;
+      if (target == null || target.paused) return;
+      _rememberMusicPosition();
+      try {
+        target.pause();
+      } catch (_) {}
+    });
+  }
+
+  /// Files the current playhead under the track that is loaded.
+  void _rememberMusicPosition() {
+    final el = _musicEl;
+    final src = _loadedMusicSrc;
+    if (el == null || src == null) return;
+    final t = el.currentTime;
+    if (t.isFinite && t > 0) _musicPos[src] = t;
+  }
+
+  void _detachMusicSeekListener() {
+    final handler = _musicSeekListener;
+    if (handler == null) return;
+    _musicEl?.removeEventListener('loadedmetadata', handler);
+    _musicSeekListener = null;
   }
 
   // ── helpers ──
