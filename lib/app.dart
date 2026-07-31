@@ -939,24 +939,12 @@ class AppState extends State<App> {
     final idleTop = _lang == Lang.es ? 'SIN PORTADORA' : 'NO CARRIER';
     final idleSub = _lang == Lang.es ? 'BARRIENDO BANDA' : 'SCANNING BAND';
 
-    // Standby poster. The lamp stands on the dial line at the frequency
-    // the readout underneath it claims, so its position is a fact about
-    // the receiver rather than a composition choice - park on 108.0 and
-    // it sits at the right-hand end of the line.
+    // Standby poster. The needle stands on the dial line at the tuned
+    // frequency, so its position is a fact about the receiver rather than
+    // a composition choice - park on 108.0 and it sits at the right-hand
+    // end of the line. Nothing prints that number any more, but the
+    // pointer is still answering to it.
     final sbPos = ((_frequency - cfg.minFreq) / (cfg.maxFreq - cfg.minFreq) * 100).clamp(0.0, 100.0);
-    final sbFreq = _band == Band.fm ? _frequency.toStringAsFixed(1) : _frequency.toInt().toString();
-    final sbState = _lang == Lang.es ? 'EN ESPERA' : 'STANDBY';
-    // Names the object, not the gesture. "PRESS ON" was the switch's own
-    // legend read aloud, which asks the visitor to already know that the
-    // legend belongs to that rocker - the exact thing they don't know
-    // yet. A sentence about the radio is understood before the control is
-    // found, and then the pulse pairs it with the rocker.
-    //
-    // "Enciende" rather than "prende": the switch's accessible name is
-    // already "Encendido" and the live region says "Radio apagada", so
-    // this is the verb the receiver already speaks about itself. One
-    // string decides it if that ever changes.
-    final sbPress = _lang == Lang.es ? 'ENCIENDE LA RADIO' : 'TURN ON THE RADIO';
 
     final rootClass = 'signal-app ${_isPowered ? 'powered-on' : 'powered-off'}';
     final crtClass = switch (_crtPhase) {
@@ -1069,10 +1057,11 @@ class AppState extends State<App> {
         // the last beat of switching off rather than glowing through the
         // flash.
         //
-        // Decorative throughout: the live region already announces "radio
-        // off", and the power switch carries its own name and state, so
-        // every string here is a second telling of something assistive
-        // tech has been given properly.
+        // Decorative throughout - there is no text left in here at all,
+        // and there is nothing missing: the live region already announces
+        // "radio off" and the power switch carries its own name and
+        // state, so screen-reader users are told everything this layer
+        // draws and told it properly.
         div(
           classes: 'standby${_crtPhase == 'off' ? '' : ' standby-out'}',
           attributes: {'aria-hidden': 'true'},
@@ -1088,6 +1077,13 @@ class AppState extends State<App> {
             // powered dial carries, which is the point: a scale lamp goes
             // out with the mains, a mechanical pointer stays where it was
             // parked.
+            //
+            // This and the housing are the whole poster. The microtype
+            // line and the instruction that used to sit above and below
+            // it are gone: an object with no lettering on it is read as
+            // an object, and the amber pulse on the rocker is left to
+            // carry the invitation on its own, down on the faceplate
+            // where the switch actually is.
             div(classes: 'sb-rule', [
               span(classes: 'sb-ticks', []),
               span(
@@ -1096,19 +1092,6 @@ class AppState extends State<App> {
                 [],
               ),
             ]),
-            // Model, state, frequency. Instrument microtype, set in the
-            // face the hardware already prints its lettering in.
-            div(classes: 'sb-data', [
-              span(classes: 'sb-mark', [Component.text('RCHF')]),
-              span(classes: 'sb-sep', []),
-              span(classes: 'sb-state', [Component.text(sbState)]),
-              span(classes: 'sb-sep', []),
-              span(classes: 'sb-freq', [Component.text(sbFreq)]),
-            ]),
-            // The only instruction on the page. It used to be silkscreen
-            // beside the rocker; it is now the closing line of the
-            // composition, which is where the eye already is.
-            div(classes: 'sb-press', [Component.text(sbPress)]),
           ],
         ),
 
@@ -1600,11 +1583,11 @@ class AppState extends State<App> {
     // dial, because it is the same part - short enough to cross the line
     // and its ticks rather than a window it no longer has. `left` is set
     // inline from the tuned frequency, so the pointer stands on the value
-    // the readout above it claims.
+    // the powered dial will show the moment the tube comes up.
     //
     // It moves in two ways, and neither is a pulse. It drifts - hunting
-    // sideways within +/-3px - and it tears off its position entirely
-    // whenever the readout above it drops a frame. The scale beside it
+    // sideways within +/-3px - and roughly every 19 s it tears off its
+    // position entirely for a tenth of a second. The scale beside it
     // changes brightness because it is being lit; this changes position
     // because it is a pointer on a spindle. Two kinds of motion for two
     // kinds of part, which is what keeps the pair reading as hardware
@@ -1616,12 +1599,13 @@ class AppState extends State<App> {
     //
     // +/-3px is not arbitrary. The scale is 600px at full width, so on FM
     // (20.5 MHz across it) 3px is 0.1 MHz - exactly one tuning step, the
-    // finest thing the readout can say. On AM it is under 6 kHz against a
-    // 10 kHz step. The pointer therefore never wanders off the value
-    // `.sb-freq` is printing: it hunts inside the resolution of the
-    // number, the way a real one sits inside the slack of its drive cord.
-    // Widen this and the poster starts claiming a frequency it is not
-    // pointing at.
+    // finest thing the dial can resolve. On AM it is under 6 kHz against
+    // a 10 kHz step. The pointer therefore never wanders off the value it
+    // is parked on: it hunts inside the resolution of the tuning, the way
+    // a real one sits inside the slack of its drive cord. Widen this and
+    // the poster parks on one frequency and points at another - which the
+    // visitor will see the instant they switch on and the lit dial
+    // disagrees with where the needle was.
     css('.sb-needle').styles(
       position: Position.absolute(top: 50.percent),
       zIndex: ZIndex(1),
@@ -1644,94 +1628,6 @@ class AppState extends State<App> {
         'animation':
             'sb-needle-drift 11s ease-in-out infinite, '
             'sb-needle-jump 19s step-end infinite',
-      },
-    ),
-
-    // ── model / state / frequency ──
-    // Set in Chakra Petch because this is the hardware talking about
-    // itself, which is exactly the role that face holds everywhere else
-    // on the panel.
-    css('.sb-data').styles(
-      display: Display.flex,
-      position: Position.absolute(
-        bottom: Unit.expression('calc(var(--panel-h) + var(--free-h) * 0.26 + 30px)'),
-        left: 50.percent,
-      ),
-      flexDirection: FlexDirection.row,
-      alignItems: AlignItems.center,
-      gap: Gap(column: 14.px),
-      fontFamily: const FontFamily.list([
-        FontFamily('Chakra Petch'),
-        FontFamilies.monospace,
-      ]),
-      fontSize: Unit.pixels(10),
-      fontWeight: FontWeight.w700,
-      textTransform: TextTransform.upperCase,
-      letterSpacing: 0.34.em,
-      raw: {
-        'white-space': 'nowrap',
-        // Centring on `translate`, the glitch's 1px skips on `transform`
-        // - the same split the needle uses, for the same reason.
-        'translate': '-50% 0',
-        'animation': 'sb-data-glitch 19s step-end infinite',
-      },
-    ),
-    // The model number is the dimmest of the three - it is the only one
-    // that never changes, so it is the only one that can afford to be
-    // read last. Still 5.12:1: dim is not the same as illegible.
-    css('.sb-mark').styles(color: const Color('#7d7d88')),
-    // Brightest, because it is the answer to the question the black
-    // screen raises.
-    css('.sb-state').styles(color: const Color('#b4b4be')),
-    // Amber, because it is a value the receiver is holding rather than a
-    // word printed on it. Tracking is pulled in: digits at 0.34em read
-    // as separate numbers.
-    css('.sb-freq').styles(
-      color: const Color('#a8823f'),
-      raw: {'letter-spacing': '0.2em'},
-    ),
-    css('.sb-sep').styles(
-      width: 3.px,
-      height: 3.px,
-      backgroundColor: const Color('#4a4a52'),
-    ),
-
-    // ── the instruction ──
-    // Sits below the dial line, closing the composition. It is the only
-    // thing on the page telling a first-time visitor what to do, so the
-    // pulse bottoms out at 0.78 (5.09:1) rather than at something that
-    // looks better and is readable half the time.
-    //
-    // It runs `power-attract`'s cycle rather than one of its own, so it
-    // swells in step with the rocker it is naming - see the keyframe.
-    css('.sb-press').styles(
-      position: Position.absolute(
-        bottom: Unit.expression('calc(var(--panel-h) + var(--free-h) * 0.26 - 42px)'),
-        left: 50.percent,
-      ),
-      color: const Color('#c99a4e'),
-      fontFamily: const FontFamily.list([
-        FontFamily('IBM Plex Mono'),
-        FontFamilies.monospace,
-      ]),
-      fontSize: Unit.pixels(11),
-      fontWeight: FontWeight.w600,
-      textTransform: TextTransform.upperCase,
-      // 0.28em, not the 0.42em this carried as a two-word legend. Letter
-      // spacing is added to the word spaces as well, so heavy tracking on
-      // a sentence pushes the words apart faster than it pushes the
-      // letters apart and the line stops reading as a phrase. Wide
-      // tracking belongs to labels; this is a sentence now.
-      letterSpacing: 0.28.em,
-      raw: {
-        'text-indent': '0.28em', // compensate trailing letter-spacing
-        // The lit end of `sb-press-attract`, same as the dial scale holds
-        // the lit end of its own cycle: with the animation stripped the
-        // line stays at the top of its swell instead of at the bottom.
-        'text-shadow': '0 0 9px rgba(232,160,53,0.55), 0 0 20px rgba(232,160,53,0.28)',
-        'white-space': 'nowrap',
-        'translate': '-50% 0',
-        'animation': 'sb-press-attract 2.4s ease-in-out infinite',
       },
     ),
 
@@ -2234,17 +2130,6 @@ class AppState extends State<App> {
       // is all derived from the measured `--panel-h` / `--free-h`.
       css('.sb-body').styles(width: Unit.expression('min(720px, 86%)')),
       css('.sb-rule').styles(width: Unit.expression('min(600px, 74%)')),
-      // Three tracked words plus two separators do not fit across a
-      // phone at 0.34em. Tracking gives way before the type size does -
-      // same rule the carrier readout follows.
-      css('.sb-data').styles(
-        gap: Gap(column: 8.px),
-        letterSpacing: 0.16.em,
-      ),
-      css('.sb-press').styles(
-        letterSpacing: 0.16.em,
-        raw: {'text-indent': '0.16em'},
-      ),
       css('.carrier-monitor').styles(gap: Gap(row: 12.px)),
       css('.carrier-dashes').styles(gap: Gap(column: 12.px)),
       css('.carrier-dash').styles(fontSize: 1.9.rem),
