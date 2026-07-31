@@ -78,11 +78,28 @@ class Station {
   final String callSign;
   final String color;
 
+  /// Root-relative path to what this station broadcasts, or null for a
+  /// station that transmits nothing but a carrier.
+  ///
+  /// One A Wired Spine track per station, streamed and looped at low
+  /// level under the panel - see [RadioAudio]. The path is declared here
+  /// rather than in the audio engine because it is a fact about the
+  /// station, the same as its frequency and its colour, and because a
+  /// missing file has to be survivable: the engine treats a track that
+  /// will not load as a station with nothing on it, so the dial keeps
+  /// working and only the music is absent.
+  ///
+  /// Named by call sign rather than numbered. A numbered set silently
+  /// misaligns the moment a station is moved or the plan is reordered,
+  /// and the band plan above is reordered fairly often.
+  final String? music;
+
   const Station({
     required this.band,
     required this.frequency,
     required this.callSign,
     required this.color,
+    this.music,
   });
 }
 
@@ -99,8 +116,8 @@ const stations = <Station>[
   // 3.6 and 3.6 MHz, all comfortably clear of the 2.0 floor, with 2.0 to
   // the bottom of the band and 2.1 to the top. Perfectly even spacing is
   // available and is not used - see the note on the startup pocket.
-  Station(band: Band.fm, frequency: 89.5, callSign: 'ITNW', color: '#4EBFB0'),
-  Station(band: Band.fm, frequency: 92.4, callSign: 'BBL', color: '#D4A843'),
+  Station(band: Band.fm, frequency: 89.5, callSign: 'ITNW', color: '#4EBFB0', music: 'audio/aws-itnw.mp3'),
+  Station(band: Band.fm, frequency: 92.4, callSign: 'BBL', color: '#D4A843', music: 'audio/aws-bbl.mp3'),
   // The gap above this one is where the receiver wakes up. `_fmFreq`
   // starts at 96.5, which has to sit at least a full tolerance from
   // everything or the site opens on a half-tuned panel instead of on the
@@ -108,22 +125,22 @@ const stations = <Station>[
   // here and 2.2 from the station above, so the first frame is genuinely
   // dead air - and that constraint is exactly why the gaps are not
   // identical.
-  Station(band: Band.fm, frequency: 95.3, callSign: 'WHO', color: '#5BA4D9'),
-  Station(band: Band.fm, frequency: 98.7, callSign: 'DTU', color: '#E8944A'),
-  Station(band: Band.fm, frequency: 102.3, callSign: 'TRP', color: '#E86A8A'),
-  Station(band: Band.fm, frequency: 105.9, callSign: 'AWS', color: '#E05050'),
+  Station(band: Band.fm, frequency: 95.3, callSign: 'WHO', color: '#5BA4D9', music: 'audio/aws-who.mp3'),
+  Station(band: Band.fm, frequency: 98.7, callSign: 'DTU', color: '#E8944A', music: 'audio/aws-dtu.mp3'),
+  Station(band: Band.fm, frequency: 102.3, callSign: 'TRP', color: '#E86A8A', music: 'audio/aws-trp.mp3'),
+  Station(band: Band.fm, frequency: 105.9, callSign: 'AWS', color: '#E05050', music: 'audio/aws-aws.mp3'),
   // ── AM: idea-stage projects, one per station. ──
-  Station(band: Band.am, frequency: 660.0, callSign: 'NUM', color: '#5BC8A0'),
-  Station(band: Band.am, frequency: 820.0, callSign: 'AYU', color: '#B07CD6'),
+  Station(band: Band.am, frequency: 660.0, callSign: 'NUM', color: '#5BC8A0', music: 'audio/aws-num.mp3'),
+  Station(band: Band.am, frequency: 820.0, callSign: 'AYU', color: '#B07CD6', music: 'audio/aws-ayu.mp3'),
   // The one deliberate exception to the spacing floor: 1000 is the
   // number the station is *about* - Kiwo's universe is #10000 - and the
   // dial saying so is worth the 120 kHz to CSP instead of 160. The cost
   // is roughly 11% residual signal at the deadest point between them
   // rather than silence. 980 buys the silence back and loses the joke.
-  Station(band: Band.am, frequency: 1000.0, callSign: 'KIW', color: '#E8C04A'),
-  Station(band: Band.am, frequency: 1120.0, callSign: 'CSP', color: '#C77B4E'),
-  Station(band: Band.am, frequency: 1280.0, callSign: 'NFT', color: '#8BBF55'),
-  Station(band: Band.am, frequency: 1600.0, callSign: 'PNK', color: '#D05A8C'),
+  Station(band: Band.am, frequency: 1000.0, callSign: 'KIW', color: '#E8C04A', music: 'audio/aws-kiw.mp3'),
+  Station(band: Band.am, frequency: 1120.0, callSign: 'CSP', color: '#C77B4E', music: 'audio/aws-csp.mp3'),
+  Station(band: Band.am, frequency: 1280.0, callSign: 'NFT', color: '#8BBF55', music: 'audio/aws-nft.mp3'),
+  Station(band: Band.am, frequency: 1600.0, callSign: 'PNK', color: '#D05A8C', music: 'audio/aws-pnk.mp3'),
 ];
 
 Iterable<Station> stationsFor(Band band) => stations.where((s) => s.band == band);

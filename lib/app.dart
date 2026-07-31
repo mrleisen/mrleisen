@@ -1034,6 +1034,15 @@ class AppState extends State<App> {
           isTuning: _isTuning,
           volume: _volume,
           isPowered: _isPowered,
+          signalStrength: _signalStrength,
+          // The *nearest* station, not the active one. `_activeStation`
+          // is only set inside `lockRange` - a tenth of the window the
+          // music fades across - so keying the programme on it would
+          // make the track appear at full level the instant the dial
+          // locked, which is the crossfade this is built to avoid.
+          // `_nearestStation` is already null outside tolerance, so dead
+          // air still means silence.
+          musicSrc: _nearestStation?.music,
         ),
 
         // CRT power-on/off overlay - fills the viewport under all
