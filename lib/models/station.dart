@@ -113,10 +113,11 @@ class Station {
 /// tracks exist, pointing them all here keeps every station on the air
 /// rather than leaving ten of them silent.
 ///
-/// Ogg Vorbis. Chrome, Firefox and Edge have always played it; Safari
-/// only from 17. Anything older gets a load error, and the engine treats
-/// that as a station with nothing on it - see [Station.music]. An MP3
-/// alongside this would close that gap.
+/// Declared as Ogg Vorbis, which is what the tracks are mastered to and
+/// what Chrome, Firefox and Edge have always played. Safari learned it in
+/// 17; anything older is served the MP3 sibling of the same name instead,
+/// chosen by the audio engine at load time - the band plan does not carry
+/// the browser's problems. See `web/audio/README.md` for the convention.
 const String _programme = 'audio/aws-routine-a-hello.ogg';
 
 /// The band plan.

@@ -167,6 +167,10 @@ class _RadioAudioState extends State<RadioAudio> {
   /// track per session is enough to establish that it is not there.
   final Set<String> _deadMusicSrc = <String>{};
 
+  /// Whether this browser decodes Ogg Vorbis. Probed once, on the first
+  /// station the dial comes near; null until then.
+  bool? _canPlayOgg;
+
   /// Pending pause, armed when the music fades out so the element is not
   /// stopped mid-fade. Cancelled if the dial comes back into range.
   Timer? _musicPauseTimer;
@@ -714,7 +718,10 @@ class _RadioAudioState extends State<RadioAudio> {
     final el = _musicEl;
     if (gain == null || el == null) return;
 
-    final src = component.musicSrc;
+    // Resolved here rather than at the prop, so the dead set, the
+    // position map and the swap all key on the file actually loaded.
+    final declared = component.musicSrc;
+    final src = declared == null ? null : _resolveMusicSrc(declared);
     // Dead air, powered off, muted, or a track that already failed to
     // load - all the same thing to the programme. Fade it out and let
     // the pause follow the fade.
@@ -737,6 +744,41 @@ class _RadioAudioState extends State<RadioAudio> {
     _musicPauseTimer?.cancel();
     _musicPauseTimer = null;
     _ensureMusicPlaying(el);
+  }
+
+  /// The file this browser can actually play, for a station that
+  /// declares [declared].
+  ///
+  /// Which container decodes is a fact about the browser, not about the
+  /// station, so the band plan stays in one format and the substitution
+  /// happens down here where the codec knowledge already lives. Ogg
+  /// Vorbis is what the tracks are mastered to and is a third of the
+  /// size; Safari only learned it in 17, and every version before that
+  /// answers `canPlayType` with an empty string - which is the whole
+  /// signal, available before a single byte is requested.
+  ///
+  /// The MP3 is a sibling of the same name. A station that has no MP3
+  /// sibling 404s on a Safari old enough to need one and lands on the
+  /// missing-file path, which is the same carrier-only state the
+  /// receiver already handles - see [_deadMusicSrc].
+  String _resolveMusicSrc(String declared) {
+    if (!declared.endsWith('.ogg')) return declared;
+    if (_canPlayOgg ??= _probeOggSupport()) return declared;
+    return '${declared.substring(0, declared.length - '.ogg'.length)}.mp3';
+  }
+
+  /// Asks the browser once whether Ogg Vorbis is worth attempting.
+  bool _probeOggSupport() {
+    try {
+      // '' is the spec's "no". Both 'maybe' and 'probably' mean try it,
+      // and the error handler covers a 'maybe' that turns out to be a no.
+      final probe = _musicEl ?? web.HTMLAudioElement();
+      return probe.canPlayType('audio/ogg; codecs=vorbis').isNotEmpty;
+    } catch (_) {
+      // A browser that won't answer the question gets the format that
+      // has never needed asking.
+      return false;
+    }
   }
 
   /// Points the element at [src], remembering where the outgoing station

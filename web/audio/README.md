@@ -5,9 +5,9 @@ level while the dial is inside a station's tolerance window.
 
 ## Right now
 
-`aws-routine-a-hello.ogg` - one file, played by all twelve stations.
-Declared once as `_programme` in `lib/models/station.dart` and handed to
-every `Station.music`.
+`aws-routine-a-hello` - one track, in both encodings (see below), played
+by all twelve stations. Declared once as `_programme` in
+`lib/models/station.dart` and handed to every `Station.music`.
 
 Because the path is identical everywhere, moving from one station to
 another does **not** reload or restart it: the engine only swaps `src`
@@ -42,12 +42,20 @@ which the rest of the receiver already knows how to handle.
 
 ## Encoding
 
-Ogg Vorbis plays in Chrome, Firefox and Edge, and in Safari from 17.
-Older Safari and older iOS do not decode it and will land on the
-missing-file path - silent station, everything else intact. An MP3 next
-to the Ogg is what closes that gap; the engine takes one path per
-station, so that means picking a format rather than offering both until
-multi-source support exists.
+**Ship every track twice: `<name>.ogg` and `<name>.mp3`.**
+
+Ogg Vorbis plays in Chrome, Firefox and Edge, and in Safari from 17 -
+older Safari and older iOS do not decode it at all. Stations declare the
+`.ogg` path and nothing else; the engine probes `canPlayType` once and
+swaps the extension to `.mp3` for a browser that can't take the Ogg
+(`_resolveMusicSrc` in `lib/components/radio_audio.dart`). The `<audio>`
+element takes one `src` at a time, so this is the substitute for the
+`<source>` children a plain player would use.
+
+A track with no MP3 sibling still works everywhere Ogg works, and lands
+on the missing-file path - silent station, everything else intact - where
+it doesn't. So the pair is a requirement of reaching every browser, not
+of the engine running.
 
 128 kbps mono is plenty - the programme peaks at `_musicCeiling` (0.18)
 underneath a layer of static, so bitrate spent on the top end is
