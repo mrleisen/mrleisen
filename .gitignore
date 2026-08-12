@@ -2,7 +2,12 @@
 **/doc/api/
 .dart_tool/
 .packages
-pubspec.lock
+
+# pubspec.lock is deliberately NOT ignored. This is an application, not a
+# package: the deploy workflow resolves dependencies from scratch on every
+# push, so without the lockfile the site that ships is built against
+# whatever was published that morning, and a breaking release lands as a
+# failed deploy on a commit that changed nothing.
 
 # Conventional directory for build output.
 /build/

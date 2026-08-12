@@ -29,7 +29,10 @@ jobs:
 
       - name: Build Jaspr
         run: |
-          dart pub global activate jaspr_cli 0.23.2
+          # Kept in step with the jaspr version in pubspec.lock. 0.23.2's
+          # build daemon does not start on Windows, so this is also the
+          # first version the site can be built locally with.
+          dart pub global activate jaspr_cli 0.23.3
           jaspr build --verbose
 
       - name: Copy CNAME to build output
