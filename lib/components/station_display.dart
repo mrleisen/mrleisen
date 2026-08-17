@@ -203,6 +203,8 @@ class StationDisplay extends StatelessComponent {
         return _kiwoPanel(s, lang);
       case 'CSP':
         return _conspiranoicoPanel(s, lang);
+      case 'PIX':
+        return _pixelPanel(s, lang);
     }
     return div([]);
   }
@@ -770,6 +772,45 @@ class StationDisplay extends StatelessComponent {
               'says about us that they are. Cataloguing without endorsing '
               'is the hard part, and the reason this is still an idea.',
     status: _status(lang, 'concept'),
+  );
+
+  /// The one AM station whose subject already exists in quantity -
+  /// dozens of finished pieces. It stays on AM anyway because the
+  /// *station* is still a sentence: a hobby with no home of its own yet,
+  /// not a shipped thing with a link. If it ever grows a gallery,
+  /// promote it the way AWS was promoted.
+  ///
+  /// Also the one station that broadcasts pictures: while its carrier is
+  /// in range, `PixelRails` shows the works on the sides of the screen,
+  /// each one openable as a puzzle. The FORMAT row says SSTV because
+  /// that is the real amateur-radio mode for sending images over the
+  /// air - the dial claiming it is the joke being true.
+  ///
+  /// Copy approved line by line by the operator on 2026-08-16: about the
+  /// craft and the era, never a list of subjects, and the pieces stay
+  /// untitled everywhere.
+  Component _pixelPanel(Station s, Lang lang) => _amPanel(
+    s: s,
+    lang: lang,
+    title: 'Pixel Art',
+    subtitle: lang == Lang.es ? 'Pasatiempo' : 'Hobby',
+    body: lang == Lang.es
+        ? 'Un pasatiempo de mi época de pixel art, hace unos diez años. '
+              'Es un arte que me encanta: nostálgico y bastante más '
+              'difícil de lo que parece. No hay atajos: una cuadrícula '
+              'pequeña, una paleta de pocos colores y cada píxel puesto '
+              'a mano, uno por uno. Requiere dedicación, y por eso mismo '
+              'vale la pena.'
+        : 'A hobby from my pixel-art days, about ten years ago. It is an '
+              'art I love: nostalgic, and quite a bit harder than it '
+              'looks. There are no shortcuts - a small grid, a short '
+              'palette, and every pixel placed by hand, one at a time. '
+              'It takes real dedication, and that is exactly why it is '
+              'worth it.',
+    data: [
+      (_key(lang, 'format'), lang == Lang.es ? 'SSTV · imagen lenta' : 'SSTV · slow-scan image'),
+    ],
+    status: _status(lang, 'active'),
   );
 
   // ── shared building blocks ──

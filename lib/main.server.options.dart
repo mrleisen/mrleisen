@@ -9,6 +9,7 @@ import 'package:radio/components/case_study.dart' as _case_study;
 import 'package:radio/components/collected_stations.dart'
     as _collected_stations;
 import 'package:radio/components/phosphor_mask.dart' as _phosphor_mask;
+import 'package:radio/components/pixel_gallery.dart' as _pixel_gallery;
 import 'package:radio/components/radio_dial.dart' as _radio_dial;
 import 'package:radio/components/rx_chrome.dart' as _rx_chrome;
 import 'package:radio/components/scanlines.dart' as _scanlines;
@@ -43,6 +44,7 @@ ServerOptions get defaultServerOptions => ServerOptions(
     ..._case_study.CaseStudyDialog.styles,
     ..._collected_stations.CollectedStationsState.styles,
     ..._phosphor_mask.PhosphorMask.styles,
+    ..._pixel_gallery.PixelRails.styles,
     ..._radio_dial.RadioDialState.styles,
     ..._scanlines.Scanlines.styles,
     ..._signal_bars.SignalBars.styles,

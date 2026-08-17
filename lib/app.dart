@@ -7,6 +7,7 @@ import 'package:universal_web/web.dart' as web;
 
 import 'components/case_study.dart';
 import 'components/phosphor_mask.dart';
+import 'components/pixel_gallery.dart';
 import 'components/radio_audio.dart';
 import 'components/rx_chrome.dart';
 import 'components/radio_dial.dart';
@@ -15,6 +16,7 @@ import 'components/signal_bars.dart';
 import 'components/station_display.dart';
 import 'components/static_noise.dart';
 import 'components/vignette.dart';
+import 'models/pixel_art.dart';
 import 'models/station.dart';
 import 'utils/keyboard.dart';
 
@@ -89,6 +91,20 @@ class AppState extends State<App> {
   final Set<String> _collectedKeys = <String>{};
 
   static const String _storageKey = 'rchf:collected_stations';
+
+  /// Ids of PIX pieces whose decode puzzle has been solved. Persisted
+  /// under [_pixSolvedKey] for the same reason as the preset rack: a
+  /// solved frame is something the visitor earned, and it should still
+  /// be theirs on the next visit.
+  final Set<String> _pixSolved = <String>{};
+
+  static const String _pixSolvedKey = 'rchf:pix_solved';
+
+  /// Which PIX piece the open decode puzzle belongs to, or null. Only
+  /// meaningful while `_openDialog == 'puzzle'` - the dialog rides the
+  /// shared printout state so it inherits the one Escape handler and
+  /// focus trap instead of growing parallel copies.
+  String? _puzzlePiece;
 
   // Onboarding cues the visitor has already worked out for themselves.
   // Holds the literal 'tune'; persisted comma-joined under [_onboardKey],
@@ -196,6 +212,10 @@ class AppState extends State<App> {
   static const Map<String, String> _dialogOwner = {
     'tech': 'WHO',
     'case': 'DTU',
+    // The decode puzzle is a printout of PIX's carrier, so tuning away
+    // from AM 1440 degrades the open puzzle the same way it degrades
+    // the other transmissions.
+    'puzzle': 'PIX',
   };
 
   @override
@@ -206,6 +226,7 @@ class AppState extends State<App> {
     if (kIsWeb) {
       _loadCollectedFromStorage();
       _loadOnboardedFromStorage();
+      _loadPixSolvedFromStorage();
 
       _keyDownListener = _onKeyDown.toJS;
       web.document.addEventListener('keydown', _keyDownListener);
@@ -244,6 +265,47 @@ class AppState extends State<App> {
       // read just means we start with an empty rack - not worth
       // surfacing.
     }
+  }
+
+  /// Hydrates `_pixSolved` from `localStorage`. Unknown ids - a piece
+  /// renamed or retired from the manifest - are dropped on read, same
+  /// rule as the preset rack.
+  void _loadPixSolvedFromStorage() {
+    try {
+      final raw = web.window.localStorage.getItem(_pixSolvedKey);
+      if (raw == null || raw.isEmpty) return;
+      final known = {for (final piece in pixelArtPieces) piece.id};
+      final loaded = raw.split(',').where(known.contains);
+      if (loaded.isEmpty) return;
+      setState(() {
+        _pixSolved.addAll(loaded);
+      });
+    } catch (_) {
+      // A failed read just means the frames start undecoded.
+    }
+  }
+
+  void _markPixSolved(String pieceId) {
+    if (_pixSolved.contains(pieceId)) return;
+    setState(() {
+      _pixSolved.add(pieceId);
+    });
+    if (!kIsWeb) return;
+    try {
+      web.window.localStorage.setItem(_pixSolvedKey, _pixSolved.join(','));
+    } catch (_) {
+      // Solving still counts for this session; it just won't persist.
+    }
+  }
+
+  /// Opens the puzzle for one of PIX's pieces.
+  void _openPuzzle(String pieceId) {
+    if (_openDialog != null) return;
+    _ensurePixelShadows();
+    setState(() {
+      _puzzlePiece = pieceId;
+    });
+    _openDialogFor('puzzle', PixelRails.thumbId(pieceId));
   }
 
   /// Keeps the faceplate measurements in step with reality.
@@ -492,7 +554,7 @@ class AppState extends State<App> {
   /// panel area would quietly kill wheel-to-tune across the middle of the
   /// screen, which is where people reach for it.
   web.Element? _scrollableUnder(web.Element el) {
-    for (final sel in const ['.rx-panel', '.station-panel']) {
+    for (final sel in const ['.rx-panel', '.station-panel', '.pix-rail']) {
       final found = el.closest(sel);
       if (found != null && found.scrollHeight > found.clientHeight) return found;
     }
@@ -558,6 +620,28 @@ class AppState extends State<App> {
     _activeStation = getActiveStation(_frequency, _band);
     _nearestStation = getNearestStation(_frequency, _band);
     _noiseLevel = noiseFromSignal(_signalStrength);
+
+    // The gallery's sprite data (~2 MB of generated CSS) lives in a
+    // deferred part file, so the initial page load stays light. Start
+    // fetching it as the dial closes in on PIX - six tolerances out is
+    // far enough that on any normal approach the art has landed before
+    // the rails fade in.
+    if (kIsWeb && _band == Band.am) {
+      final pix = stationsFor(Band.am).where((st) => st.callSign == 'PIX').firstOrNull;
+      final cfg = configFor(Band.am);
+      if (pix != null && (_frequency - pix.frequency).abs() <= cfg.tolerance * 6) {
+        _ensurePixelShadows();
+      }
+    }
+  }
+
+  /// Kicks the deferred sprite fetch and repaints once it lands, so
+  /// rails already on screen fill in with the art. Idempotent - the
+  /// loader caches the request.
+  void _ensurePixelShadows() {
+    loadPixelShadows().then((_) {
+      if (mounted) setState(() {});
+    });
   }
 
   /// Adds the currently-locked station to the collected set. No-op
@@ -791,7 +875,9 @@ class AppState extends State<App> {
       ),
       (
         es ? 'IMÁGENES' : 'IMAGES',
-        es ? 'Ninguna en la interfaz' : 'None in the interface',
+        // The one honest exception: the pixel-art rewards on AM 1440
+        // are real GIFs, earned puzzle by puzzle.
+        es ? 'Ninguna, a excepción del hobby' : 'None, except for the hobby',
       ),
       (
         es ? 'DEPS JS' : 'JS DEPS',
@@ -805,7 +891,14 @@ class AppState extends State<App> {
       //   cat build/jaspr/*.js | wc -c        -> raw
       //   cat build/jaspr/*.js | gzip -9 | wc -c -> gzip
       //   du -ch build/jaspr/fonts/*.woff2    -> fonts
-      (es ? 'JAVASCRIPT' : 'JAVASCRIPT', '231 KB · 77 KB gzip'),
+      // Initial load only. The gallery's sprite strings live in their
+      // own deferred part file (lib/models/pixel_art_shadows.dart),
+      // fetched when the dial approaches AM 1440 - hence the row below.
+      (es ? 'JAVASCRIPT' : 'JAVASCRIPT', '256 KB · 86 KB gzip'),
+      (
+        es ? 'GALERÍA' : 'GALLERY',
+        es ? '2.2 MB · solo al sintonizar AM 1440' : '2.2 MB · only when tuning AM 1440',
+      ),
       (
         es ? 'TIPOGRAFÍAS' : 'TYPEFACES',
         es ? '72 KB · 4 familias, subset latino' : '72 KB · 4 families, latin subset',
@@ -1209,6 +1302,18 @@ class AppState extends State<App> {
           caseTriggerId: _caseTriggerId,
         ),
 
+        // PIX's intercepted frames, on the sides of the screen while the
+        // dial is on or near AM 1440. They fade with the same curve as
+        // the station panel between them.
+        PixelRails(
+          frequency: _frequency,
+          band: _band,
+          lang: _lang,
+          isPowered: _isPowered,
+          solved: _pixSolved,
+          onOpenPuzzle: _openPuzzle,
+        ),
+
         // Long-form printouts. They sit above every content layer but below
         // the faceplate, so the receiver stays visible around them - each
         // panel reads as something the radio decoded, not as a web modal
@@ -1220,6 +1325,19 @@ class AppState extends State<App> {
             dialogId: _dialogId,
             onClose: _closeDialog,
             signal: _dialogSignalState,
+          ),
+        if (_openDialog == 'puzzle' && _puzzlePiece != null)
+          PixelPuzzleDialog(
+            // Keyed by piece so switching pieces never reuses a
+            // half-solved board from the previous one.
+            key: ValueKey(_puzzlePiece!),
+            pieceId: _puzzlePiece!,
+            lang: _lang,
+            dialogId: _dialogId,
+            onClose: _closeDialog,
+            onSolved: _markPixSolved,
+            signal: _dialogSignalState,
+            alreadySolved: _pixSolved.contains(_puzzlePiece),
           ),
 
         // Radio dial. The collected-stations row is rendered inside
@@ -1321,6 +1439,7 @@ class AppState extends State<App> {
       _openDialog = null;
       _dialogTriggerId = null;
       _dialogStation = null;
+      _puzzlePiece = null;
     });
     if (!kIsWeb || trigger == null) return;
     // Hand focus back to the control that opened it. Dropping focus to
@@ -1352,6 +1471,7 @@ class AppState extends State<App> {
         _openDialog = null;
         _dialogTriggerId = null;
         _dialogStation = null;
+        _puzzlePiece = null;
       }
     });
 

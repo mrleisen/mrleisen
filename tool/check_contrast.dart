@@ -26,24 +26,25 @@ const bg = '#050507';
 /// clear AA without losing their hue.
 const neutral = '#d8d2c4';
 
-/// The 12 station colours from `lib/models/station.dart`.
+/// The 13 station colours from `lib/models/station.dart`.
 const stationColors = {
   'ITNW': '#4EBFB0',
   'BBL': '#D4A843',
-  'NET': '#B085E0',
   'WHO': '#5BA4D9',
   'DTU': '#E8944A',
   'TRP': '#E86A8A',
+  'AWS': '#E05050',
   'NUM': '#5BC8A0',
   'AYU': '#B07CD6',
-  'AWS': '#E05050',
+  'KIW': '#E8C04A',
   'CSP': '#C77B4E',
   'NFT': '#8BBF55',
   'PNK': '#D05A8C',
+  'PIX': '#7B8FE8',
 };
 
-const amStations = ['NUM', 'AYU', 'AWS', 'CSP', 'NFT', 'PNK'];
-const fmStations = ['ITNW', 'BBL', 'NET', 'WHO', 'DTU', 'TRP'];
+const amStations = ['NUM', 'AYU', 'KIW', 'CSP', 'NFT', 'PNK', 'PIX'];
+const fmStations = ['ITNW', 'BBL', 'WHO', 'DTU', 'TRP', 'AWS'];
 
 /// Only these three render `.panel-subtitle` (`_itnwPanel`, `_tropPanel`
 /// and `_bblPanel`). The AM panels go through `_amPanel`, which uses
@@ -143,6 +144,10 @@ void main() {
   check('.rx-hint', '#82828c', px: 11);
   check('.rx-close', '#9a9aa6', px: 20);
   check('.pill-action', '#E8A035', px: 11);
+  // The puzzle's ARTWORK COMPLETE status line and its SCRAMBLE control,
+  // same panel face.
+  check('.pz-state', '#E8A035', px: 11);
+  check('.pz-reset', '#E8A035', px: 11);
 
   section('Transmission data block');
   check('.tx-key', '#938d81', px: 11);

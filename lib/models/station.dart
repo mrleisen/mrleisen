@@ -157,6 +157,10 @@ const stations = <Station>[
   Station(band: Band.am, frequency: 1000.0, callSign: 'KIW', color: '#E8C04A', music: _programme),
   Station(band: Band.am, frequency: 1120.0, callSign: 'CSP', color: '#C77B4E', music: _programme),
   Station(band: Band.am, frequency: 1280.0, callSign: 'NFT', color: '#8BBF55', music: _programme),
+  // 1440 sits exactly 160 kHz from both neighbours - the spacing floor
+  // met to the digit on either side, in the one gap wide enough to take
+  // a seventh station. The physics picked the frequency.
+  Station(band: Band.am, frequency: 1440.0, callSign: 'PIX', color: '#7B8FE8', music: _programme),
   Station(band: Band.am, frequency: 1600.0, callSign: 'PNK', color: '#D05A8C', music: _programme),
 ];
 
