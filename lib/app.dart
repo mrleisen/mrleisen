@@ -909,19 +909,26 @@ class AppState extends State<App> {
       ),
     ];
 
+    // Kept honest against two features that arrived after the first
+    // draft: the stations stream real tracks (the only recorded audio),
+    // and the pixel-art rewards are real files (the only images).
     final intro = es
-        ? 'Todo lo que oyes se sintetiza en el momento: no hay un solo '
-              'archivo de audio. La estática son dos rutas de ruido disperso '
-              'y el silbido al pasar cerca de una emisora es un oscilador '
-              'cuya frecuencia es la distancia a la estación. Todo lo que '
-              'ves es CSS: el fósforo, las líneas de barrido, el encendido '
-              'del tubo. No hay imágenes ni canvas en la interfaz.'
-        : 'Everything you hear is synthesised on the spot: there is not a '
-              'single audio file. The static is two sparse-noise paths, and '
-              'the whistle near a station is an oscillator whose frequency '
-              'is the distance to it. Everything you see is CSS: the '
-              'phosphor, the scanlines, the tube warming up. No images and '
-              'no canvas anywhere in the interface.';
+        ? 'El sonido del receptor se sintetiza en el momento: la estática '
+              'son dos rutas de ruido disperso y el silbido al pasar cerca '
+              'de una emisora es un oscilador cuya frecuencia es la '
+              'distancia a la estación. El único audio grabado es el que '
+              'sintonizas: lo que transmiten las emisoras. Todo lo que ves '
+              'es un CRT viejo dibujado en CSS: el brillo de la pantalla, '
+              'sus líneas de barrido, el encendido del tubo. Sin canvas, y '
+              'las únicas imágenes son los premios de la emisora Pixel Art.'
+        : 'The receiver\'s sound is synthesised on the spot: the static is '
+              'two sparse-noise paths, and the whistle near a station is an '
+              'oscillator whose frequency is the distance to it. The only '
+              'recorded audio is what you tune into: the stations\' own '
+              'broadcasts. Everything you see is an old CRT drawn in CSS: '
+              'the screen\'s glow, its scanlines, the tube warming up. No '
+              'canvas, and the only images are the Pixel Art station\'s '
+              'rewards.';
 
     final outro = es
         ? 'Escrito entero en Dart y compilado a HTML estático con Jaspr. '
