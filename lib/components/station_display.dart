@@ -602,10 +602,18 @@ class StationDisplay extends StatelessComponent {
             _key(lang, 'role'),
             lang == Lang.es ? 'Creador' : 'Creator',
           ),
-          (_key(lang, 'status'), _status(lang, 'prelaunch')),
+          (_key(lang, 'status'), _status(lang, 'active')),
         ]),
         div(classes: 'pill-row', [
           _pill('Web', href: 'https://boomboomlotter.com'),
+          _pill(
+            'App Store',
+            href: 'https://apps.apple.com/co/app/boom-boom-lotter/id6789975487',
+          ),
+          _pill(
+            'Google Play',
+            href: 'https://play.google.com/store/apps/details?id=com.rafahcf.bbl',
+          ),
         ]),
       ],
     );
