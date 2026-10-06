@@ -35,7 +35,7 @@
 
 ## About
 
-This site is a single-page interactive radio-frequency simulator. Audio is synthesised at runtime through the Web Audio API, every visual effect is pure CSS, and it ships with zero JavaScript runtime dependencies.
+This site is a single-page interactive radio-frequency simulator. The receiver's sound is synthesised at runtime through the Web Audio API, every visual effect is pure CSS, and it ships with zero JavaScript runtime dependencies. The only recorded audio is what you tune into: each station broadcasts its own A Wired Spine track.
 
 The entire codebase is written in **Dart** and compiled to static HTML, CSS, and JavaScript via the [Jaspr](https://docs.jaspr.site) framework, then deployed on GitHub Pages. No server. No framework bundle. No tracking.
 
@@ -63,7 +63,7 @@ It's a small demonstration of what I build: procedural audio, CSS-only visuals, 
 - `dart:js_interop` for native browser calls
 - Sparse-noise static + heterodyne whistle
 - Mobile-safe unlock on power-switch gesture
-- No prerecorded audio assets
+- One A Wired Spine track per station, band-limited to sound like a radio, crossfaded under the static
 
 </td>
 </tr>
@@ -74,7 +74,7 @@ It's a small demonstration of what I build: procedural audio, CSS-only visuals, 
 - Pure CSS static, scanlines, vignette, phosphor mask
 - CRT power-on/off animation (expanding scanline)
 - LCD scramble and signal-scan sweep
-- No canvas, no WebGL, no images
+- No canvas, no WebGL; the only images are the Pixel Art station's rewards
 
 </td>
 <td width="50%">
@@ -119,16 +119,16 @@ It's a small demonstration of what I build: procedural audio, CSS-only visuals, 
 
 <p align="center">
   <strong>FM</strong> - featured long-form content<br>
-  <code>89.5 &nbsp;·&nbsp; 91.6 &nbsp;·&nbsp; 93.6 &nbsp;·&nbsp; 97.7 &nbsp;·&nbsp; 101.8 &nbsp;·&nbsp; 105.9</code>
+  <code>89.5 &nbsp;·&nbsp; 92.4 &nbsp;·&nbsp; 95.3 &nbsp;·&nbsp; 98.7 &nbsp;·&nbsp; 102.3 &nbsp;·&nbsp; 105.9</code>
 </p>
 
 <p align="center">
   <strong>AM</strong> - idea-stage project cards<br>
-  <code>660 &nbsp;·&nbsp; 820 &nbsp;·&nbsp; 960 &nbsp;·&nbsp; 1120 &nbsp;·&nbsp; 1280 &nbsp;·&nbsp; 1600</code>
+  <code>660 &nbsp;·&nbsp; 820 &nbsp;·&nbsp; 1000 &nbsp;·&nbsp; 1120 &nbsp;·&nbsp; 1280 &nbsp;·&nbsp; 1440 &nbsp;·&nbsp; 1600</code>
 </p>
 
 <p align="center">
-  <sub>Twelve stations across two bands. Each one carries a different signal.<br>Flip the power switch and tune in.</sub>
+  <sub>Thirteen stations across two bands. Each one carries a different signal and its own song.<br>Flip the power switch and tune in.</sub>
 </p>
 
 <p align="center">
@@ -202,8 +202,10 @@ radio/
 │       └── motion.dart        # prefers-reduced-motion detection
 ├── tool/
 │   ├── check_contrast.dart    # WCAG AA contrast audit (exits non-zero on failure)
-│   └── generate_og_image.dart # Regenerates web/og-image.png
+│   ├── generate_og_image.dart # Regenerates web/og-image.png
+│   └── generate_pixel_css.dart # Pixel Art station sprites from assets/pixel-art
 ├── web/                       # Static assets (favicon, manifest, icons, OG)
+│   └── audio/                 # Station programme, one .ogg + .mp3 per station (see its README)
 ├── .github/
 │   ├── assets/                # Banner and branding
 │   └── workflows/             # GitHub Pages deployment
