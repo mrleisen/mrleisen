@@ -19,12 +19,12 @@ AM carries *Please, Please!!!* and two songs from the 2011 EP.
 | FM   | 102.3  | TRP  | `aws-trp.…`  | una encerrona                            |
 | FM   | 105.9  | AWS  | `aws-aws.…`  | un adios                                 |
 | AM   | 660    | NUM  | `aws-num.…`  | Remember the day we were happy, please!! |
-| AM   | 820    | AYU  | `aws-ayu.…`  | ITIHSTS                                  |
+| AM   | 820    | AYU  | `aws-ayu.…`  | y tu                                     |
 | AM   | 1000   | KIW  | `aws-kiw.…`  | Vámonos Por La sombrita, Por Favor!!!    |
 | AM   | 1120   | CSP  | `aws-csp.…`  | Beware Of The Sad Word                   |
 | AM   | 1280   | NFT  | `aws-nft.…`  | The Empty Space Between L VE             |
 | AM   | 1440   | PIX  | `aws-pix.…`  | hielito                                  |
-| AM   | 1600   | PNK  | `aws-pnk.…`  | y tu                                     |
+| AM   | 1600   | PNK  | `aws-pnk.…`  | ITIHSTS                                  |
 
 Names keyed to the call sign rather than numbered, because a numbered set
 misaligns silently the first time a station moves. A station whose file
