@@ -402,6 +402,13 @@ void main() {
           '0%, 100%': Styles(opacity: 0.85),
           '50%': Styles(opacity: 1),
         }),
+        // Keyframe: np-in
+        // The now-playing line on the faceplate arriving a beat after the
+        // lock, slow enough that it surfaces rather than appears.
+        css.keyframes('np-in', {
+          '0%, 30%': Styles(opacity: 0),
+          '100%': Styles(opacity: 1),
+        }),
         // Keyframe: power-attract
         // Slow amber swell on the power rocker whenever the radio is off.
         // Everything on this page lives behind that one 52x22 control, so

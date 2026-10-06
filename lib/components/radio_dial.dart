@@ -604,6 +604,43 @@ class RadioDialState extends State<RadioDial> {
 
   // --- build ---
 
+  /// The song the station is playing, printed small on the faceplate
+  /// the way a receiver shows RDS radiotext: only once the dial has
+  /// locked, and never louder than the brand plate beside it. The panel
+  /// on screen is what the station is about; this is just what it is
+  /// playing while you read it.
+  ///
+  /// A published song links to awiredspine.com, which opens the record
+  /// and cues the track. An unpublished one is named and not linked.
+  ///
+  /// The empty slot always renders so the header keeps its layout when
+  /// the line comes and goes.
+  Component _nowPlaying() {
+    final song = component.isPowered ? component.activeStation?.song : null;
+    if (song == null) return div(classes: 'now-playing', []);
+    final es = component.lang == Lang.es;
+    final title = song.titleFor(es: es);
+    final children = [
+      span(classes: 'np-artist', [Component.text('A WIRED SPINE · ')]),
+      span(classes: 'np-title', [Component.text(title)]),
+    ];
+    final href = song.href;
+    if (href == null) {
+      return div(classes: 'now-playing is-on', key: ValueKey(title), children);
+    }
+    return a(
+      classes: 'now-playing is-on is-link',
+      key: ValueKey(title),
+      href: href,
+      target: Target.blank,
+      attributes: {
+        'rel': 'noopener',
+        'aria-label': es ? '$title, de A Wired Spine. Escúchala completa' : '$title, by A Wired Spine. Hear it in full',
+      },
+      children,
+    );
+  }
+
   @override
   Component build(BuildContext context) {
     final tuned = component.activeStation != null;
@@ -632,6 +669,7 @@ class RadioDialState extends State<RadioDial> {
             span(classes: 'brand', [Component.text('RCHF · 2600')]),
             span(classes: 'brand-sub', [Component.text('AM/FM STEREO RECEIVER')]),
           ]),
+          _nowPlaying(),
           div(classes: 'indicator-row', [
             // There is no "PRESS ON" silkscreen here, and no instruction
             // anywhere else either - it lived here, then moved into the
@@ -1551,6 +1589,40 @@ class RadioDialState extends State<RadioDial> {
         'text-shadow': '-1px -1px 0 rgba(0,0,0,0.5), 1px 1px 0 rgba(255,255,255,0.04)',
       },
     ),
+    // ── now playing ──
+    // Silkscreen-quiet: the same microtype family and greys as the brand
+    // plate, so it reads as part of the faceplate rather than as a
+    // control. Hover is the only time it is allowed to look like a link.
+    css('.now-playing').styles(
+      overflow: Overflow.hidden,
+      flex: Flex(grow: 1, shrink: 1, basis: Unit.zero),
+      color: const Color('#4a4a55'),
+      textAlign: TextAlign.center,
+      fontFamily: const FontFamily.list([
+        FontFamily('IBM Plex Mono'),
+        FontFamilies.monospace,
+      ]),
+      fontSize: Unit.pixels(9),
+      textDecoration: TextDecoration.none,
+      letterSpacing: 0.08.em,
+      textOverflow: TextOverflow.ellipsis,
+      whiteSpace: WhiteSpace.noWrap,
+      raw: {'min-width': '0', 'transition': 'color 0.3s ease'},
+    ),
+    css('.now-playing.is-on').styles(
+      raw: {'animation': 'np-in 1.2s ease-out both'},
+    ),
+    css('.np-artist').styles(
+      letterSpacing: 0.3.em,
+      raw: {'font-size': '7px'},
+    ),
+    css('.np-title').styles(color: const Color('#7a6a4a')),
+    css('.now-playing.is-link:hover, .now-playing.is-link:focus-visible').styles(
+      color: const Color(_lcdAmberDim),
+    ),
+    css('.now-playing.is-link:hover .np-title, .now-playing.is-link:focus-visible .np-title').styles(
+      color: const Color(_lcdAmber),
+    ),
     css('.indicator-row').styles(
       display: Display.flex,
       flexDirection: FlexDirection.row,
@@ -2451,6 +2523,10 @@ class RadioDialState extends State<RadioDial> {
       css('.panel-header').styles(
         raw: {'margin-bottom': '6px', 'justify-content': 'flex-end'},
       ),
+      // The line takes the brand plate's place on the left, and drops
+      // the artist: one title is all the width a phone has left.
+      css('.now-playing').styles(textAlign: TextAlign.left),
+      css('.np-artist').styles(display: Display.none),
       css('.indicator-row').styles(gap: Gap(column: 4.px)),
       // FM / AM / MEM are real controls, not decoration, so they get a
       // little more room to breathe and a 40px hit area. 40 rather than
