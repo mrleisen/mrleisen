@@ -136,13 +136,13 @@ class _RadioAudioState extends State<RadioAudio> {
   web.GainNode? _whistleGain;
 
   // ── the programme ──
-  // One element and one MediaElementAudioSourceNode for all twelve
-  // stations, with `src` swapped as the dial moves, rather than twelve of
-  // each. A source node is permanently bound to the element it was
+  // One element and one MediaElementAudioSourceNode for all thirteen
+  // stations, with `src` swapped as the dial moves, rather than thirteen
+  // of each. A source node is permanently bound to the element it was
   // created from, but the element is free to change what it is playing,
   // so one pair covers the whole band plan - and only one track is ever
-  // in flight, which is the difference between streaming 3 MB and
-  // streaming 36.
+  // in flight, which is the difference between streaming under 1 MB
+  // and streaming 6.
   web.HTMLAudioElement? _musicEl;
   web.GainNode? _musicGain;
 
@@ -218,9 +218,13 @@ class _RadioAudioState extends State<RadioAudio> {
   /// replacing, but only just: at the crossover the two are audible at
   /// once, which is the entire point of the crossfade.
   ///
+  /// Was 0.18; raised 30% twice (0.234, then 0.304) once every station
+  /// had its own track, because the band-limited masters read quieter
+  /// than the noise around them, even with the volume knob turned up.
+  ///
   /// Everything here is scaled by the user's volume control on top, so
   /// this is the ceiling of the ceiling.
-  static const double _musicCeiling = 0.18;
+  static const double _musicCeiling = 0.304;
 
   /// Fade applied to the programme as the dial moves. Slower than
   /// [_gainRamp]: static reacts instantly because it is noise, music
@@ -455,7 +459,7 @@ class _RadioAudioState extends State<RadioAudio> {
   ///
   /// An element rather than a decoded AudioBuffer because these are full
   /// tracks: `decodeAudioData` would pull each one into memory whole and
-  /// hold it there, for twelve stations, to play one at a time. The
+  /// hold it there, for thirteen stations, to play one at a time. The
   /// element streams and the browser handles the buffering.
   ///
   /// Routed through the context rather than driven by `element.volume`

@@ -55,3 +55,7 @@ app.*.map.json
 # what is being published.
 docs/
 CLAUDE.md
+
+# Source masters for the station programme. Only the processed,
+# band-limited copies in web/audio/ ship; see web/audio/README.md.
+assets/audio/

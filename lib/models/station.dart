@@ -92,6 +92,11 @@ class Station {
   /// Named by call sign rather than numbered. A numbered set silently
   /// misaligns the moment a station is moved or the plan is reordered,
   /// and the band plan above is reordered fairly often.
+  ///
+  /// Declared as Ogg Vorbis. Safari learned it in 17; anything older is
+  /// served the MP3 sibling of the same name instead, chosen by the audio
+  /// engine at load time - the band plan does not carry the browser's
+  /// problems. See `web/audio/README.md` for the convention.
   final String? music;
 
   const Station({
@@ -102,23 +107,6 @@ class Station {
     this.music,
   });
 }
-
-/// What every station is currently broadcasting.
-///
-/// One file across the whole plan, temporarily. The engine and the
-/// [Station.music] field are built for a track per station - swapping
-/// `src` as the dial moves is the whole reason there is one `<audio>`
-/// element and not twelve - and the intended end state is twelve
-/// distinct entries with this constant gone. Until the rest of the
-/// tracks exist, pointing them all here keeps every station on the air
-/// rather than leaving ten of them silent.
-///
-/// Declared as Ogg Vorbis, which is what the tracks are mastered to and
-/// what Chrome, Firefox and Edge have always played. Safari learned it in
-/// 17; anything older is served the MP3 sibling of the same name instead,
-/// chosen by the audio engine at load time - the band plan does not carry
-/// the browser's problems. See `web/audio/README.md` for the convention.
-const String _programme = 'audio/aws-routine-a-hello.ogg';
 
 /// The band plan.
 ///
@@ -133,8 +121,8 @@ const stations = <Station>[
   // 3.6 and 3.6 MHz, all comfortably clear of the 2.0 floor, with 2.0 to
   // the bottom of the band and 2.1 to the top. Perfectly even spacing is
   // available and is not used - see the note on the startup pocket.
-  Station(band: Band.fm, frequency: 89.5, callSign: 'ITNW', color: '#4EBFB0', music: _programme),
-  Station(band: Band.fm, frequency: 92.4, callSign: 'BBL', color: '#D4A843', music: _programme),
+  Station(band: Band.fm, frequency: 89.5, callSign: 'ITNW', color: '#4EBFB0', music: 'audio/aws-itnw.ogg'),
+  Station(band: Band.fm, frequency: 92.4, callSign: 'BBL', color: '#D4A843', music: 'audio/aws-bbl.ogg'),
   // The gap above this one is where the receiver wakes up. `_fmFreq`
   // starts at 96.5, which has to sit at least a full tolerance from
   // everything or the site opens on a half-tuned panel instead of on the
@@ -142,26 +130,26 @@ const stations = <Station>[
   // here and 2.2 from the station above, so the first frame is genuinely
   // dead air - and that constraint is exactly why the gaps are not
   // identical.
-  Station(band: Band.fm, frequency: 95.3, callSign: 'WHO', color: '#5BA4D9', music: _programme),
-  Station(band: Band.fm, frequency: 98.7, callSign: 'DTU', color: '#E8944A', music: _programme),
-  Station(band: Band.fm, frequency: 102.3, callSign: 'TRP', color: '#E86A8A', music: _programme),
-  Station(band: Band.fm, frequency: 105.9, callSign: 'AWS', color: '#E05050', music: _programme),
+  Station(band: Band.fm, frequency: 95.3, callSign: 'WHO', color: '#5BA4D9', music: 'audio/aws-who.ogg'),
+  Station(band: Band.fm, frequency: 98.7, callSign: 'DTU', color: '#E8944A', music: 'audio/aws-dtu.ogg'),
+  Station(band: Band.fm, frequency: 102.3, callSign: 'TRP', color: '#E86A8A', music: 'audio/aws-trp.ogg'),
+  Station(band: Band.fm, frequency: 105.9, callSign: 'AWS', color: '#E05050', music: 'audio/aws-aws.ogg'),
   // ── AM: idea-stage projects, one per station. ──
-  Station(band: Band.am, frequency: 660.0, callSign: 'NUM', color: '#5BC8A0', music: _programme),
-  Station(band: Band.am, frequency: 820.0, callSign: 'AYU', color: '#B07CD6', music: _programme),
+  Station(band: Band.am, frequency: 660.0, callSign: 'NUM', color: '#5BC8A0', music: 'audio/aws-num.ogg'),
+  Station(band: Band.am, frequency: 820.0, callSign: 'AYU', color: '#B07CD6', music: 'audio/aws-ayu.ogg'),
   // The one deliberate exception to the spacing floor: 1000 is the
   // number the station is *about* - Kiwo's universe is #10000 - and the
   // dial saying so is worth the 120 kHz to CSP instead of 160. The cost
   // is roughly 11% residual signal at the deadest point between them
   // rather than silence. 980 buys the silence back and loses the joke.
-  Station(band: Band.am, frequency: 1000.0, callSign: 'KIW', color: '#E8C04A', music: _programme),
-  Station(band: Band.am, frequency: 1120.0, callSign: 'CSP', color: '#C77B4E', music: _programme),
-  Station(band: Band.am, frequency: 1280.0, callSign: 'NFT', color: '#8BBF55', music: _programme),
+  Station(band: Band.am, frequency: 1000.0, callSign: 'KIW', color: '#E8C04A', music: 'audio/aws-kiw.ogg'),
+  Station(band: Band.am, frequency: 1120.0, callSign: 'CSP', color: '#C77B4E', music: 'audio/aws-csp.ogg'),
+  Station(band: Band.am, frequency: 1280.0, callSign: 'NFT', color: '#8BBF55', music: 'audio/aws-nft.ogg'),
   // 1440 sits exactly 160 kHz from both neighbours - the spacing floor
   // met to the digit on either side, in the one gap wide enough to take
   // a seventh station. The physics picked the frequency.
-  Station(band: Band.am, frequency: 1440.0, callSign: 'PIX', color: '#7B8FE8', music: _programme),
-  Station(band: Band.am, frequency: 1600.0, callSign: 'PNK', color: '#D05A8C', music: _programme),
+  Station(band: Band.am, frequency: 1440.0, callSign: 'PIX', color: '#7B8FE8', music: 'audio/aws-pix.ogg'),
+  Station(band: Band.am, frequency: 1600.0, callSign: 'PNK', color: '#D05A8C', music: 'audio/aws-pnk.ogg'),
 ];
 
 Iterable<Station> stationsFor(Band band) => stations.where((s) => s.band == band);
