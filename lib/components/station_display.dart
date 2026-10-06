@@ -317,10 +317,12 @@ class StationDisplay extends StatelessComponent {
               'care about what people keep using, not about what demos well.';
 
     final note = es
-        ? 'Este receptor es un ejemplo de eso. Todo lo que oyes está '
-              'sintetizado en el navegador y todo lo que ves es CSS.'
-        : 'This receiver is an example of that. Everything you hear is '
-              'synthesised in the browser and everything you see is CSS.';
+        ? 'Este receptor es un ejemplo de eso. La estática y el silbido se '
+              'sintetizan en el navegador, lo que suena en cada emisora es una '
+              'canción que hice para A Wired Spine, y casi todo lo que ves es CSS.'
+        : 'This receiver is an example of that. The static and the whistle '
+              'are synthesised in the browser, what each station plays is a song '
+              'I made for A Wired Spine, and nearly everything you see is CSS.';
 
     return div(classes: 'panel-shell panel-origin', [
       div(classes: 'panel-label', [Component.text(label)]),
