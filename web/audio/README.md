@@ -6,16 +6,16 @@ tolerance window.
 
 ## The band plan
 
-FM carries *Rutina* (2012) in album order, except that tracks 2 and 3
-are swapped so *un dilema* plays on WHO, the station about Rafael. AM
-carries *Please, Please!!!* and two songs from the 2011 EP.
+FM carries *Rutina* (2012) in album order, with two swaps: *un dilema*
+plays on WHO, the station about Rafael, and *un hola* on DTU, DeTodoUIS.
+AM carries *Please, Please!!!* and two songs from the 2011 EP.
 
 | Band | Freq   | Call | File        | Track                                    |
 |------|--------|------|-------------|------------------------------------------|
-| FM   | 89.5   | ITNW | `aws-itnw.…` | un hola                                  |
+| FM   | 89.5   | ITNW | `aws-itnw.…` | una preocupación                         |
 | FM   | 92.4   | BBL  | `aws-bbl.…`  | una compra                               |
 | FM   | 95.3   | WHO  | `aws-who.…`  | un dilema                                |
-| FM   | 98.7   | DTU  | `aws-dtu.…`  | una preocupación                         |
+| FM   | 98.7   | DTU  | `aws-dtu.…`  | un hola                                  |
 | FM   | 102.3  | TRP  | `aws-trp.…`  | una encerrona                            |
 | FM   | 105.9  | AWS  | `aws-aws.…`  | un adios                                 |
 | AM   | 660    | NUM  | `aws-num.…`  | Remember the day we were happy, please!! |
