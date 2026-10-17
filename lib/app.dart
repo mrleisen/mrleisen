@@ -92,6 +92,18 @@ class AppState extends State<App> {
 
   static const String _storageKey = 'rchf:collected_stations';
 
+  /// Where FM stations saved before the band was re-cut for DMTFY live
+  /// now. Keys are frequencies, so without this a re-cut silently drops
+  /// every FM preset a returning visitor had earned.
+  static const Map<String, String> _movedKeys = {
+    'fm:89.5': 'fm:88.9',
+    'fm:92.4': 'fm:91.9',
+    'fm:95.3': 'fm:94.9',
+    'fm:98.7': 'fm:97.9',
+    'fm:102.3': 'fm:100.9',
+    'fm:105.9': 'fm:103.9',
+  };
+
   /// Ids of PIX pieces whose decode puzzle has been solved. Persisted
   /// under [_pixSolvedKey] for the same reason as the preset rack: a
   /// solved frame is something the visitor earned, and it should still
@@ -255,7 +267,7 @@ class AppState extends State<App> {
       final valid = {
         for (final s in stations) _stationKey(s),
       };
-      final loaded = raw.split(',').where(valid.contains);
+      final loaded = raw.split(',').map((k) => _movedKeys[k] ?? k).where(valid.contains);
       if (loaded.isEmpty) return;
       setState(() {
         _collectedKeys.addAll(loaded);

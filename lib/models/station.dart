@@ -102,6 +102,13 @@ class Station {
   /// What [music] is, for the now-playing line under the faceplate.
   final Song? song;
 
+  /// Root-relative path to the project's own mark, as its own app or site
+  /// draws it, or null for a station whose project has none - today that
+  /// is WHO and every AM idea. Taken from each project's own repo, never
+  /// redrawn here; sources and how each file was prepared are in
+  /// `assets/logos/README.md`.
+  final String? logo;
+
   const Station({
     required this.band,
     required this.frequency,
@@ -109,6 +116,7 @@ class Station {
     required this.color,
     this.music,
     this.song,
+    this.logo,
   });
 }
 
@@ -143,36 +151,38 @@ class Song {
 /// and 160 kHz on AM; check it before moving anything.
 const stations = <Station>[
   // ── FM: featured content. ──
-  // Spread deliberately rather than inherited: gaps of 2.9, 2.9, 3.4,
-  // 3.6 and 3.6 MHz, all comfortably clear of the 2.0 floor, with 2.0 to
-  // the bottom of the band and 2.1 to the top. Perfectly even spacing is
-  // available and is not used - see the note on the startup pocket.
+  // Seven stations on an even 3.0 MHz grid, every one of them on a .9:
+  // FM in the Americas is allocated on odd tenths, so a real receiver
+  // would find every one of these frequencies plausible. 3.0 is half
+  // again the 2.0 floor, and the grid leaves 1.4 to the bottom of the
+  // band and 1.1 to the top, so both ends of the dial reach true silence.
   Station(
     band: Band.fm,
-    frequency: 89.5,
+    frequency: 88.9,
     callSign: 'ITNW',
     color: '#4EBFB0',
     music: 'audio/aws-itnw.ogg',
     song: Song('una preocupación', en: 'A Concern', slug: 'a-concern'),
+    logo: 'logos/itnw.png',
   ),
   Station(
     band: Band.fm,
-    frequency: 92.4,
+    frequency: 91.9,
     callSign: 'BBL',
     color: '#D4A843',
     music: 'audio/aws-bbl.ogg',
     song: Song('una compra', en: 'A Purchase', slug: 'a-purchase'),
+    logo: 'logos/bbl.png',
   ),
-  // The gap above this one is where the receiver wakes up. `_fmFreq`
+  // The gap below this one is where the receiver wakes up. `_fmFreq`
   // starts at 96.5, which has to sit at least a full tolerance from
   // everything or the site opens on a half-tuned panel instead of on the
-  // empty carrier monitor it was designed to open on. 96.5 is 1.2 from
-  // here and 2.2 from the station above, so the first frame is genuinely
-  // dead air - and that constraint is exactly why the gaps are not
-  // identical.
+  // empty carrier monitor it was designed to open on. 96.5 is 1.6 from
+  // here and 1.4 from DTU, so the first frame is genuinely dead air.
+  // Any grid that is moved has to be checked against this first.
   Station(
     band: Band.fm,
-    frequency: 95.3,
+    frequency: 94.9,
     callSign: 'WHO',
     color: '#5BA4D9',
     music: 'audio/aws-who.ogg',
@@ -180,27 +190,43 @@ const stations = <Station>[
   ),
   Station(
     band: Band.fm,
-    frequency: 98.7,
+    frequency: 97.9,
     callSign: 'DTU',
     color: '#E8944A',
     music: 'audio/aws-dtu.ogg',
     song: Song('un hola', en: 'A Hello', slug: 'a-hello'),
+    logo: 'logos/dtu.png',
   ),
   Station(
     band: Band.fm,
-    frequency: 102.3,
+    frequency: 100.9,
     callSign: 'TRP',
     color: '#E86A8A',
     music: 'audio/aws-trp.ogg',
     song: Song('una encerrona', en: 'A Trap', slug: 'a-trap'),
+    logo: 'logos/trp.png',
   ),
   Station(
     band: Band.fm,
-    frequency: 105.9,
+    frequency: 103.9,
     callSign: 'AWS',
     color: '#E05050',
     music: 'audio/aws-aws.ogg',
     song: Song('un adios', en: 'A Farewell', slug: 'a-farewell'),
+    logo: 'logos/aws.svg',
+  ),
+  // The newest thing on the dial, and the reason the grid above was
+  // re-cut: six stations had the band to themselves at uneven spacing,
+  // and there was no gap wide enough for a seventh without moving all
+  // of them. Plays the one A Wired Spine song nothing else was using.
+  Station(
+    band: Band.fm,
+    frequency: 106.9,
+    callSign: 'DMTFY',
+    color: '#8FAE7C',
+    music: 'audio/aws-dmtfy.ogg',
+    song: Song('alguien tiene un arma'),
+    logo: 'logos/dmtfy.svg',
   ),
   // ── AM: idea-stage projects, one per station. ──
   Station(

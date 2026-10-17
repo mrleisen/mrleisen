@@ -119,7 +119,7 @@ It's a small demonstration of what I build: procedural audio, CSS-only visuals, 
 
 <p align="center">
   <strong>FM</strong> - featured long-form content<br>
-  <code>89.5 &nbsp;·&nbsp; 92.4 &nbsp;·&nbsp; 95.3 &nbsp;·&nbsp; 98.7 &nbsp;·&nbsp; 102.3 &nbsp;·&nbsp; 105.9</code>
+  <code>88.9 &nbsp;·&nbsp; 91.9 &nbsp;·&nbsp; 94.9 &nbsp;·&nbsp; 97.9 &nbsp;·&nbsp; 100.9 &nbsp;·&nbsp; 103.9 &nbsp;·&nbsp; 106.9</code>
 </p>
 
 <p align="center">
@@ -128,7 +128,7 @@ It's a small demonstration of what I build: procedural audio, CSS-only visuals, 
 </p>
 
 <p align="center">
-  <sub>Thirteen stations across two bands. Each one carries a different signal and its own song.<br>Flip the power switch and tune in.</sub>
+  <sub>Fourteen stations across two bands. Each one carries a different signal and its own song.<br>Flip the power switch and tune in.</sub>
 </p>
 
 <p align="center">

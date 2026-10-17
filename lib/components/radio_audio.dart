@@ -136,8 +136,8 @@ class _RadioAudioState extends State<RadioAudio> {
   web.GainNode? _whistleGain;
 
   // ── the programme ──
-  // One element and one MediaElementAudioSourceNode for all thirteen
-  // stations, with `src` swapped as the dial moves, rather than thirteen
+  // One element and one MediaElementAudioSourceNode for all fourteen
+  // stations, with `src` swapped as the dial moves, rather than fourteen
   // of each. A source node is permanently bound to the element it was
   // created from, but the element is free to change what it is playing,
   // so one pair covers the whole band plan - and only one track is ever
@@ -459,7 +459,7 @@ class _RadioAudioState extends State<RadioAudio> {
   ///
   /// An element rather than a decoded AudioBuffer because these are full
   /// tracks: `decodeAudioData` would pull each one into memory whole and
-  /// hold it there, for thirteen stations, to play one at a time. The
+  /// hold it there, for fourteen stations, to play one at a time. The
   /// element streams and the browser handles the buffering.
   ///
   /// Routed through the context rather than driven by `element.volume`

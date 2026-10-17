@@ -26,7 +26,7 @@ const bg = '#050507';
 /// clear AA without losing their hue.
 const neutral = '#d8d2c4';
 
-/// The 13 station colours from `lib/models/station.dart`.
+/// The 14 station colours from `lib/models/station.dart`.
 const stationColors = {
   'ITNW': '#4EBFB0',
   'BBL': '#D4A843',
@@ -34,6 +34,7 @@ const stationColors = {
   'DTU': '#E8944A',
   'TRP': '#E86A8A',
   'AWS': '#E05050',
+  'DMTFY': '#8FAE7C',
   'NUM': '#5BC8A0',
   'AYU': '#B07CD6',
   'KIW': '#E8C04A',
@@ -44,13 +45,13 @@ const stationColors = {
 };
 
 const amStations = ['NUM', 'AYU', 'KIW', 'CSP', 'NFT', 'PNK', 'PIX'];
-const fmStations = ['ITNW', 'BBL', 'WHO', 'DTU', 'TRP', 'AWS'];
+const fmStations = ['ITNW', 'BBL', 'WHO', 'DTU', 'TRP', 'AWS', 'DMTFY'];
 
-/// Only these three render `.panel-subtitle` (`_itnwPanel`, `_tropPanel`
-/// and `_bblPanel`). The AM panels go through `_amPanel`, which uses
+/// Only these render `.panel-subtitle` (`_itnwPanel`, `_tropPanel`,
+/// `_bblPanel` and `_dmtfyPanel`). The AM panels go through `_amPanel`, which uses
 /// `.am-subtitle` instead - so pairing an AM colour with `.panel-subtitle`
 /// tests a combination the app can never produce.
-const subtitleStations = ['ITNW', 'TRP', 'BBL'];
+const subtitleStations = ['ITNW', 'TRP', 'BBL', 'DMTFY'];
 
 double _lin(double c) => c <= 0.03928 ? c / 12.92 : math.pow((c + 0.055) / 1.055, 2.4).toDouble();
 

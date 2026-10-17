@@ -8,16 +8,19 @@ tolerance window.
 
 FM carries *Rutina* (2012) in album order, with two swaps: *un dilema*
 plays on WHO, the station about Rafael, and *un hola* on DTU, DeTodoUIS.
-AM carries *Please, Please!!!* and two songs from the 2011 EP.
+DMTFY, the seventh FM station, takes *alguien tiene un arma*, the last
+song from the 2011 EP that nothing else was playing. AM carries
+*Please, Please!!!* and the other two songs from that EP.
 
 | Band | Freq   | Call | File        | Track                                    |
 |------|--------|------|-------------|------------------------------------------|
-| FM   | 89.5   | ITNW | `aws-itnw.…` | una preocupación                         |
-| FM   | 92.4   | BBL  | `aws-bbl.…`  | una compra                               |
-| FM   | 95.3   | WHO  | `aws-who.…`  | un dilema                                |
-| FM   | 98.7   | DTU  | `aws-dtu.…`  | un hola                                  |
-| FM   | 102.3  | TRP  | `aws-trp.…`  | una encerrona                            |
-| FM   | 105.9  | AWS  | `aws-aws.…`  | un adios                                 |
+| FM   | 88.9   | ITNW | `aws-itnw.…` | una preocupación                         |
+| FM   | 91.9   | BBL  | `aws-bbl.…`  | una compra                               |
+| FM   | 94.9   | WHO  | `aws-who.…`  | un dilema                                |
+| FM   | 97.9   | DTU  | `aws-dtu.…`  | un hola                                  |
+| FM   | 100.9  | TRP  | `aws-trp.…`  | una encerrona                            |
+| FM   | 103.9  | AWS  | `aws-aws.…`  | un adios                                 |
+| FM   | 106.9  | DMTFY | `aws-dmtfy.…` | alguien tiene un arma                  |
 | AM   | 660    | NUM  | `aws-num.…`  | Remember the day we were happy, please!! |
 | AM   | 820    | AYU  | `aws-ayu.…`  | y tu                                     |
 | AM   | 1000   | KIW  | `aws-kiw.…`  | Vámonos Por La sombrita, Por Favor!!!    |
@@ -77,7 +80,7 @@ of the engine running.
 Both at 22.05 kHz mono: Vorbis `-q:a 0` (~28 kbps), MP3 32 kbps CBR. The
 chain above leaves nothing above ~3.5 kHz and the programme peaks at
 `_musicCeiling` (0.304) underneath a layer of static, so anything more is
-bitrate nobody hears. All thirteen pairs come to about 11 MB; they ship
+bitrate nobody hears. All fourteen pairs come to about 12 MB; they ship
 in the repo and are served from GitHub Pages.
 
 Loop points are not honoured - the element loops the whole file, so a
