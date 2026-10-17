@@ -191,6 +191,8 @@ class StationDisplay extends StatelessComponent {
         return _tropPanel(s, lang);
       case 'AWS':
         return _awsPanel(s, lang);
+      case 'DMTFY':
+        return _dmtfyPanel(s, lang);
       case 'NFT':
         return _nftPanel(s, lang);
       case 'PNK':
@@ -553,6 +555,7 @@ class StationDisplay extends StatelessComponent {
     String? websiteHref,
   }) {
     return div(classes: 'am-shell', [
+      ?_logo(s),
       div(classes: 'panel-label am-label', [Component.text(_stationLabel(s, lang))]),
       _title('am-title', title, s),
       div(classes: 'am-subtitle', [Component.text(subtitle)]),
@@ -661,6 +664,55 @@ class StationDisplay extends StatelessComponent {
         div(classes: 'pill-row', [
           _pill('Web', href: 'https://awiredspine.com'),
           _pill('SoundCloud', href: 'https://soundcloud.com/awiredspine'),
+        ]),
+      ],
+    );
+  }
+
+  /// The newest station, and the one whose logo is about the product: it
+  /// grows a segment for every account connected, in that account's
+  /// colour. The panel says so because it is the most specific true thing
+  /// about the app, and the mark is sitting right above it.
+  ///
+  /// Every row checked against the project's own README and
+  /// `design/BRAND.md`. Reading is the whole scope today - sending and
+  /// replying are explicitly out of this version - and access is by
+  /// invitation, so the status is PRE-LAUNCH rather than ACTIVE.
+  Component _dmtfyPanel(Station s, Lang lang) {
+    final es = lang == Lang.es;
+    final subtitle = es ? 'Cliente de correo' : 'Mail client';
+    final body = es
+        ? 'Varias cuentas de Gmail e IMAP en una sola interfaz tranquila. '
+              'Cada cuenta se sincroniza a su propio ritmo y el servidor '
+              'sigue trabajando aunque cierres la app. El logo crece como '
+              'un gusano: un segmento por cada cuenta conectada, del color '
+              'de esa cuenta.'
+        : 'Several Gmail and IMAP accounts in one calm interface. Each '
+              'account syncs at its own pace, and the server keeps working '
+              'after you close the app. The logo grows like a worm: one '
+              'segment for every account connected, in the colour of '
+              'that account.';
+    return _panelShell(
+      station: s,
+      label: _stationLabel(s, lang),
+      title: 'DMTFY',
+      children: [
+        div(classes: 'panel-subtitle', [Component.text(subtitle)]),
+        p(classes: 'panel-body', [Component.text(body)]),
+        _transmissionData([
+          (_key(lang, 'since'), '2026'),
+          (
+            _key(lang, 'scope'),
+            es ? 'Recibidos · Enviados · Marcar como leído' : 'Inbox · Sent · Mark as read',
+          ),
+          (_key(lang, 'platforms'), es ? 'Web · Android e iOS en camino' : 'Web · Android and iOS on the way'),
+          (_key(lang, 'stack'), 'Flutter · Riverpod · Laravel'),
+          (_key(lang, 'access'), es ? 'Privado, por invitación' : 'Private, by invitation'),
+          (_key(lang, 'role'), es ? 'Creador' : 'Creator'),
+          (_key(lang, 'status'), _status(lang, 'prelaunch')),
+        ]),
+        div(classes: 'pill-row', [
+          _pill('Web', href: 'https://dmtfy.com'),
         ]),
       ],
     );
@@ -884,6 +936,8 @@ class StationDisplay extends StatelessComponent {
       'downloads': ('DESCARGAS', 'DOWNLOADS'),
       'registered': ('REGISTRADOS', 'REGISTERED'),
       'rating': ('CALIFICACIÓN', 'RATING'),
+      'scope': ('ALCANCE', 'SCOPE'),
+      'access': ('ACCESO', 'ACCESS'),
     };
     final pair = table[k]!;
     return lang == Lang.es ? pair.$1 : pair.$2;
@@ -900,10 +954,30 @@ class StationDisplay extends StatelessComponent {
     // what the station *is* needed for is how far off the dial sits,
     // which is what decides how much of this title has resolved yet.
     return div(classes: 'panel-shell', [
+      ?_logo(station),
       div(classes: 'panel-label', [Component.text(label)]),
       _title('panel-title', title, station),
       ...children,
     ]);
+  }
+
+  /// The project's own mark, above the label, or null when it has none.
+  ///
+  /// Decorative to assistive tech: the title right under it already says
+  /// the name, so an `alt` would only make a screen reader read it twice.
+  /// Sits inside `.panel-fx`, so it blurs, tears and splits into red and
+  /// cyan with the rest of the transmission instead of floating clean
+  /// over a signal that is still coming in.
+  Component? _logo(Station s) {
+    final src = s.logo;
+    if (src == null) return null;
+    return div(
+      classes: 'panel-logo',
+      attributes: const {'aria-hidden': 'true'},
+      [
+        img(src: src, alt: '', attributes: const {'decoding': 'async', 'draggable': 'false'}),
+      ],
+    );
   }
 
   /// A station title, resolved as far as the tuning currently allows.
@@ -1080,7 +1154,8 @@ class StationDisplay extends StatelessComponent {
         'transition': 'opacity 0.32s ease-out, transform 0.32s ease-out',
       },
     ),
-    for (var i = 1; i <= 6; i++)
+    // Seven blocks now that a project can carry its logo above the label.
+    for (var i = 1; i <= 7; i++)
       css(
         '.station-panel.is-visible .panel-shell > *:nth-child($i), '
         '.station-panel.is-visible .am-shell > *:nth-child($i)',
@@ -1118,6 +1193,45 @@ class StationDisplay extends StatelessComponent {
         'text-shadow': '0 0 2px var(--sc-glow, rgba(232,160,53,0.35))',
       },
     ),
+
+    // The project's mark, shown as the tube would show it: lit in its own
+    // colours with a halo in the station colour, scanlines drawn across
+    // it, and the same red/cyan split the title takes when the signal is
+    // off. Height-capped, never width-capped, so a wide mark and a tall
+    // one carry the same visual weight.
+    css('.panel-logo', [
+      css('&').styles(
+        position: Position.relative(),
+        raw: {'line-height': '0'},
+      ),
+      css('img').styles(
+        height: 56.px,
+        raw: {
+          'width': 'auto',
+          'max-width': '120px',
+          'object-fit': 'contain',
+          'user-select': 'none',
+          // Never fully clean: even on a locked carrier the mark rests at
+          // the look of 0.20 off-tune, picked by eye on a specimen. The
+          // split grows from that floor; the extra blur only tops the
+          // panel's own up to it and adds nothing once the panel is
+          // blurrier, so the logo is never softer than its title.
+          'filter':
+              'blur(calc(max(0, 0.2 - var(--distortion, 0)) * 4px)) '
+              'drop-shadow(calc(max(var(--distortion, 0), 0.2) * 3px) 0 rgba(255,0,0,0.55)) '
+              'drop-shadow(calc(max(var(--distortion, 0), 0.2) * -3px) 0 rgba(0,255,255,0.55)) '
+              'drop-shadow(0 0 8px var(--sc-glow, rgba(232,160,53,0.3)))',
+        },
+      ),
+      css('&::after').styles(
+        position: Position.absolute(top: Unit.zero, left: Unit.zero, right: Unit.zero, bottom: Unit.zero),
+        pointerEvents: PointerEvents.none,
+        raw: {
+          'content': '""',
+          'background': 'repeating-linear-gradient(to bottom, transparent 0 2px, rgba(0,0,0,0.32) 2px 3px)',
+        },
+      ),
+    ]),
 
     // Title - dim illuminated text on a dark panel, in the station
     // colour. Chromatic glitch split still scales with --distortion.
@@ -1536,6 +1650,7 @@ class StationDisplay extends StatelessComponent {
         padding: Padding.symmetric(horizontal: 12.px, vertical: 12.px),
       ),
       css('.am-body').styles(fontSize: Unit.pixels(12)),
+      css('.panel-logo img').styles(height: 44.px),
     ]),
   ];
 }
