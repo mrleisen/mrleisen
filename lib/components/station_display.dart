@@ -1619,6 +1619,257 @@ class StationDisplay extends StatelessComponent {
       ),
     ]),
 
+    // Station dossiers share the receiver's typography and ruled layout.
+    // Scope every rule away from PIX: its game keeps its existing shell.
+    css('.station-panel:not(.station-pix)').styles(
+      raw: {
+        'max-width': '860px',
+        'width': 'calc(100% - 48px)',
+        'text-align': 'left',
+      },
+    ),
+    css(
+      '.station-panel:not(.station-pix) .panel-shell, '
+      '.station-panel:not(.station-pix) .am-shell',
+    ).styles(
+      raw: {
+        'display': 'grid',
+        'grid-template-columns': 'minmax(0, 1.2fr) minmax(0, 1fr)',
+        'column-gap': '36px',
+        'row-gap': '16px',
+        'align-items': 'start',
+        'max-width': 'none',
+        'padding': '24px 28px',
+        'margin': '0',
+        'border': '1px solid color-mix(in srgb, var(--sc) 18%, transparent)',
+        'border-top': '2px solid color-mix(in srgb, var(--sc) 55%, transparent)',
+        'border-radius': '2px',
+        'background': 'linear-gradient(110deg, rgba(18,18,22,0.65), rgba(8,8,11,0.25))',
+      },
+    ),
+    css('.station-panel:not(.station-pix) .panel-label').styles(
+      raw: {
+        'grid-column': '1 / -1',
+        'grid-row': '1',
+        'letter-spacing': '0.18em',
+        'font-size': '10px',
+        'line-height': '1.8',
+        'padding-bottom': '14px',
+        'border-bottom': '1px solid color-mix(in srgb, var(--sc) 20%, transparent)',
+      },
+    ),
+    css(
+      '.station-panel:not(.station-pix) .panel-title, '
+      '.station-panel:not(.station-pix) .am-title',
+    ).styles(
+      raw: {
+        'grid-column': '1 / -1',
+        'grid-row': '2',
+        'font-family': '"Chakra Petch", sans-serif',
+        'font-weight': '700',
+        'font-size': 'clamp(1.8rem, 4.2vw, 2.8rem)',
+        'line-height': '1.15',
+        'letter-spacing': '0.015em',
+        'padding-right': '100px',
+        'overflow-wrap': 'anywhere',
+      },
+    ),
+    css('.station-panel:not(.station-pix) .panel-logo').styles(
+      raw: {
+        'grid-column': '2',
+        'grid-row': '2 / 4',
+        'justify-self': 'end',
+        'align-self': 'center',
+      },
+    ),
+    css('.station-panel:not(.station-pix) .panel-logo img').styles(
+      raw: {
+        'height': '48px',
+        'max-width': '80px',
+      },
+    ),
+    css(
+      '.station-panel:not(.station-pix) .panel-subtitle, '
+      '.station-panel:not(.station-pix) .am-subtitle',
+    ).styles(
+      raw: {
+        'grid-column': '1 / -1',
+        'grid-row': '3',
+        'padding-right': '100px',
+        'padding-bottom': '12px',
+        'letter-spacing': '0.14em',
+        'line-height': '1.7',
+      },
+    ),
+    css(
+      '.station-panel:not(.station-pix) .panel-body, '
+      '.station-panel:not(.station-pix) .am-body',
+    ).styles(
+      raw: {
+        'grid-column': '1',
+        'grid-row': '4',
+        'max-width': 'none',
+        'margin': '0',
+        'text-align': 'left',
+        'line-height': '1.8',
+      },
+    ),
+    css('.station-panel:not(.station-pix) .panel-body ~ .panel-body').styles(
+      raw: {
+        'grid-row': '5',
+        'font-size': '12px',
+        'padding-top': '16px',
+        'border-top': '1px solid rgba(255,255,255,0.08)',
+      },
+    ),
+    css('.station-panel:not(.station-pix) .tx-data').styles(
+      raw: {
+        'grid-column': '2',
+        'grid-row': '4 / 6',
+        'grid-template-columns': 'minmax(0, 0.85fr) minmax(0, 1.15fr)',
+        'align-content': 'start',
+        'gap': '12px 16px',
+        'max-width': 'none',
+        'width': 'auto',
+        'margin': '0',
+        'padding': '4px 0 4px 24px',
+        'border-top': '0',
+        'border-left': '1px solid color-mix(in srgb, var(--sc) 22%, transparent)',
+      },
+    ),
+    css('.station-panel:not(.station-pix) .tx-key').styles(
+      raw: {
+        'white-space': 'normal',
+        'font-size': '10px',
+        'letter-spacing': '0.1em',
+        'line-height': '1.7',
+      },
+    ),
+    css('.station-panel:not(.station-pix) .tx-val').styles(
+      raw: {
+        'line-height': '1.7',
+        'overflow-wrap': 'anywhere',
+      },
+    ),
+    css('.station-panel:not(.station-pix) .pill-row').styles(
+      raw: {
+        'grid-column': '1 / -1',
+        'grid-row': '6',
+        'justify-content': 'flex-start',
+        'padding-top': '18px',
+        'margin-top': '4px',
+        'border-top': '1px solid color-mix(in srgb, var(--sc) 20%, transparent)',
+      },
+    ),
+    css('.station-panel:not(.station-pix) .pill').styles(
+      raw: {
+        'border-radius': '3px',
+        'letter-spacing': '0.1em',
+        'min-height': '40px',
+        'box-sizing': 'border-box',
+      },
+    ),
+    css.media(const MediaQuery.raw('(min-width: 701px) and (max-height: 800px)'), [
+      css(
+        '.station-panel:not(.station-pix) .panel-shell, '
+        '.station-panel:not(.station-pix) .am-shell',
+      ).styles(
+        raw: {
+          'padding': '18px 24px',
+          'row-gap': '10px',
+        },
+      ),
+      css('.station-panel:not(.station-pix) .panel-label').styles(
+        raw: {
+          'padding-bottom': '8px',
+        },
+      ),
+      css(
+        '.station-panel:not(.station-pix) .panel-subtitle, '
+        '.station-panel:not(.station-pix) .am-subtitle',
+      ).styles(
+        raw: {
+          'padding-bottom': '6px',
+        },
+      ),
+      css(
+        '.station-panel:not(.station-pix) .panel-body, '
+        '.station-panel:not(.station-pix) .am-body',
+      ).styles(
+        raw: {
+          'line-height': '1.65',
+        },
+      ),
+      css('.station-panel:not(.station-pix) .tx-data').styles(
+        raw: {
+          'row-gap': '8px',
+        },
+      ),
+      css('.station-panel:not(.station-pix) .pill-row').styles(
+        raw: {
+          'padding-top': '12px',
+        },
+      ),
+    ]),
+    css.media(MediaQuery.screen(maxWidth: 700.px), [
+      css('.station-panel:not(.station-pix)').styles(
+        raw: {
+          'width': 'calc(100% - 28px)',
+          'max-height': 'calc(var(--free-h) - 88px)',
+        },
+      ),
+      css(
+        '.station-panel:not(.station-pix) .panel-shell, '
+        '.station-panel:not(.station-pix) .am-shell',
+      ).styles(
+        raw: {
+          'grid-template-columns': 'minmax(0, 1fr)',
+          'padding': '18px',
+          'gap': '14px',
+        },
+      ),
+      css('.station-panel:not(.station-pix) .panel-logo').styles(
+        raw: {
+          'grid-column': '1',
+        },
+      ),
+      css(
+        '.station-panel:not(.station-pix) .panel-title, '
+        '.station-panel:not(.station-pix) .am-title, '
+        '.station-panel:not(.station-pix) .panel-subtitle, '
+        '.station-panel:not(.station-pix) .am-subtitle',
+      ).styles(
+        raw: {
+          'padding-right': '76px',
+        },
+      ),
+      css('.station-panel:not(.station-pix) .panel-logo img').styles(
+        raw: {
+          'max-width': '60px',
+          'height': '40px',
+        },
+      ),
+      css('.station-panel:not(.station-pix) .tx-data').styles(
+        raw: {
+          'grid-column': '1',
+          'grid-row': '5',
+          'padding': '16px 0 0',
+          'border-left': '0',
+          'border-top': '1px solid color-mix(in srgb, var(--sc) 22%, transparent)',
+        },
+      ),
+      css('.station-panel:not(.station-pix) .panel-body ~ .panel-body').styles(
+        raw: {
+          'grid-row': '6',
+        },
+      ),
+      css('.station-panel:not(.station-pix) .pill-row').styles(
+        raw: {
+          'grid-row': '7',
+        },
+      ),
+    ]),
+
     // Mobile sizing.
     css.media(MediaQuery.screen(maxWidth: 600.px), [
       // No `.panel-title` / `.am-title` size override here: both are
