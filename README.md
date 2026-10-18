@@ -8,262 +8,104 @@
 
 <p align="center">
   <strong>Software engineer with 10+ years of experience. I build things - like this.</strong><br>
-  <sub>Built entirely in Dart.</sub>
+  <sub>A portfolio you tune into.</sub>
 </p>
 
 <p align="center">
-  <a href="#about">About</a> •
-  <a href="#how-it-was-built">How it was built</a> •
-  <a href="#stack">Stack</a> •
-  <a href="#signals">Signals</a> •
-  <a href="#build">Build</a>
+  <a href="#about">About</a> ·
+  <a href="#on-the-air">On the air</a> ·
+  <a href="#behind-the-radio">Behind the radio</a> ·
+  <a href="#run-locally">Run locally</a>
 </p>
 
 <p align="center">
-  <a href="https://dart.dev"><img src="https://img.shields.io/badge/Dart-3.10+-0175C2?style=for-the-badge&logo=dart&logoColor=white" alt="Dart"/></a>
-  <a href="https://docs.jaspr.site"><img src="https://img.shields.io/badge/Jaspr-0.23-02569B?style=for-the-badge&logoColor=white" alt="Jaspr"/></a>
-  <img src="https://img.shields.io/badge/Web_Audio_API-Enabled-FF6B00?style=for-the-badge&logoColor=white" alt="Web Audio API"/>
-  <img src="https://img.shields.io/badge/JS_packages-none-F2EFE6?style=for-the-badge&labelColor=000" alt="No JavaScript package dependencies"/>
-  <img src="https://img.shields.io/badge/Deploy-GitHub_Pages-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub Pages"/>
+  <a href="https://dart.dev"><img src="https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white" alt="Dart"/></a>
+  <a href="https://docs.jaspr.site"><img src="https://img.shields.io/badge/Jaspr-02569B?style=for-the-badge&logoColor=white" alt="Jaspr"/></a>
+  <img src="https://img.shields.io/badge/Web_Audio_API-FF6B00?style=for-the-badge&logoColor=white" alt="Web Audio API"/>
 </p>
 
 <p align="center">
-  <a href="https://rafahcf.com"><strong>► rafahcf.com</strong></a>
+  <a href="https://rafahcf.com"><strong>► Switch it on at rafahcf.com</strong></a>
 </p>
 
 ---
 
 ## About
 
-This site is a single-page interactive radio-frequency simulator and personal portfolio. The receiver's static and whistle are synthesised at runtime through the Web Audio API, and its visual effects are pure CSS. The recorded audio is what you tune into: each of the fourteen stations broadcasts its own A Wired Spine track.
+My work, music, and pixel art share the same radio. Turn it on, move the dial, and the static gives way to a station. Each frequency reveals something different: a project, an idea, a story, or a small puzzle.
 
-The application is written in **Dart** and compiled to static HTML, CSS, and JavaScript via the [Jaspr](https://docs.jaspr.site) framework, then deployed on GitHub Pages. Jaspr's client code is compiled with the app for hydration; there are no separately installed JavaScript packages or production application server.
+I wanted exploring the site to feel like finding something on the air. The screen flickers, signals drift into focus, and songs emerge from the noise as you tune. The receiver itself is part of the work.
 
-It's a small demonstration of what I build: procedural audio, CSS-only visuals, type-safe browser interop, and a static build pipeline end-to-end.
+## On the air
 
----
+Fourteen stations across two bands, each with its own A Wired Spine track.
 
-## How it was built
+- **FM** carries featured projects and stories, including DeTodoUIS, A Wired Spine, DMTFY, and a little about me.
+- **AM** carries early ideas and the Pixel Art gallery. Find **1440** to assemble the artwork and reveal the original pieces.
+- **MEM** saves a station once you've tuned into it. Tap a saved preset to return, or hold it to clear.
 
-<table>
-<tr>
-<td width="50%">
+The interface is available in English and Spanish. Tune with touch, the mouse wheel, or the arrow keys; adjust the volume and explore at your own pace. Your saved stations and completed puzzles will be there when you return.
 
-### Rendering
-- Server-side generated at build time
-- Client-side hydrated for interactivity
-- Compiled from Dart to optimised JS
-- One stateful client island, with Jaspr compiled into the client output
-- Pixel-art sprite data loaded on demand near the PIX station
+## Behind the radio
 
-</td>
-<td width="50%">
+The app is written in **Dart**, using **Jaspr** to build a static website hosted on **GitHub Pages**.
 
-### Audio
-- Procedural synthesis via Web Audio API
-- `dart:js_interop` for native browser calls
-- Sparse-noise static + heterodyne whistle
-- Mobile-safe unlock on power-switch gesture
-- One A Wired Spine track per station, band-limited to sound like a radio, crossfaded under the static
-- Ogg playback with MP3 fallback, remembered playback positions, and a master volume knob
-- Now-playing song title on the faceplate, linked to the release when published
+A few things that make the receiver work:
 
-</td>
-</tr>
-<tr>
-<td width="50%">
+- **Sound responds to the dial.** The Web Audio API generates the static and tuning whistle in real time. Recorded songs fade in as you approach a station, processed to sound like they're coming through a radio.
+- **The receiver is drawn with CSS.** The screen glow, scanlines, distortion, and power-on animation use CSS. Project logos and original artwork provide the image content.
+- **Small interactions carry the experience.** Each band remembers where you left the dial, the faceplate names the song playing, and pixel-art puzzles reveal their colour as you solve them.
+- **Keyboard and motion preferences are considered.** Controls support keyboard use, dialogs manage focus, and animations adapt to reduced-motion settings.
 
-### Visual
-- Pure CSS static, scanlines, vignette, phosphor mask
-- CRT power-on/off animation (expanding scanline)
-- LCD scramble and signal-scan sweep
-- No canvas or WebGL; images are project logos and Pixel Art rewards
-- Project logos distort with their station's transmission
-- CSS pixel-art rails and tile-swapping puzzles on AM 1440
+Jaspr lets the interface and browser interactions stay in one language while producing HTML, CSS, and JavaScript that can be served as a static site.
 
-</td>
-<td width="50%">
+For a closer look, start with [`lib/app.dart`](lib/app.dart), the [station list](lib/models/station.dart), or the [notes on the soundtrack](web/audio/README.md).
 
-### Interaction
-- Hardware-style rocker power switch
-- FM / AM band toggle
-- Pointer, touch, wheel, and keyboard tuning
-- English / Spanish interface
-- Fine-grain frequency locking
-- MEM presets - save while locked, tap to recall, hold to clear
-- Explicitly saved presets and solved pixel-art puzzles persist to `localStorage`
-- Focus-trapped dialogs and reduced-motion support
+## Run locally
 
-</td>
-</tr>
-</table>
-
----
-
-## Stack
-
-| Layer          | Technology                                                   |
-|----------------|--------------------------------------------------------------|
-| **Language**   | Dart 3.10+                                                   |
-| **Framework**  | Jaspr (static mode)                                          |
-| **Browser interop** | `universal_web` + `dart:js_interop`                    |
-| **Audio**      | Web Audio API via `dart:js_interop`                          |
-| **Styling**    | Pure CSS (no preprocessors, no frameworks)                   |
-| **Build**      | `build_runner` + `build_web_compilers`                       |
-| **Deploy**     | GitHub Pages (static)                                        |
-
-### Why Jaspr?
-
-| Reason | Detail |
-|--------|--------|
-| **Single language** | UI, logic, and interop all written in Dart |
-| **Static output** | Fully prerendered HTML with optional hydration |
-| **Type safety** | Strong typing extends from DOM to audio graph |
-| **Compiled client** | Tree-shaken Dart-to-JavaScript output, with deferred pixel-art sprite data |
-
----
-
-## Signals
-
-<p align="center">
-  <strong>FM</strong> - featured long-form content<br>
-  <code>88.9 &nbsp;·&nbsp; 91.9 &nbsp;·&nbsp; 94.9 &nbsp;·&nbsp; 97.9 &nbsp;·&nbsp; 100.9 &nbsp;·&nbsp; 103.9 &nbsp;·&nbsp; 106.9</code>
-</p>
-
-<p align="center">
-  <strong>AM</strong> - idea-stage project cards and the Pixel Art gallery<br>
-  <code>660 &nbsp;·&nbsp; 820 &nbsp;·&nbsp; 1000 &nbsp;·&nbsp; 1120 &nbsp;·&nbsp; 1280 &nbsp;·&nbsp; 1440 &nbsp;·&nbsp; 1600</code>
-</p>
-
-<p align="center">
-  <sub>Fourteen stations across two bands. Each one carries a different signal and its own song.<br>Flip the power switch and tune in.</sub>
-</p>
-
-<p align="center">
-  <sub>Lock on, hit <strong>MEM</strong> to save it to the rack. Tap a preset to recall, press and hold to wipe it.</sub>
-</p>
-
-The band plan lives in [`lib/models/station.dart`](lib/models/station.dart). FM spans 87.5–108.0 MHz in 0.1 MHz steps; AM spans 540–1700 kHz in 10 kHz steps. DMTFY is on FM 106.9; the pixel-art gallery and its puzzles are on AM 1440. The full station-to-song mapping and audio preparation notes are in [`web/audio/README.md`](web/audio/README.md).
-
-### Controls
-
-Switch the receiver on to unlock audio, then drag the tuning strip or use the mouse wheel. Each band remembers its tuned frequency during the session. The volume knob controls both the procedural receiver sound and the music.
-
-| Key | Action while powered on |
-|-----|-------------------------|
-| Left / Right | Tune one step |
-| Shift + Left / Right | Tune ten steps |
-| B | Switch FM / AM |
-| M | Save the locked station |
-| 1–9 | Recall a saved preset in rack order |
-| Escape | Close an open dialog |
-
-Dialogs keep keyboard focus inside them while open. At PIX, select an artwork and swap tiles to solve its 3×3 puzzle and reveal the original PNG or animated GIF.
-
----
-
-## Build
-
-### Prerequisites
-
-| Tool  | Version |
-|-------|---------|
-| Dart  | 3.10+   |
-
-### Local development
+Requires **Dart 3.10+**.
 
 ```bash
-# One-time: the Jaspr CLI is a global activation, not a dev dependency
 dart pub global activate jaspr_cli 0.23.3
-
-# Install dependencies
 dart pub get
-
-# Serve with hot reload
 jaspr serve
+```
 
-# Build static output
+To create the production build:
+
+```bash
 jaspr build
+```
 
-# Regenerate the OG image
-dart run tool/generate_og_image.dart
+Output goes to `build/jaspr/`. Pushes to `main` deploy automatically to GitHub Pages through the [deployment workflow](.github/workflows/deploy.yml).
 
-# Audit text contrast (WCAG AA)
-dart run tool/check_contrast.dart
+<details>
+<summary>Development tools</summary>
 
-# Regenerate pixel-art metadata, deferred CSS sprites, and reward assets
-dart run tool/generate_pixel_css.dart --dart
-
-# Lint and format
+```bash
+# Analyze and format the Dart code
 dart analyze
 dart format --line-length 120 .
+
+# Check the colour pairs used in the contrast audit
+dart run tool/check_contrast.dart
+
+# Regenerate the social preview image
+dart run tool/generate_og_image.dart
+
+# Regenerate pixel-art sprites and rewards
+dart run tool/generate_pixel_css.dart --dart
 ```
 
-The CLI version above matches [the deployment workflow](.github/workflows/deploy.yml) and Jaspr 0.23.3 in `pubspec.lock`. Keep the lockfile committed for reproducible dependency resolution. Generated `lib/main.*.options.dart` files are managed by Jaspr; do not edit them by hand.
+Components live in `lib/components/`, station and artwork data in `lib/models/`, and static assets in `web/`.
 
-The build output is written to `build/jaspr/` and is deployed automatically on push to `main` via `.github/workflows/deploy.yml` (GitHub Pages), or through a manual workflow run. The workflow copies `CNAME` (→ `rafahcf.com`) into the build output before publishing.
-
-There is no automated test suite. The analyzer, contrast audit, and static build are the available code checks; browser interaction and audio playback need manual verification. The contrast audit checks the colour pairs declared in its script, not the entire rendered interface.
+</details>
 
 ---
-
-## Project structure
-
-```
-mrleisen/
-├── lib/
-│   ├── app.dart               # Root client island, single source of truth
-│   ├── main.client.dart       # Client-side hydration entry
-│   ├── main.server.dart       # SSR entry - document, head, global keyframes
-│   ├── components/            # Jaspr components
-│   │   ├── radio_audio.dart        # Web Audio graph and mobile-safe unlock
-│   │   ├── radio_dial.dart         # Tuning dial, pointer capture, LCD scramble, MEM button
-│   │   ├── station_display.dart    # Active-station content panels
-│   │   ├── case_study.dart         # Long-form case-study printout dialog
-│   │   ├── pixel_gallery.dart      # Artwork rails, 3×3 puzzles, original-image rewards
-│   │   ├── rx_chrome.dart          # Shared dialog chrome + carrier-lost degradation
-│   │   ├── signal_bars.dart        # Reception bars with power-on scan sweep
-│   │   ├── collected_stations.dart # Preset rack: tap-to-recall, hold-to-delete
-│   │   ├── static_noise.dart       # CSS static layer
-│   │   ├── scanlines.dart          # CRT scanline overlay
-│   │   ├── phosphor_mask.dart      # RGB phosphor subpixel mask
-│   │   └── vignette.dart           # Ambient illumination
-│   ├── models/
-│   │   ├── station.dart       # Bands, stations, songs, logos, proximity math
-│   │   ├── pixel_art.dart     # Generated sprite metadata
-│   │   └── pixel_art_shadows.dart # Generated CSS box-shadows, loaded on demand
-│   └── utils/
-│       ├── keyboard.dart      # Enter/Space activation for role=button controls
-│       └── motion.dart        # prefers-reduced-motion detection
-├── tool/
-│   ├── check_contrast.dart    # WCAG AA contrast audit (exits non-zero on failure)
-│   ├── generate_og_image.dart # Regenerates web/og-image.png
-│   └── generate_pixel_css.dart # Pixel Art station sprites from assets/pixel-art
-├── assets/                    # Pixel-art sources and project-logo originals/provenance
-├── web/                       # Static assets (favicon, manifest, icons, OG)
-│   ├── audio/                 # Station programme, one .ogg + .mp3 per station (see its README)
-│   ├── fonts/                 # Self-hosted fonts, declared in fonts.css
-│   ├── logos/                 # Project marks displayed on station panels
-│   └── pixel/                 # Original PNG/GIF puzzle rewards
-├── .github/
-│   ├── assets/                # Banner and branding
-│   └── workflows/             # GitHub Pages deployment
-├── pubspec.yaml
-└── pubspec.lock               # Pinned application dependencies
-```
-
----
-
-## License
 
 All rights reserved.
 
----
-
 <p align="center">
-  <sub>Built with Jaspr · Dart · CSS · Web Audio API</sub>
-</p>
-
-<p align="center">
+  <sub>Built with Jaspr · Dart · CSS · Web Audio API</sub><br>
   <a href="https://rafahcf.com"><sub>rafahcf.com</sub></a>
 </p>
