@@ -40,6 +40,8 @@ I wanted exploring the site to feel like finding something on the air. The scree
 
 Fourteen stations across two bands, each with its own A Wired Spine track.
 
+The Tropelorio station links to [its website](https://tropelorio.com), [Google Play](https://play.google.com/store/apps/details?id=com.rafahcf.tropelorio), and the [App Store](https://apps.apple.com/app/tropelorio/id6820841164).
+
 - **FM** carries featured projects and stories, including DeTodoUIS, A Wired Spine, DMTFY, and a little about me.
 - **AM** carries early ideas and the Pixel Art gallery. Find **1440** to assemble the artwork and reveal the original pieces.
 - **MEM** saves a station once you've tuned into it. Tap a saved preset to return, or hold it to clear.

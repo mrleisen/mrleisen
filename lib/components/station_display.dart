@@ -532,7 +532,9 @@ class StationDisplay extends StatelessComponent {
           (_key(lang, 'status'), _status(lang, 'expanding')),
         ]),
         div(classes: 'pill-row', [
-          _pill('Instagram', href: 'https://www.instagram.com/tropelorio'),
+          _pill('Web', href: 'https://tropelorio.com'),
+          _pill('Google Play', href: 'https://play.google.com/store/apps/details?id=com.rafahcf.tropelorio'),
+          _pill('App Store', href: 'https://apps.apple.com/app/tropelorio/id6820841164'),
         ]),
       ],
     );

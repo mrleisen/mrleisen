@@ -853,8 +853,7 @@ void main() {
               // ever see.
               '"sameAs":['
               '"https://www.linkedin.com/in/rafael-c-a6132982/",'
-              '"https://www.youtube.com/@InThisNewWorld",'
-              '"https://www.instagram.com/tropelorio"'
+              '"https://www.youtube.com/@InThisNewWorld"'
               ']}',
         ),
       ],
