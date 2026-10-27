@@ -6,6 +6,7 @@ referenced from `Station.logo` in `lib/models/station.dart`.
 
 | Call  | Original here              | Taken from                                               | Ships as           |
 |-------|----------------------------|----------------------------------------------------------|--------------------|
+| CRM   | `criptomano-mark.png`      | `criptomano/assets/brand/criptomano-mark.png`             | `criptomano.png`   |
 | ITNW  | `itnw-watermark.png`       | `itnw_machine/img/watermark.png`                         | `itnw.png`         |
 | BBL   | `bbl-logotipo.png`         | `bbl/assets/images/logotipo.png` (launcher icon)         | `bbl.png`          |
 | DTU   | `dtu-logotipo_v4.png`      | `detodouis_core/assets/images/logotipo_v4.png`           | `dtu.png`          |
@@ -17,8 +18,7 @@ Also kept for reference, not shipped: `bbl-logo.svg` (the Inkscape
 source, whose artwork sits outside its own viewBox), `dtu-logo_v4.png`
 (the wordmark), `dtu-logotipo_v4_ios.png` and `dmtfy-favicon.svg`.
 
-WHO has no logo (it is a person), and neither does any AM station: those
-are ideas, and none of them has a mark of its own yet.
+WHO has no logo (it is a person). Most AM ideas have no mark; ITNW retains its original logo after moving to AM.
 
 ## How the PNGs were prepared
 
@@ -32,6 +32,7 @@ All cropped to their visible pixels and scaled to 192 px on the long side
   The original is drawn for a light background; on the black screen its
   outline vanished and the ring lost its shape.
 - **TRP**: scaled with nearest-neighbour, since it is flat blocks.
+- **CRM**: transparent approved symbol, cropped and scaled without recolouring.
 - **ITNW**: as is; it already is a glow on transparency.
 
 `aws.svg` is copied byte for byte. `dmtfy.svg` only has its viewBox

@@ -14,13 +14,14 @@ song from the 2011 EP that nothing else was playing. AM carries
 
 | Band | Freq   | Call | File        | Track                                    |
 |------|--------|------|-------------|------------------------------------------|
-| FM   | 88.9   | ITNW | `aws-itnw.…` | una preocupación                         |
+| FM   | 88.9   | CRM  | `aws-itnw.…` | una preocupación                         |
 | FM   | 91.9   | BBL  | `aws-bbl.…`  | una compra                               |
 | FM   | 94.9   | WHO  | `aws-who.…`  | un dilema                                |
 | FM   | 97.9   | DTU  | `aws-dtu.…`  | un hola                                  |
 | FM   | 100.9  | TRP  | `aws-trp.…`  | una encerrona                            |
 | FM   | 103.9  | AWS  | `aws-aws.…`  | un adios                                 |
 | FM   | 106.9  | DMTFY | `aws-dmtfy.…` | alguien tiene un arma                  |
+| AM   | 540    | ITNW | `aws-itnw.…` | una preocupación                         |
 | AM   | 660    | NUM  | `aws-num.…`  | Remember the day we were happy, please!! |
 | AM   | 820    | AYU  | `aws-ayu.…`  | y tu                                     |
 | AM   | 1000   | KIW  | `aws-kiw.…`  | Vámonos Por La sombrita, Por Favor!!!    |
@@ -38,6 +39,9 @@ already knows how to handle.
 Moving between stations swaps `src`. The engine remembers where each
 track was, so coming back to a station resumes it rather than restarting
 it. Dropping into dead air fades the music out and pauses it.
+
+CRM and ITNW share `aws-itnw`: Criptomano keeps the programme at FM 88.9,
+and In This New World retains its track after moving to AM 540.
 
 ## The sound
 

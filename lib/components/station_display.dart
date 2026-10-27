@@ -185,6 +185,8 @@ class StationDisplay extends StatelessComponent {
         return _detodouisPanel(s, lang);
       case 'ITNW':
         return _itnwPanel(s, lang);
+      case 'CRM':
+        return _criptomanoPanel(s, lang);
       case 'BBL':
         return _bblPanel(s, lang);
       case 'TRP':
@@ -461,47 +463,59 @@ class StationDisplay extends StatelessComponent {
     );
   }
 
-  Component _itnwPanel(Station s, Lang lang) {
-    final subtitle = lang == Lang.es ? 'Canal de YouTube - audio inmersivo' : 'YouTube channel - immersive audio';
-    final body = lang == Lang.es
-        ? 'Cada episodio parte de una sola regla - una condición especial - '
-              'y construye un mundo entero a partir de ella. El narrador '
-              'habla desde adentro, como alguien que siempre vivió ahí: no '
-              'hay explicación ni origen, el mundo simplemente es. Detrás '
-              'hay una herramienta propia que lleva un mundo del concepto '
-              'al video publicado, entera en local y sin nube.'
-        : 'Each episode starts from a single rule - one special condition - '
-              'and builds an entire world out of it. The narrator speaks '
-              'from inside, as someone who has always lived there: no '
-              'explanation, no origin story, the world simply is. Behind it '
-              'is a purpose-built tool that carries a world from concept to '
-              'published video, entirely local, with no cloud.';
+  Component _criptomanoPanel(Station s, Lang lang) {
+    final es = lang == Lang.es;
     return _panelShell(
       station: s,
       label: _stationLabel(s, lang),
-      title: 'In This New World',
+      title: 'Criptomano',
       children: [
-        div(classes: 'panel-subtitle', [Component.text(subtitle)]),
-        p(classes: 'panel-body', [Component.text(body)]),
+        div(classes: 'panel-subtitle', [
+          Component.text(es ? 'No todo lo que cuenta, cuenta.' : 'Not everything that counts, adds up.'),
+        ]),
+        p(classes: 'panel-body', [
+          Component.text(
+            es
+                ? 'Historias documentadas sobre los colapsos, fallos de seguridad y promesas rotas '
+                      'del mundo cripto, contadas desde quienes sufrieron sus consecuencias. '
+                      'Cada artículo se apoya en fuentes y pasa por aprobación humana. '
+                      'La app reúne el lector y un conversor de monedas tradicionales y cripto.'
+                : 'Documented stories about crypto collapses, security failures and broken promises, '
+                      'told through the people who suffered the consequences. Every article is '
+                      'sourced and approved by a human. The app combines a reader with a '
+                      'converter for traditional currencies and crypto.',
+          ),
+        ]),
         _transmissionData([
-          (
-            _key(lang, 'format'),
-            lang == Lang.es ? 'Narración inmersiva larga' : 'Long-form immersive narration',
-          ),
-          (
-            _key(lang, 'episodes'),
-            lang == Lang.es ? 'EP01 publicado · más en producción' : 'EP01 published · more in production',
-          ),
-          (
-            _key(lang, 'stack'),
-            lang == Lang.es ? 'Monorepo propio · local-first' : 'In-house monorepo · local-first',
-          ),
-          (_key(lang, 'status'), _status(lang, 'production')),
+          (_key(lang, 'format'), es ? 'Publicación en español · App móvil' : 'Spanish publication · Mobile app'),
+          (_key(lang, 'stack'), 'Flutter · Laravel · Filament'),
+          (_key(lang, 'role'), es ? 'Creador' : 'Creator'),
+          (_key(lang, 'status'), es ? 'WEB ACTIVA · APP PRE-LANZAMIENTO' : 'WEB LIVE · APP PRE-LAUNCH'),
         ]),
         div(classes: 'pill-row', [
-          _pill('YouTube', href: 'https://www.youtube.com/@InThisNewWorld'),
+          _pill('Web', href: 'https://criptomano.com'),
         ]),
       ],
+    );
+  }
+
+  Component _itnwPanel(Station s, Lang lang) {
+    return _amPanel(
+      s: s,
+      lang: lang,
+      title: 'In This New World',
+      subtitle: lang == Lang.es ? 'Canal de YouTube - audio inmersivo' : 'YouTube channel - immersive audio',
+      body: lang == Lang.es
+          ? 'Una regla especial da origen a un mundo entero, narrado desde adentro. '
+                'Una herramienta propia lleva cada episodio del concepto al video, en local.'
+          : 'One special rule gives rise to an entire world, narrated from within. '
+                'A purpose-built local tool takes each episode from concept to video.',
+      status: lang == Lang.es ? 'PUBLICADO' : 'PUBLISHED',
+      data: [
+        (_key(lang, 'episodes'), lang == Lang.es ? 'Varios videos publicados' : 'Several videos published'),
+      ],
+      href: 'https://www.youtube.com/@InThisNewWorld',
+      linkLabel: 'YouTube',
     );
   }
 
@@ -555,6 +569,7 @@ class StationDisplay extends StatelessComponent {
     List<(String, String)> data = const [],
     String? href,
     String? websiteHref,
+    String linkLabel = 'SoundCloud',
   }) {
     return div(classes: 'am-shell', [
       ?_logo(s),
@@ -573,7 +588,7 @@ class StationDisplay extends StatelessComponent {
       if (href != null || websiteHref != null)
         div(classes: 'pill-row', [
           if (websiteHref != null) _pill('Web', href: websiteHref),
-          if (href != null) _pill('SoundCloud', href: href),
+          if (href != null) _pill(linkLabel, href: href),
         ]),
     ]);
   }

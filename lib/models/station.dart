@@ -3,14 +3,12 @@ library;
 
 import 'dart:math' as math;
 
-/// Broadcast band. FM carries the work worth stopping on - shipped, or
-/// finished, or still being made; AM carries lightweight idea-stage
-/// project cards.
+/// Broadcast band. FM carries featured projects and stories; AM carries
+/// lightweight cards for ideas and projects given less prominence.
 ///
-/// The split is about whether there is something to show, not about
-/// whether it is current: A Wired Spine closed in 2012 and broadcasts on
-/// FM because three records exist, while a concept from last month sits
-/// on AM because it is still a sentence.
+/// Placement is editorial, not a release-status rule. A Wired Spine
+/// remains featured after closing; ITNW moves to AM despite publishing
+/// several videos because the channel did not find its audience.
 enum Band { fm, am }
 
 /// Per-band constants used by the dial, audio engine, and content panels.
@@ -104,7 +102,7 @@ class Station {
 
   /// Root-relative path to the project's own mark, as its own app or site
   /// draws it, or null for a station whose project has none - today that
-  /// is WHO and every AM idea. Taken from each project's own repo, never
+  /// is WHO and most AM ideas. Taken from each project's own repo, never
   /// redrawn here; sources and how each file was prepared are in
   /// `assets/logos/README.md`.
   final String? logo;
@@ -159,11 +157,11 @@ const stations = <Station>[
   Station(
     band: Band.fm,
     frequency: 88.9,
-    callSign: 'ITNW',
-    color: '#4EBFB0',
+    callSign: 'CRM',
+    color: '#4EBF90',
     music: 'audio/aws-itnw.ogg',
     song: Song('una preocupación', en: 'A Concern', slug: 'a-concern'),
-    logo: 'logos/itnw.png',
+    logo: 'logos/criptomano.png',
   ),
   Station(
     band: Band.fm,
@@ -229,6 +227,17 @@ const stations = <Station>[
     logo: 'logos/dmtfy.svg',
   ),
   // ── AM: idea-stage projects, one per station. ──
+  // ITNW occupies the lower edge without retuning existing AM presets.
+  // Like KIW/CSP, its 120 kHz gap to NUM leaves a faint residual signal.
+  Station(
+    band: Band.am,
+    frequency: 540.0,
+    callSign: 'ITNW',
+    color: '#4EBFB0',
+    music: 'audio/aws-itnw.ogg',
+    song: Song('una preocupación', en: 'A Concern', slug: 'a-concern'),
+    logo: 'logos/itnw.png',
+  ),
   Station(
     band: Band.am,
     frequency: 660.0,
@@ -245,7 +254,7 @@ const stations = <Station>[
     music: 'audio/aws-ayu.ogg',
     song: Song('y tu'),
   ),
-  // The one deliberate exception to the spacing floor: 1000 is the
+  // Another deliberate exception to the spacing floor: 1000 is the
   // number the station is *about* - Kiwo's universe is #10000 - and the
   // dial saying so is worth the 120 kHz to CSP instead of 160. The cost
   // is roughly 11% residual signal at the deadest point between them
