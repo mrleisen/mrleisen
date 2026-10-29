@@ -681,6 +681,10 @@ class StationDisplay extends StatelessComponent {
         div(classes: 'pill-row', [
           _pill('Web', href: 'https://awiredspine.com'),
           _pill('SoundCloud', href: 'https://soundcloud.com/awiredspine'),
+          // ROUTINE went out through CD Baby in Oct 2026 and is live on
+          // Spotify and the other stores; the artist page collects the
+          // rest as they land.
+          _pill('Spotify', href: 'https://open.spotify.com/artist/0MqExRl9ITgoQdbi3kObYW'),
         ]),
       ],
     );
