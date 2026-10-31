@@ -679,12 +679,13 @@ class StationDisplay extends StatelessComponent {
           (_key(lang, 'status'), _status(lang, 'archived')),
         ]),
         div(classes: 'pill-row', [
+          // Spotify leads: since ROUTINE went out through CD Baby in Oct
+          // 2026 it is where the records live, and the artist page
+          // collects the rest as they land. SoundCloud is the old home,
+          // kept last for the archive.
+          _pill('Spotify', href: 'https://open.spotify.com/artist/0MqExRl9ITgoQdbi3kObYW'),
           _pill('Web', href: 'https://awiredspine.com'),
           _pill('SoundCloud', href: 'https://soundcloud.com/awiredspine'),
-          // ROUTINE went out through CD Baby in Oct 2026 and is live on
-          // Spotify and the other stores; the artist page collects the
-          // rest as they land.
-          _pill('Spotify', href: 'https://open.spotify.com/artist/0MqExRl9ITgoQdbi3kObYW'),
         ]),
       ],
     );

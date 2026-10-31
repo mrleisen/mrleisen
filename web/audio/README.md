@@ -46,7 +46,7 @@ and In This New World retains its track after moving to AM 540.
 ## The sound
 
 These are not meant to sound good. Anyone who wants to hear the songs
-properly has SoundCloud; here they are a radio in the next room. Every
+properly has Spotify; here they are a radio in the next room. Every
 track goes through the same chain with ffmpeg, from the source MP3s:
 
 1. Mono, leading and trailing silence trimmed.
