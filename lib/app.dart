@@ -365,11 +365,11 @@ class AppState extends State<App> {
 
   /// Reads the faceplate's real box and stores it.
   ///
-  /// `rect.top` is the honest answer for the free space above it: the
-  /// panel is `position: fixed`, so that number is measured against the
-  /// viewport the browser is actually painting, rather than derived from
-  /// `100dvh` minus a height, which is the arithmetic that goes wrong the
-  /// moment a mobile browser's chrome disagrees with its own unit.
+  /// The free space above it is the panel's top edge relative to
+  /// `.signal-app`, the box both the panel and the content layers are
+  /// positioned in, rather than derived from `100dvh` minus a height,
+  /// which is the arithmetic that goes wrong the moment a mobile
+  /// browser's chrome disagrees with its own unit.
   void _measurePanel() {
     if (!mounted) return;
     final panel = web.document.querySelector('.radio-panel');
@@ -377,7 +377,15 @@ class AppState extends State<App> {
     final rect = panel.getBoundingClientRect();
     final h = rect.height.round();
     if (h <= 0) return;
-    final free = rect.top.round().clamp(0, 100000);
+    // Measured from the top of `.signal-app`, not from the top of the
+    // viewport. The content layers that read `--free-h` are positioned
+    // inside `.signal-app`, so that is the only origin the number means
+    // anything against. On a desktop the two coincide; on a phone with
+    // the browser's toolbar showing they need not, and the difference is
+    // exactly how much of a station panel ended up under the faceplate.
+    final app = web.document.querySelector('.signal-app');
+    final origin = app?.getBoundingClientRect().top ?? 0;
+    final free = (rect.top - origin).round().clamp(0, 100000);
     // `visualViewport` is the only honest answer here: it excludes
     // browser chrome and shrinks for an on-screen keyboard, neither of
     // which `innerHeight` accounts for. It is the fallback, not the
@@ -1532,9 +1540,17 @@ class AppState extends State<App> {
       },
     ),
     css('.signal-app').styles(
-      position: Position.relative(),
-      width: 100.percent,
-      height: 100.vh,
+      // Pinned to the viewport rather than sized in flow, so it is the
+      // very box a `position: fixed; bottom: 0` faceplate used to be
+      // anchored to. The faceplate and every content layer are now
+      // positioned inside this one box, which is what keeps the station
+      // panels clear of the faceplate on a phone. See `.radio-panel`.
+      position: Position.fixed(
+        top: Unit.zero,
+        left: Unit.zero,
+        right: Unit.zero,
+        bottom: Unit.zero,
+      ),
       overflow: Overflow.hidden,
       backgroundColor: const Color('#050507'),
       raw: {
@@ -1558,7 +1574,6 @@ class AppState extends State<App> {
     ),
     css('.signal-app').styles(
       raw: {
-        'height': '100dvh',
         '--free-h': 'calc(100dvh - var(--panel-h))',
       },
     ),

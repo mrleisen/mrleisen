@@ -1155,7 +1155,20 @@ class RadioDialState extends State<RadioDial> {
     // pre-feature 210 px exactly.
     css('.radio-panel').styles(
       display: Display.flex,
-      position: Position.fixed(
+      // `absolute`, not `fixed`, and that is the fix for the station
+      // panels running underneath the faceplate on phones.
+      //
+      // The content layers are absolute children of `.signal-app` and
+      // place themselves with `--free-h`. With the faceplate `fixed`, that
+      // number came from a box laid out against the viewport while the
+      // content was laid out against `.signal-app`, and on a phone with
+      // the browser's toolbar showing those are two different frames: the
+      // panel's lower edge landed under the faceplate, partly (a scroll
+      // that stopped short) or entirely (no scroll at all, because the
+      // box itself thought it fit). Same containing block, same frame,
+      // nothing to disagree about. `.signal-app` is itself `fixed` to the
+      // viewport, so the faceplate still sits exactly where it did.
+      position: Position.absolute(
         bottom: Unit.zero,
         left: Unit.zero,
         right: Unit.zero,

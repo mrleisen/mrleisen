@@ -35,6 +35,12 @@ jobs:
           dart pub global activate jaspr_cli 0.23.3
           jaspr build --verbose
 
+      - name: Mobile layout tests
+        # Drives the build just produced in the runner's Chrome at phone
+        # sizes and fails the deploy if any station panel or printout ends
+        # up under the faceplate. See e2e/mobile_layout_test.dart.
+        run: CHROME_PATH="$(which google-chrome)" dart test e2e
+
       - name: Copy CNAME to build output
         run: cp CNAME build/jaspr/CNAME
 

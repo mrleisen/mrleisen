@@ -59,3 +59,6 @@ CLAUDE.md
 # Source masters for the station programme. Only the processed,
 # band-limited copies in web/audio/ ship; see web/audio/README.md.
 assets/audio/
+
+# Chromium that puppeteer downloads for e2e/ when CHROME_PATH is unset.
+.local-chromium/
